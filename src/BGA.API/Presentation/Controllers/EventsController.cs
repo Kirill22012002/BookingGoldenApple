@@ -17,24 +17,36 @@ public class EventsController(IEventService _eventService) : ControllerBase
             Data = _eventService.GetAll(),
             Success = true,
             StatusCode = HttpStatusCode.OK,
-            Message = ""
+            Message = "Got all events"
         };
     }
 
     [HttpGet("{id:int}")]
-    public ApiResult<EventDto> Get([FromRoute] int id)
+    public ApiBaseResult Get([FromRoute] int id)
     {
-        return new ApiResult<EventDto>
+        try
         {
-            Data = _eventService.GetById(id),
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = ""
-        };
+            return new ApiResult<EventDto>
+            {
+                Data = _eventService.GetById(id),
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Got event by id"
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.NotFound,
+                Message = $"Could not find event by id: {ex.Message}"
+            };
+        }
     }
 
     [HttpPost]
-    public ApiResult Add([FromBody] AddEventDto dto)
+    public ApiBaseResult Add([FromBody] AddEventDto dto) // return ApiResult if model is not valid
     {
         _eventService.Create(dto);
 
@@ -42,33 +54,57 @@ public class EventsController(IEventService _eventService) : ControllerBase
         {
             Success = true,
             StatusCode = HttpStatusCode.Created,
-            Message = ""
+            Message = "Created event"
         };
     }
 
     [HttpPut("{id:int}")]
-    public ApiResult Put([FromRoute] int id, [FromBody] PutEventDto dto)
+    public ApiBaseResult Put([FromRoute] int id, [FromBody] PutEventDto dto) // return ApiResult if model is not valid
     {
-        _eventService.Change(id, dto);
-
-        return new ApiResult
+        try
         {
-            Success = true,
-            StatusCode = HttpStatusCode.NoContent,
-            Message = ""
-        };
+            _eventService.Change(id, dto);
+
+            return new ApiResult
+            {
+                Success = true,
+                StatusCode = HttpStatusCode.NoContent,
+                Message = "Changed event by id"
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.NotFound,
+                Message = $"Could not find event by id: {ex.Message}"
+            };
+        }
     }
 
     [HttpDelete("{id:int}")]
-    public ApiResult Remove([FromRoute] int id)
+    public ApiBaseResult Remove([FromRoute] int id)
     {
-        _eventService.Remove(id);
-        
-        return new ApiResult
+        try
         {
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = ""
-        };
+            _eventService.Remove(id);
+
+            return new ApiResult
+            {
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Removed event by id"
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.NotFound,
+                Message = $"Could not find event by id: {ex.Message}"
+            };
+        }
     }
 }
