@@ -1,3 +1,5 @@
+using BGA.API.Dtos;
+
 namespace BGA.API.Models;
 
 public class Event

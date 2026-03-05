@@ -1,3 +1,10 @@
 namespace BGA.API.Dtos;
 
-public record EventDto(int Id, string Title, string Description, DateTime StartAt, DateTime EndAt);
+public record EventDto
+{
+    public required int Id { get; set; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public required DateTime StartAt { get; set; }
+    public required DateTime EndAt { get; set; }
+}
