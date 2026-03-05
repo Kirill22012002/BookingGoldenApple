@@ -1,6 +1,6 @@
-namespace BGA.API.Dtos;
+namespace BGA.API.Infrastructure.Models;
 
-public record EventDto
+public class Event
 {
     public required int Id { get; set; }
     public required string Title { get; set; }

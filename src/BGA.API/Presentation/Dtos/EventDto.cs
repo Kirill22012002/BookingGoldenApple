@@ -1,8 +1,6 @@
-using BGA.API.Dtos;
+namespace BGA.API.Presentation.Dtos;
 
-namespace BGA.API.Models;
-
-public class Event
+public record EventDto
 {
     public required int Id { get; set; }
     public required string Title { get; set; }

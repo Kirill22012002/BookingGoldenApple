@@ -1,8 +1,8 @@
-using BGA.API.Attributes;
+using BGA.API.Presentation.Attributes;
 
-namespace BGA.API.Dtos;
+namespace BGA.API.Presentation.Dtos;
 
-public record AddEventDto
+public record PutEventDto
 {
     [FieldRequired]
     public string? Title { get; set; }

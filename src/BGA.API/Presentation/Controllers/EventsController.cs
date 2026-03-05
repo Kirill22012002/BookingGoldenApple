@@ -1,9 +1,9 @@
-using BGA.API.Dtos;
-using BGA.API.Services.Interfaces;
+using BGA.API.Presentation.Dtos;
+using BGA.API.Application.Services.Interfaces;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BGA.API.Controllers;
+namespace BGA.API.Presentation.Controllers;
 
 [ApiController]
 [Route("[controller]")]

@@ -1,9 +1,9 @@
-using BGA.API.Dtos;
-using BGA.API.Extensions;
-using BGA.API.Repositories;
-using BGA.API.Services.Interfaces;
+using BGA.API.Presentation.Dtos;
+using BGA.API.Application.Extensions;
+using BGA.API.Infrastructure.Repositories;
+using BGA.API.Application.Services.Interfaces;
 
-namespace BGA.API.Services.Implementations;
+namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(EventRepository _repository) : IEventService
 {

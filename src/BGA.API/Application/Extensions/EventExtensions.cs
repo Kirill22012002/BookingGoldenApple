@@ -1,7 +1,7 @@
-using BGA.API.Dtos;
-using BGA.API.Models;
+using BGA.API.Presentation.Dtos;
+using BGA.API.Infrastructure.Models;
 
-namespace BGA.API.Extensions;
+namespace BGA.API.Application.Extensions;
 
 public static class EventExtensions
 {

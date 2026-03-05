@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace BGA.API;
+namespace BGA.API.Presentation;
 
 public class ApiResult<T> : ApiBaseResult
 {

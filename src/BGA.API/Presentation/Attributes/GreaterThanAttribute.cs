@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BGA.API.Attributes;
+namespace BGA.API.Presentation.Attributes;
 
 public sealed class GreaterThanAttribute<T>(string _targetPropertyName) : ValidationAttribute where T : IComparable<T>
 {

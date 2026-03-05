@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BGA.API.Attributes;
+namespace BGA.API.Presentation.Attributes;
 
 public sealed class FieldRequiredAttribute : RequiredAttribute
 {

@@ -1,6 +1,6 @@
-using BGA.API.Dtos;
+using BGA.API.Presentation.Dtos;
 
-namespace BGA.API.Services.Interfaces;
+namespace BGA.API.Application.Services.Interfaces;
 
 public interface IEventService
 {
