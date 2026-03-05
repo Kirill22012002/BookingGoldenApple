@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using BGA.API.Attributes;
 
 namespace BGA.API.Dtos;
@@ -14,6 +13,6 @@ public record AddEventDto
     public required DateTime StartAt { get; set; }
 
     [FieldRequired]
-    [DateTimeGreaterThan(nameof(StartAt))]
+    [GreaterThan<DateTime>(nameof(StartAt))]
     public required DateTime EndAt { get; set; }
 }
