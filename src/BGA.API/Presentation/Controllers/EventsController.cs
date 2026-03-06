@@ -1,6 +1,5 @@
 using BGA.API.Presentation.Dtos;
 using BGA.API.Application.Services.Interfaces;
-using System.Net;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BGA.API.Presentation.Controllers;
@@ -10,101 +9,71 @@ namespace BGA.API.Presentation.Controllers;
 public class EventsController(IEventService _eventService) : ControllerBase
 {
     [HttpGet]
-    public ApiResult<List<EventDto>> Get()
+    public IActionResult Get()
     {
-        return new ApiResult<List<EventDto>>
-        {
-            Data = _eventService.GetAll(),
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = "Got all events"
-        };
+        return Ok(_eventService.GetAll());
     }
 
     [HttpGet("{id:int}")]
-    public ApiBaseResult Get([FromRoute] int id)
+    public IActionResult Get([FromRoute] int id)
     {
+        if (id <= 0)
+        {
+            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
+        }
+
         try
         {
-            return new ApiResult<EventDto>
-            {
-                Data = _eventService.GetById(id),
-                Success = true,
-                StatusCode = HttpStatusCode.OK,
-                Message = "Got event by id"
-            };
+            return Ok(_eventService.GetById(id));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return new ApiResult
-            {
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = $"Could not find event by id: {ex.Message}"
-            };
+            return NotFound(new { Errror = $"Event with Id: {id} not found" });
         }
     }
 
     [HttpPost]
-    public ApiBaseResult Add([FromBody] AddEventDto dto) // return ApiResult if model is not valid
+    public IActionResult Add([FromBody] AddEventDto dto)
     {
         _eventService.Create(dto);
-
-        return new ApiResult
-        {
-            Success = true,
-            StatusCode = HttpStatusCode.Created,
-            Message = "Created event"
-        };
+        return Created();
     }
 
     [HttpPut("{id:int}")]
-    public ApiBaseResult Put([FromRoute] int id, [FromBody] PutEventDto dto) // return ApiResult if model is not valid
+    public IActionResult Put([FromRoute] int id, [FromBody] PutEventDto dto)
     {
+        if (id <= 0)
+        {
+            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
+        }
+
         try
         {
             _eventService.Change(id, dto);
-
-            return new ApiResult
-            {
-                Success = true,
-                StatusCode = HttpStatusCode.NoContent,
-                Message = "Changed event by id"
-            };
+            return NoContent();
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return new ApiResult
-            {
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = $"Could not find event by id: {ex.Message}"
-            };
+            return NotFound(new { Errror = $"Event with Id: {id} not found" });
         }
     }
 
     [HttpDelete("{id:int}")]
-    public ApiBaseResult Remove([FromRoute] int id)
+    public IActionResult Remove([FromRoute] int id)
     {
+        if (id <= 0)
+        {
+            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
+        }
+
         try
         {
             _eventService.Remove(id);
-
-            return new ApiResult
-            {
-                Success = true,
-                StatusCode = HttpStatusCode.OK,
-                Message = "Removed event by id"
-            };
+            return Ok();
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return new ApiResult
-            {
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = $"Could not find event by id: {ex.Message}"
-            };
+            return NotFound(new { Errror = $"Event with Id: {id} not found" });
         }
     }
 }
