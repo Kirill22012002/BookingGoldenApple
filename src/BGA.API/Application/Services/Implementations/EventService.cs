@@ -10,7 +10,7 @@ public class EventService(EventRepository _repository) : IEventService
     public List<EventDto> GetAll()
     {
         var events = _repository.ToList();
-        return events.MapToDtos();
+        return events.MapToDtos().ToList();
     }
 
     public EventDto GetById(int id)

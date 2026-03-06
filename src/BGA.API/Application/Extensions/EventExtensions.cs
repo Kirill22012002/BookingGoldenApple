@@ -29,20 +29,6 @@ public static class EventExtensions
         };
     }
 
-    public static List<Event> MapToEntities(this List<EventDto> dtos)
-    {
-        return dtos
-            .Select(dto => new Event
-            {
-                Id = 0,
-                Title = dto.Title,
-                Description = dto.Description,
-                StartAt = dto.StartAt,
-                EndAt = dto.EndAt
-            })
-            .ToList();
-    }
-
     public static EventDto MapToDto(this Event entity)
     {
         return new EventDto
@@ -55,10 +41,9 @@ public static class EventExtensions
         };
     }
 
-    public static List<EventDto> MapToDtos(this List<Event> entities)
+    public static IEnumerable<EventDto> MapToDtos(this IEnumerable<Event> entities)
     {
         return entities
-            .Select(entity => entity.MapToDto())
-            .ToList();
+            .Select(entity => entity.MapToDto());
     }
 }
