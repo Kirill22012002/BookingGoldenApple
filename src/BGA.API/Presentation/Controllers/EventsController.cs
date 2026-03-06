@@ -31,8 +31,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpPost]
     public IActionResult Add([FromBody] AddEventDto dto)
     {
-        _eventService.Create(dto);
-        return Created();
+        var eventDto = _eventService.Create(dto);
+        return CreatedAtAction(nameof(Get), new { id = eventDto.Id}, eventDto);
     }
 
     [HttpPut("{id:int}")]

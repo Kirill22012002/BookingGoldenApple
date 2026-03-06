@@ -19,10 +19,11 @@ public class EventService(EventRepository _repository) : IEventService
         return @event.MapToDto();
     }
 
-    public void Create(AddEventDto dto)
+    public EventDto Create(AddEventDto dto)
     {
         var @event = dto.MapToEntity();
         _repository.Add(@event);
+        return @event.MapToDto();
     }
 
     public void Change(int id, PutEventDto dto)
