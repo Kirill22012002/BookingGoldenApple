@@ -55,7 +55,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
         try
         {
             _eventService.Remove(id);
-            return Ok();
+            return NoContent();
         }
         catch (InvalidOperationException)
         {
