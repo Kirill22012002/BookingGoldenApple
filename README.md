@@ -48,6 +48,6 @@ http://localhost:5068/swagger/index.html
 ### Endpoints: 
 - GET:    /events       - get list of all events
 - GET:    /events/{id}  - get event by id; if not found returns 404
-- POST:   /events       - crete event
+- POST:   /events       - create event
 - PUT:    /events/{id}  - update event
 - DELETE: /events/{id}  - remove event; if not found returns 404

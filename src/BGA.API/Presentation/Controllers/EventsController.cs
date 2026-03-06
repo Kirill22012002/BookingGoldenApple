@@ -24,7 +24,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
         }
         catch (InvalidOperationException)
         {
-            return NotFound(new { Errror = $"Event with Id: {id} not found" });
+            return NotFound(new { Error = $"Event with Id: {id} not found" });
         }
     }
 
@@ -45,7 +45,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
         }
         catch (InvalidOperationException)
         {
-            return NotFound(new { Errror = $"Event with Id: {id} not found" });
+            return NotFound(new { Error = $"Event with Id: {id} not found" });
         }
     }
 
@@ -59,7 +59,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
         }
         catch (InvalidOperationException)
         {
-            return NotFound(new { Errror = $"Event with Id: {id} not found" });
+            return NotFound(new { Error = $"Event with Id: {id} not found" });
         }
     }
 }
