@@ -9,7 +9,7 @@ public class EventService(EventRepository _repository) : IEventService
 {
     public List<EventDto> GetAll()
     {
-        var events = _repository.ToList();
+        var events = _repository.AsEnumerable();
         return events.MapToDtos().ToList();
     }
 
@@ -27,13 +27,28 @@ public class EventService(EventRepository _repository) : IEventService
 
     public void Change(int id, PutEventDto dto)
     {
-        Remove(id);
-        var @event = dto.MapToEntity(id);
-        _repository.Add(@event);
+        var index = _repository.FindIndex(x => x.Id == id);
+        if (index != -1)
+        {
+            var @event = dto.MapToEntity(id);
+            _repository[index] = @event;
+        }
+        else
+        {
+            throw new InvalidOperationException();
+        }
     }
 
     public void Remove(int id)
     {
-        _repository.Remove(_repository.Single(x => x.Id == id));
+        var index = _repository.FindIndex(x => x.Id == id);
+        if (index != -1)
+        {
+            _repository.RemoveAt(index);
+        }
+        else
+        {
+            throw new InvalidOperationException();
+        }
     }
 }
