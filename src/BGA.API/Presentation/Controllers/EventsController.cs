@@ -1,6 +1,7 @@
 using BGA.API.Presentation.Dtos;
 using BGA.API.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace BGA.API.Presentation.Controllers;
 
@@ -15,13 +16,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult Get([FromRoute] int id)
+    public IActionResult Get([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        if (id <= 0)
-        {
-            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
-        }
-
         try
         {
             return Ok(_eventService.GetById(id));
@@ -40,13 +36,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public IActionResult Put([FromRoute] int id, [FromBody] PutEventDto dto)
+    public IActionResult Put([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
     {
-        if (id <= 0)
-        {
-            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
-        }
-
         try
         {
             _eventService.Change(id, dto);
@@ -59,13 +50,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public IActionResult Remove([FromRoute] int id)
+    public IActionResult Remove([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        if (id <= 0)
-        {
-            return BadRequest(new { Error = $"{nameof(id)} can not be less or equal than 0" });
-        }
-
         try
         {
             _eventService.Remove(id);
