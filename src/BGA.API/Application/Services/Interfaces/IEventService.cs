@@ -1,12 +1,12 @@
-using BGA.API.Presentation.Dtos;
+using BGA.API.Infrastructure.Models;
 
 namespace BGA.API.Application.Services.Interfaces;
 
 public interface IEventService
 {
-    List<EventDto> GetAll();
-    EventDto GetById(int id);
-    EventDto Create(AddEventDto dto);
-    void Change(int id, PutEventDto dto);
+    IEnumerable<Event> GetAll();
+    Event GetById(int id);
+    Event Create(Event @event);
+    void Change(int id, Event @event);
     void Remove(int id);
 }

@@ -2,6 +2,7 @@ using BGA.API.Presentation.Dtos;
 using BGA.API.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using BGA.API.Presentation.Extensions;
 
 namespace BGA.API.Presentation.Controllers;
 
@@ -12,7 +13,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(_eventService.GetAll());
+        var dtos = _eventService.GetAll().MapToDtos().ToList();
+        return Ok(dtos);
     }
 
     [HttpGet("{id:int}")]
@@ -20,7 +22,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     {
         try
         {
-            return Ok(_eventService.GetById(id));
+            var dto = _eventService.GetById(id).MapToDto();
+            return Ok(dto);
         }
         catch (InvalidOperationException)
         {
@@ -31,7 +34,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpPost]
     public IActionResult Add([FromBody] AddEventDto dto)
     {
-        var eventDto = _eventService.Create(dto);
+        var @event = _eventService.Create(dto.MapToEntity());
+        var eventDto = @event.MapToDto();
         return CreatedAtAction(nameof(Get), new { id = eventDto.Id}, eventDto);
     }
 
@@ -40,7 +44,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
     {
         try
         {
-            _eventService.Change(id, dto);
+            var @event = dto.MapToEntity(id);
+            _eventService.Change(id, @event);
             return NoContent();
         }
         catch (InvalidOperationException)
