@@ -10,9 +10,9 @@ public record AddEventDto
     public string? Description { get; set; }
 
     [FieldRequired]
-    public required DateTime? StartAt { get; set; }
+    public required DateTime StartAt { get; set; }
 
     [FieldRequired]
     [GreaterThan<DateTime>(nameof(StartAt))]
-    public required DateTime? EndAt { get; set; }
+    public required DateTime EndAt { get; set; }
 }
