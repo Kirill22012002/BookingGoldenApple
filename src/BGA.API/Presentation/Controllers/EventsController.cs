@@ -3,6 +3,8 @@ using BGA.API.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using BGA.API.Presentation.Extensions;
+using BGA.API.Application;
+using BGA.API.Infrastructure.Models;
 
 namespace BGA.API.Presentation.Controllers;
 
@@ -13,58 +15,49 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        var dtos = _eventService.GetAll().MapToDtos().ToList();
+        var result = _eventService.GetAll();
+        var dtos = result.Data.MapToDtos().ToList();
+        
         return Ok(dtos);
     }
 
     [HttpGet("{id:int}")]
     public IActionResult Get([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        try
-        {
-            var dto = _eventService.GetById(id).MapToDto();
-            return Ok(dto);
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var result = _eventService.GetById(id);
+
+        return result.Success
+            ? Ok((result as ServiceResult<Event>)?.Data.MapToDto())
+            : NotFound(new { Error = result.ErrorMessage });
     }
 
     [HttpPost]
     public IActionResult Add([FromBody] AddEventDto dto)
     {
-        var @event = _eventService.Create(dto.MapToEntity());
-        var eventDto = @event.MapToDto();
-        return CreatedAtAction(nameof(Get), new { id = eventDto.Id}, eventDto);
+        var result = _eventService.Create(dto.MapToEntity());
+        var eventDto = result.Data.MapToDto();
+
+        return CreatedAtAction(nameof(Get), new { id = eventDto.Id }, eventDto);
     }
 
     [HttpPut("{id:int}")]
     public IActionResult Put([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
     {
-        try
-        {
-            var @event = dto.MapToEntity(id);
-            _eventService.Change(id, @event);
-            return NoContent();
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var @event = dto.MapToEntity(id);
+        var result = _eventService.Change(id, @event);
+
+        return result.Success
+            ? NoContent()
+            : NotFound(new { Error = result.ErrorMessage });
     }
 
     [HttpDelete("{id:int}")]
     public IActionResult Remove([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        try
-        {
-            _eventService.Remove(id);
-            return NoContent();
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var result = _eventService.Remove(id);
+
+        return result.Success
+            ? NoContent()
+            : NotFound(new { Error = result.ErrorMessage });
     }
 }

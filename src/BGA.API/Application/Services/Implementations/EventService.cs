@@ -6,45 +6,83 @@ namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(EventRepository _repository) : IEventService
 {
-    public IEnumerable<Event> GetAll()
+    public ServiceResult<IEnumerable<Event>> GetAll()
     {
-        return _repository.AsEnumerable();
+        return new ServiceResult<IEnumerable<Event>>
+        {
+            Success = true,
+            Data = _repository.AsEnumerable()
+        };
     }
 
-    public Event GetById(int id)
+    public ServiceBaseResult GetById(int id)
     {
-        return _repository.Single(x => x.Id == id);
+        var @event = _repository.FirstOrDefault(x => x.Id == id);
+        if (@event is null)
+        {
+            return new ServiceResult
+            {
+                Success = false,
+                ErrorMessage =  $"Event with Id: {id} not found"
+            };
+        }
+
+        return new ServiceResult<Event>
+        {
+            Success = true,
+            Data = @event
+        };
     }
 
-    public Event Create(Event @event)
+    public ServiceResult<Event> Create(Event @event)
     {
         _repository.Add(@event);
-        return @event;
+        return new ServiceResult<Event>
+        {
+            Success = true,
+            Data = @event
+        };
     }
 
-    public void Change(int id, Event @event)
+    public ServiceResult Change(int id, Event @event)
     {
         var index = _repository.FindIndex(x => x.Id == id);
         if (index != -1)
         {
             _repository[index] = @event;
+            return new ServiceResult
+            {
+                Success = true
+            };
         }
         else
         {
-            throw new InvalidOperationException();
+            return new ServiceResult
+            {
+                Success = false,
+                ErrorMessage = $"Event with Id: {id} not found"
+            };
         }
     }
 
-    public void Remove(int id)
+    public ServiceResult Remove(int id)
     {
         var index = _repository.FindIndex(x => x.Id == id);
         if (index != -1)
         {
             _repository.RemoveAt(index);
+            return new ServiceResult
+            {
+                Success = true
+            };
         }
         else
         {
-            throw new InvalidOperationException();
+            return new ServiceResult
+            {
+                Success = false,
+                ErrorMessage = $"Event with Id: {id} not found"
+            };
         }
     }
 }

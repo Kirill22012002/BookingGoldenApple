@@ -4,9 +4,9 @@ namespace BGA.API.Application.Services.Interfaces;
 
 public interface IEventService
 {
-    IEnumerable<Event> GetAll();
-    Event GetById(int id);
-    Event Create(Event @event);
-    void Change(int id, Event @event);
-    void Remove(int id);
+    ServiceResult<IEnumerable<Event>> GetAll();
+    ServiceBaseResult GetById(int id);
+    ServiceResult<Event> Create(Event @event);
+    ServiceResult Change(int id, Event @event);
+    ServiceResult Remove(int id);
 }
