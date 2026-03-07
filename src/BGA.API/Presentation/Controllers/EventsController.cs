@@ -28,7 +28,13 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return result.Success
             ? Ok((result as ServiceResult<Event>)?.Data.MapToDto())
-            : NotFound(new { Error = result.ErrorMessage });
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                type: $"/errors/EventNotFound",
+                title: "Resource not found",
+                detail: result.ErrorMessage,
+                instance: HttpContext.Request.Path
+            );
     }
 
     [HttpPost]
@@ -48,7 +54,13 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return result.Success
             ? NoContent()
-            : NotFound(new { Error = result.ErrorMessage });
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                type: $"/errors/EventNotFound",
+                title: "Resource not found",
+                detail: result.ErrorMessage,
+                instance: HttpContext.Request.Path
+            );
     }
 
     [HttpDelete("{id:int}")]
@@ -58,6 +70,12 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return result.Success
             ? NoContent()
-            : NotFound(new { Error = result.ErrorMessage });
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                type: $"/errors/EventNotFound",
+                title: "Resource not found",
+                detail: result.ErrorMessage,
+                instance: HttpContext.Request.Path
+            );
     }
 }
