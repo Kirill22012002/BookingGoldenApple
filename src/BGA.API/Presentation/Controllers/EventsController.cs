@@ -13,7 +13,7 @@ namespace BGA.API.Presentation.Controllers;
 public class EventsController(IEventService _eventService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get()
+    public IActionResult GetAll()
     {
         var result = _eventService.GetAll();
         var dtos = result.Data.MapToDtos().ToList();
@@ -22,7 +22,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult Get([FromRoute][Range(1, int.MaxValue)] int id)
+    public IActionResult GetById([FromRoute][Range(1, int.MaxValue)] int id)
     {
         var result = _eventService.GetById(id);
 
@@ -32,16 +32,16 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Add([FromBody] AddEventDto dto)
+    public IActionResult Create([FromBody] AddEventDto dto)
     {
         var result = _eventService.Create(dto.MapToEntity());
         var eventDto = result.Data.MapToDto();
 
-        return CreatedAtAction(nameof(Get), new { id = eventDto.Id }, eventDto);
+        return CreatedAtAction(nameof(GetById), new { id = eventDto.Id }, eventDto);
     }
 
     [HttpPut("{id:int}")]
-    public IActionResult Put([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
+    public IActionResult Change([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
     {
         var @event = dto.MapToEntity(id);
         var result = _eventService.Change(id, @event);
