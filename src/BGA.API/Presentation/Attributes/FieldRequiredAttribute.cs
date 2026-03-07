@@ -4,13 +4,11 @@ namespace BGA.API.Presentation.Attributes;
 
 public sealed class FieldRequiredAttribute : ValidationAttribute
 {
-    public FieldRequiredAttribute() : base($"{0} does not have a default value") { }
-
     public override string FormatErrorMessage(string fieldName)
     {
         return !string.IsNullOrEmpty(ErrorMessage)
             ? ErrorMessage
-            : $"The {fieldName} field is required";
+            : $"The field {fieldName} is required";
     }
 
     public override bool IsValid(object? value)

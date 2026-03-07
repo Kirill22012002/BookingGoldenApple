@@ -5,14 +5,14 @@ namespace BGA.API.Presentation.Dtos;
 public record AddEventDto
 {
     [FieldRequired]
-    public required string? Title { get; set; }
+    public string? Title { get; set; }
 
     public string? Description { get; set; }
 
-    [FieldRequired]
-    public required DateTime StartAt { get; set; }
+    [FieldRequired(ErrorMessage = $"{nameof(StartAt)} must be filled with valid value (not default value)")]
+    public DateTime StartAt { get; set; }
 
-    [FieldRequired]
+    [FieldRequired(ErrorMessage = $"{nameof(EndAt)} must be filled with valid value (not default value)")]
     [GreaterThan<DateTime>(nameof(StartAt))]
-    public required DateTime EndAt { get; set; }
+    public DateTime EndAt { get; set; }
 }
