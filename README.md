@@ -46,8 +46,8 @@ http://localhost:5068/swagger/index.html
 ## API Documentation
 
 ### Endpoints: 
-- GET:    /events       - get list of all events
-- GET:    /events/{id}  - get event by id; if not found returns 404
-- POST:   /events       - create event
-- PUT:    /events/{id}  - update event
-- DELETE: /events/{id}  - remove event; if not found returns 404
+- `GET`:    /events       - get list of all events
+- `GET`:    /events/{id}  - get event by id; if not found returns 404
+- `POST`:   /events       - create event
+- `PUT`:    /events/{id}  - update event
+- `DELETE`: /events/{id}  - remove event; if not found returns 404
