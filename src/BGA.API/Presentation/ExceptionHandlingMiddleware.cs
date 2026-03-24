@@ -34,7 +34,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             Status = statusCode,
             Title = "An error occured",
             Type = GetProblemType(statusCode),
-            Instance = context.Request.Path,
             Detail = exception.Message
         };
 
