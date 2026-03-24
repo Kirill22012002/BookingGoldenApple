@@ -1,17 +1,22 @@
 using BGA.API.Infrastructure.Repositories;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddSingleton<EventRepository>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler(); // fallback
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
