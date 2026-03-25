@@ -25,7 +25,7 @@ public class EventService(IEventRepository _repository) : IEventService
         var success = _repository.Create(@event);
 
         return success
-            ? ServiceResponse<EventDto>.Success(@event.MapToDto()) 
+            ? ServiceResponse<EventDto>.Success(@event.MapToDto())
             : ServiceResponse<EventDto>.Failure(["Cannot create event"]);
     }
 

@@ -1,6 +1,6 @@
+using BGA.API.Infrastructure.Repositories.Interfaces;
 using System.Collections.Concurrent;
 using BGA.API.Infrastructure.Models;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Infrastructure.Repositories.Implementations;
 

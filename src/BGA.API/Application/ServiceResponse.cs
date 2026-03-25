@@ -21,6 +21,6 @@ public class ServiceResponse<T> : ServiceResponse
     public static ServiceResponse<T> Success(T data)
         => new ServiceResponse<T> { Data = data, Succeeded = true, Message = "Operation successful" };
 
-    public static new  ServiceResponse<T> Failure(List<string> errors)
+    public static new ServiceResponse<T> Failure(List<string> errors)
         => new ServiceResponse<T> { Succeeded = false, Errors = errors, Message = "Operation failed" };
 }
