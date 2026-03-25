@@ -7,12 +7,25 @@ namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(IEventRepository _repository) : IEventService
 {
-    public ServiceResponse<List<EventDto>> GetAll()
+    public ServiceResponse<List<EventDto>> GetAll(string? title, DateTime? from, DateTime? to)
     {
         try
         {
-            var events = _repository.GetAll();
-            return ServiceResponse<List<EventDto>>.Success(events.MapToDtos().ToList());
+            var query = _repository.GetAll();
+            if (title != null)
+            {
+                query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            }
+            else if (from != null)
+            {
+                query = query.Where(@event => @event.StartAt >= from);
+            }
+            else if (to != null)
+            {
+                query = query.Where(@event => @event.EndAt <= to);
+            }
+
+            return ServiceResponse<List<EventDto>>.Success(query.AsEnumerable().MapToDtos().ToList());
         }
         catch (Exception ex)
         {

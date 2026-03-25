@@ -10,9 +10,9 @@ namespace BGA.API.Presentation.Controllers;
 public class EventsController(IEventService _eventService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get()
+    public IActionResult Get([FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-        var response = _eventService.GetAll();
+        var response = _eventService.GetAll(title, from, to);
         return Ok(response.Data);
     }
 

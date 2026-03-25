@@ -9,9 +9,9 @@ public class EventRepository : IEventRepository
     private readonly ConcurrentDictionary<int, Event> _events = [];
     private int _eventId = 0;
 
-    public IEnumerable<Event> GetAll()
+    public IQueryable<Event> GetAll()
     {
-        return _events.Values.AsEnumerable();
+        return _events.Values.AsQueryable();
     }
 
     public Event GetById(int id)
