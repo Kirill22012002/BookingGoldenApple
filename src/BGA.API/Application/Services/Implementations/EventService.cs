@@ -9,40 +9,77 @@ public class EventService(IEventRepository _repository) : IEventService
 {
     public ServiceResponse<List<EventDto>> GetAll()
     {
-        var events = _repository.GetAll();
-        return ServiceResponse<List<EventDto>>.Success(events.MapToDtos().ToList());
+        try
+        {
+            var events = _repository.GetAll();
+            return ServiceResponse<List<EventDto>>.Success(events.MapToDtos().ToList());
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse<List<EventDto>>.Failure([ex.Message]);
+        }
     }
 
     public ServiceResponse<EventDto> GetById(int id)
     {
-        var @event = _repository.GetById(id);
-        return ServiceResponse<EventDto>.Success(@event.MapToDto());
+        try
+        {
+            var @event = _repository.GetById(id);
+            return ServiceResponse<EventDto>.Success(@event.MapToDto());
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse<EventDto>.Failure([ex.Message]);
+        }
     }
 
     public ServiceResponse<EventDto> Create(AddEventDto dto)
     {
-        var @event = dto.MapToEntity();
-        var success = _repository.Create(@event);
+        try
+        {
+            var @event = dto.MapToEntity();
+            var success = _repository.Create(@event);
 
-        return success
-            ? ServiceResponse<EventDto>.Success(@event.MapToDto())
-            : ServiceResponse<EventDto>.Failure(["Cannot create event"]);
+            return success
+                ? ServiceResponse<EventDto>.Success(@event.MapToDto())
+                : ServiceResponse<EventDto>.Failure(["Cannot create event"]);
+
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse<EventDto>.Failure([ex.Message]);
+        }
     }
 
     public ServiceResponse Change(int id, PutEventDto dto)
     {
-        var @event = dto.MapToEntity(id);
-        _repository.Update(id, @event);
+        try
+        {
+            var @event = dto.MapToEntity(id);
+            _repository.Update(id, @event);
 
-        return ServiceResponse.Success();
+            return ServiceResponse.Success();
+
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse.Failure([ex.Message]);
+        }
     }
 
     public ServiceResponse Remove(int id)
     {
-        var success = _repository.Remove(id);
+        try
+        {
+            var success = _repository.Remove(id);
 
-        return success
-            ? ServiceResponse.Success()
-            : ServiceResponse.Failure(["Cannot remove event"]);
+            return success
+                ? ServiceResponse.Success()
+                : ServiceResponse.Failure(["Cannot remove event"]);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse.Failure([ex.Message]);
+        }
     }
 }
