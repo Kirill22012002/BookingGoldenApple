@@ -4,9 +4,9 @@ namespace BGA.API.Application.Services.Interfaces;
 
 public interface IEventService
 {
-    List<EventDto> GetAll();
-    EventDto GetById(int id);
-    EventDto Create(AddEventDto dto);
-    void Change(int id, PutEventDto dto);
-    void Remove(int id);
+    ServiceResponse<List<EventDto>> GetAll();
+    ServiceResponse<EventDto> GetById(int id);
+    ServiceResponse<EventDto> Create(AddEventDto dto);
+    ServiceResponse Change(int id, PutEventDto dto);
+    ServiceResponse Remove(int id);
 }

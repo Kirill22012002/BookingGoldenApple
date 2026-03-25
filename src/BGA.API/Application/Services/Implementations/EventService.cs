@@ -1,55 +1,48 @@
 using BGA.API.Presentation.Dtos;
 using BGA.API.Application.Extensions;
-using BGA.API.Infrastructure.Repositories;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class EventService(EventRepository _repository) : IEventService
+public class EventService(IEventRepository _repository) : IEventService
 {
-    public List<EventDto> GetAll()
+    public ServiceResponse<List<EventDto>> GetAll()
     {
-        var events = _repository.AsEnumerable();
-        return events.MapToDtos().ToList();
+        var events = _repository.GetAll();
+        return ServiceResponse<List<EventDto>>.Success(events.MapToDtos().ToList());
     }
 
-    public EventDto GetById(int id)
+    public ServiceResponse<EventDto> GetById(int id)
     {
-        var @event = _repository.Single(x => x.Id == id);
-        return @event.MapToDto();
+        var @event = _repository.GetById(id);
+        return ServiceResponse<EventDto>.Success(@event.MapToDto());
     }
 
-    public EventDto Create(AddEventDto dto)
+    public ServiceResponse<EventDto> Create(AddEventDto dto)
     {
         var @event = dto.MapToEntity();
-        _repository.Add(@event);
-        return @event.MapToDto();
+        var success = _repository.Create(@event);
+
+        return success
+            ? ServiceResponse<EventDto>.Success(@event.MapToDto()) 
+            : ServiceResponse<EventDto>.Failure(["Cannot create event"]);
     }
 
-    public void Change(int id, PutEventDto dto)
+    public ServiceResponse Change(int id, PutEventDto dto)
     {
-        var index = _repository.FindIndex(x => x.Id == id);
-        if (index != -1)
-        {
-            var @event = dto.MapToEntity(id);
-            _repository[index] = @event;
-        }
-        else
-        {
-            throw new InvalidOperationException();
-        }
+        var @event = dto.MapToEntity(id);
+        _repository.Update(id, @event);
+
+        return ServiceResponse.Success();
     }
 
-    public void Remove(int id)
+    public ServiceResponse Remove(int id)
     {
-        var index = _repository.FindIndex(x => x.Id == id);
-        if (index != -1)
-        {
-            _repository.RemoveAt(index);
-        }
-        else
-        {
-            throw new InvalidOperationException();
-        }
+        var success = _repository.Remove(id);
+
+        return success
+            ? ServiceResponse.Success()
+            : ServiceResponse.Failure(["Cannot remove event"]);
     }
 }

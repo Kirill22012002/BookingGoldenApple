@@ -12,54 +12,39 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(_eventService.GetAll());
+        var response = _eventService.GetAll();
+        return Ok(response.Data);
     }
 
     [HttpGet("{id:int}")]
     public IActionResult Get([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        try
-        {
-            return Ok(_eventService.GetById(id));
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var response = _eventService.GetById(id);
+        return Ok(response.Data);
     }
 
     [HttpPost]
     public IActionResult Add([FromBody] AddEventDto dto)
     {
-        var eventDto = _eventService.Create(dto);
-        return CreatedAtAction(nameof(Get), new { id = eventDto.Id}, eventDto);
+        var response = _eventService.Create(dto);
+        return CreatedAtAction(nameof(Get), new { id = response?.Data?.Id }, response?.Data);
     }
 
     [HttpPut("{id:int}")]
     public IActionResult Put([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
     {
-        try
-        {
-            _eventService.Change(id, dto);
-            return NoContent();
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var response = _eventService.Change(id, dto);
+        return response.Succeeded
+            ? NoContent()
+            : NotFound(); // with problem details $"Event with Id: {id} not found"
     }
 
     [HttpDelete("{id:int}")]
     public IActionResult Remove([FromRoute][Range(1, int.MaxValue)] int id)
     {
-        try
-        {
-            _eventService.Remove(id);
-            return NoContent();
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound(new { Error = $"Event with Id: {id} not found" });
-        }
+        var response = _eventService.Remove(id);
+        return response.Succeeded
+            ? NoContent()
+            : NotFound(); // with problem details $"Event with Id: {id} not found"
     }
 }

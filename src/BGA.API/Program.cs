@@ -1,7 +1,8 @@
-using BGA.API.Infrastructure.Repositories;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Presentation;
+using BGA.API.Infrastructure.Repositories.Interfaces;
+using BGA.API.Infrastructure.Repositories.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddSingleton<EventRepository>();
+builder.Services.AddSingleton<IEventRepository, EventRepository>();
 
 var app = builder.Build();
 
