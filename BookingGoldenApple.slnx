@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/BGA.API/BGA.API.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BGA.API.Tests/BGA.API.Tests.csproj" Id="4a728714-7dd6-47a3-baa6-556421ed6376" />
+  </Folder>
 </Solution>

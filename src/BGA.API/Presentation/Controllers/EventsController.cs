@@ -35,7 +35,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpPut("{id:int}")]
     public IActionResult Put([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
     {
-        var response = _eventService.Change(id, dto);
+        var response = _eventService.Update(id, dto);
         return response.Succeeded
             ? NoContent()
             : NotFound(); // with problem details $"Event with Id: {id} not found"

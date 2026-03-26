@@ -78,7 +78,7 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse Change(int id, PutEventDto dto)
+    public ServiceResponse Update(int id, PutEventDto dto)
     {
         try
         {
