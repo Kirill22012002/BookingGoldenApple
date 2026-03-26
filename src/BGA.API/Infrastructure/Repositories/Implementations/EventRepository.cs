@@ -19,7 +19,7 @@ public class EventRepository : IEventRepository
         var @event = _events.GetValueOrDefault(id);
         if (@event == null)
         {
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException($"Event with Id: {id} not found");
         }
 
         return @event;
@@ -36,9 +36,15 @@ public class EventRepository : IEventRepository
         return _events.TryAdd(@event.Id, @event);
     }
 
-    public void Update(int id, Event @event)
+    public bool Update(int id, Event @event)
     {
-        _events.AddOrUpdate(id, @event, (key, oldValue) => @event);
+        var oldEvent = _events.GetValueOrDefault(id);
+        if (oldEvent == null)
+        {
+            throw new KeyNotFoundException($"Event with Id: {id} not found");
+        }
+
+        return _events.TryUpdate(id, @event, oldEvent);
     }
 
     public bool Remove(int id)

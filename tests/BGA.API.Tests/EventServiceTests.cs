@@ -52,7 +52,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Update_ValidPutEventDto_ReturnsServiceResponseWithSuccess()
+    public void Update_WithValidPutEventDto_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = 1;
@@ -63,6 +63,10 @@ public class EventServiceTests
             StartAt = new DateTime(2026, 03, 26),
             EndAt = new DateTime(2026, 03, 27)
         };
+
+        _repository
+            .Setup(repository => repository.Update(id, It.IsAny<Event>()))
+            .Returns(true);
 
         // Act
         var result = _service.Update(id, dto);
@@ -76,7 +80,37 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Remove_ValidId_ReturnsServiceResponseWithSuccess()
+    public void Update_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var id = 1;
+        var exceptionMessage = $"Event with Id: {id} not found";
+        var dto = new PutEventDto()
+        {
+            Title = "Jogging",
+            Description = "Jogging with other strong men",
+            StartAt = new DateTime(2026, 06, 24),
+            EndAt = new DateTime(2026, 06, 28)
+        };
+
+        _repository
+            .Setup(repository => repository.Update(id, It.IsAny<Event>()))
+            .Throws(new KeyNotFoundException(exceptionMessage));
+
+        // Act
+        var result = _service.Update(id, dto);
+
+        // Assert
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(exceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Update(id, It.IsAny<Event>()), Times.Once);
+    }
+
+    [Fact]
+    public void Remove_WithValidId_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = 1;
@@ -94,5 +128,28 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Remove(id), Times.Once);
+    }
+
+    [Fact]
+    public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var id = 1;
+        var exceptionMessage = $"Event with Id: {id} not found";
+
+        _repository
+            .Setup(repository => repository.GetById(id))
+            .Throws(new KeyNotFoundException(exceptionMessage));
+
+        // Act
+        var result = _service.GetById(id);
+
+        // Assert
+        Assert.IsType<ServiceResponse<EventDto>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(exceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetById(id), Times.Once);
     }
 }

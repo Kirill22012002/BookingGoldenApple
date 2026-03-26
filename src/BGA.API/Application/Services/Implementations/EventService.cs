@@ -83,10 +83,11 @@ public class EventService(IEventRepository _repository) : IEventService
         try
         {
             var @event = dto.MapToEntity(id);
-            _repository.Update(id, @event);
+            var success = _repository.Update(id, @event);
 
-            return ServiceResponse.Success();
-
+            return success
+                ? ServiceResponse.Success()
+                : ServiceResponse.Failure(["Cannot create event"]);
         }
         catch (Exception ex)
         {
