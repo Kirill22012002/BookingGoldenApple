@@ -7,7 +7,7 @@ namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(IEventRepository _repository) : IEventService
 {
-    public ServiceResponse<List<EventDto>> GetAll(string? title, DateTime? from, DateTime? to)
+    public ServiceResponse<PaginatedResult<EventDto>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
         try
         {
@@ -25,11 +25,25 @@ public class EventService(IEventRepository _repository) : IEventService
                 query = query.Where(@event => @event.EndAt <= to);
             }
 
-            return ServiceResponse<List<EventDto>>.Success(query.AsEnumerable().MapToDtos().ToList());
+            var filteredCount = query.Count();
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize);
+
+            var paginatedResult = new PaginatedResult<EventDto>()
+            {
+                Items = items.AsEnumerable().MapToDtos(),
+                TotalItems = filteredCount,
+                PageNumber = page,
+                PageSize = items.Count()
+            };
+
+            return ServiceResponse<PaginatedResult<EventDto>>.Success(paginatedResult);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<List<EventDto>>.Failure([ex.Message]);
+            return ServiceResponse<PaginatedResult<EventDto>>.Failure([ex.Message]);
         }
     }
 
