@@ -26,7 +26,11 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? Ok(response?.Data?.MapToDto())
-            : NotFound(); // with problem details $"Event with Id: {id} not found"
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Event not found",
+                type: StatusCodes.Status404NotFound.GetProblemType(),
+                detail: string.Join(".", response.Errors));
     }
 
     [HttpPost]
@@ -47,7 +51,11 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : NotFound(); // with problem details $"Event with Id: {id} not found"
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Event not found",
+                type: StatusCodes.Status404NotFound.GetProblemType(),
+                detail: string.Join(".", response.Errors));
     }
 
     [HttpDelete("{id:int}")]
@@ -57,6 +65,10 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : NotFound(); // with problem details $"Event with Id: {id} not found"
+            : Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Event not found",
+                type: StatusCodes.Status404NotFound.GetProblemType(),
+                detail: string.Join(".", response.Errors));
     }
 }

@@ -1,3 +1,4 @@
+using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BGA.API.Presentation;
@@ -33,7 +34,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         {
             Status = statusCode,
             Title = "An error occured",
-            Type = GetProblemType(statusCode),
+            Type = statusCode.GetProblemType(),
             Detail = exception.Message
         };
 
@@ -45,15 +46,5 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         KeyNotFoundException => StatusCodes.Status404NotFound,
         ArgumentException => StatusCodes.Status400BadRequest,
         _ => StatusCodes.Status500InternalServerError
-    };
-
-    private static string GetProblemType(int statusCode) => statusCode switch
-    {
-        400 => "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-        401 => "https://tools.ietf.org/html/rfc9110#section-15.5.2",
-        403 => "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-        404 => "https://tools.ietf.org/html/rfc9110#section-15.5.5",
-        409 => "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-        _ => "https://tools.ietf.org/html/rfc9110#section-15.6.1"
     };
 }
