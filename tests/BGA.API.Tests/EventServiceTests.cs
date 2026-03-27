@@ -2,7 +2,6 @@
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
-using BGA.API.Presentation.Dtos;
 using Moq;
 
 namespace BGA.API.Tests;
@@ -35,7 +34,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: null, from: null, to: null, page: page, pageSize: pageSize);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(totalItems, result.Data.TotalItems);
@@ -65,7 +64,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(expectedTitles.Count, result.Data.Items.Count());
@@ -94,7 +93,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(expectedStartAtDates.Count, result.Data.Items.Count());
@@ -123,7 +122,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data.Items);
@@ -161,7 +160,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data.Items, @event => @event.StartAt == expectedStartAtDate && @event.EndAt == expectedEndAtDate);
@@ -216,7 +215,7 @@ public class EventServiceTests
         var result = _service.GetAll(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(isInclude, result.Data.Items.Any(@event =>
@@ -243,7 +242,7 @@ public class EventServiceTests
         var result = _service.GetById(id);
 
         // Assert
-        Assert.IsType<ServiceResponse<EventDto>>(result);
+        Assert.IsType<ServiceResponse<Event>>(result);
         Assert.False(result.Succeeded);
         Assert.Contains(exceptionMessage, result.Errors);
 
@@ -252,11 +251,12 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Create_WithValidAddEventDto_ReturnsServiceResponseWithEventDto()
+    public void Create_WithValidEvent_ReturnsServiceResponseWithEvent()
     {
         // Arrange
-        var dto = new AddEventDto()
+        var @event = new Event()
         {
+            Id = 1,
             Title = "Cycling",
             Description = "Cycling with other crazy people",
             StartAt = new DateTime(2026, 05, 25),
@@ -268,28 +268,29 @@ public class EventServiceTests
             .Returns(true);
 
         // Act
-        var result = _service.Create(dto);
+        var result = _service.Create(@event);
 
         // Assert
-        Assert.IsType<ServiceResponse<EventDto>>(result);
+        Assert.IsType<ServiceResponse<Event>>(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
-        Assert.Equal(dto.Title, result.Data.Title);
-        Assert.Equal(dto.Description, result.Data.Description);
-        Assert.Equal(dto.StartAt, result.Data.StartAt);
-        Assert.Equal(dto.EndAt, result.Data.EndAt);
+        Assert.Equal(@event.Title, result.Data.Title);
+        Assert.Equal(@event.Description, result.Data.Description);
+        Assert.Equal(@event.StartAt, result.Data.StartAt);
+        Assert.Equal(@event.EndAt, result.Data.EndAt);
 
         _repository
             .Verify(repository => repository.Create(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
-    public void Update_WithValidPutEventDto_ReturnsServiceResponseWithSuccess()
+    public void Update_WithValidEvent_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = 1;
-        var dto = new PutEventDto()
+        var @event = new Event()
         {
+            Id = id,
             Title = "Jumping",
             Description = "Jumping with other beautiful women",
             StartAt = new DateTime(2026, 03, 26),
@@ -301,7 +302,7 @@ public class EventServiceTests
             .Returns(true);
 
         // Act
-        var result = _service.Update(id, dto);
+        var result = _service.Update(id, @event);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -317,8 +318,9 @@ public class EventServiceTests
         // Arrange
         var id = 1;
         var exceptionMessage = $"Event with Id: {id} not found";
-        var dto = new PutEventDto()
+        var @event = new Event()
         {
+            Id = id,
             Title = "Jogging",
             Description = "Jogging with other strong men",
             StartAt = new DateTime(2026, 06, 24),
@@ -330,7 +332,7 @@ public class EventServiceTests
             .Throws(new KeyNotFoundException(exceptionMessage));
 
         // Act
-        var result = _service.Update(id, dto);
+        var result = _service.Update(id, @event);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);

@@ -1,7 +1,8 @@
 using BGA.API.Presentation.Dtos;
 using BGA.API.Infrastructure.Models;
+using BGA.API.Application;
 
-namespace BGA.API.Application.Extensions;
+namespace BGA.API.Presentation.Extensions;
 
 public static class EventExtensions
 {
@@ -38,6 +39,17 @@ public static class EventExtensions
             Description = entity.Description ?? "",
             StartAt = entity.StartAt,
             EndAt = entity.EndAt
+        };
+    }
+
+    public static PaginatedResult<EventDto> MapToDto(this PaginatedResult<Event> paginatedResult)
+    {
+        return new PaginatedResult<EventDto>
+        {
+            Items = paginatedResult.Items.Select(entity => entity.MapToDto()),
+            TotalItems = paginatedResult.TotalItems,
+            PageNumber = paginatedResult.PageNumber,
+            PageSize = paginatedResult.PageSize
         };
     }
 

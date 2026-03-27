@@ -1,13 +1,12 @@
-using BGA.API.Presentation.Dtos;
-using BGA.API.Application.Extensions;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Repositories.Interfaces;
+using BGA.API.Infrastructure.Models;
 
 namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(IEventRepository _repository) : IEventService
 {
-    public ServiceResponse<PaginatedResult<EventDto>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
+    public ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
         try
         {
@@ -22,58 +21,55 @@ public class EventService(IEventRepository _repository) : IEventService
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize);
 
-            var paginatedResult = new PaginatedResult<EventDto>()
+            var paginatedResult = new PaginatedResult<Event>()
             {
-                Items = items.AsEnumerable().MapToDtos(),
+                Items = items.AsEnumerable(),
                 TotalItems = filteredCount,
                 PageNumber = page,
                 PageSize = items.Count()
             };
 
-            return ServiceResponse<PaginatedResult<EventDto>>.Success(paginatedResult);
+            return ServiceResponse<PaginatedResult<Event>>.Success(paginatedResult);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<PaginatedResult<EventDto>>.Failure([ex.Message]);
+            return ServiceResponse<PaginatedResult<Event>>.Failure([ex.Message]);
         }
     }
 
-    public ServiceResponse<EventDto> GetById(int id)
+    public ServiceResponse<Event> GetById(int id)
     {
         try
         {
             var @event = _repository.GetById(id);
-            return ServiceResponse<EventDto>.Success(@event.MapToDto());
+            return ServiceResponse<Event>.Success(@event);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<EventDto>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure([ex.Message]);
         }
     }
 
-    public ServiceResponse<EventDto> Create(AddEventDto dto)
+    public ServiceResponse<Event> Create(Event @event)
     {
         try
         {
-            var @event = dto.MapToEntity();
             var success = _repository.Create(@event);
 
             return success
-                ? ServiceResponse<EventDto>.Success(@event.MapToDto())
-                : ServiceResponse<EventDto>.Failure(["Cannot create event"]);
-
+                ? ServiceResponse<Event>.Success(@event)
+                : ServiceResponse<Event>.Failure(["Cannot create event"]);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<EventDto>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure([ex.Message]);
         }
     }
 
-    public ServiceResponse Update(int id, PutEventDto dto)
+    public ServiceResponse Update(int id, Event @event)
     {
         try
         {
-            var @event = dto.MapToEntity(id);
             var success = _repository.Update(id, @event);
 
             return success
