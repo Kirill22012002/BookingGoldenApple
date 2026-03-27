@@ -1,5 +1,4 @@
 ﻿using BGA.API.Application;
-using BGA.API.Application.Extensions;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
@@ -17,6 +16,183 @@ public class EventServiceTests
     {
         _repository = new Mock<IEventRepository>();
         _service = new EventService(_repository.Object);
+    }
+
+    [Fact]
+    public void GetAll_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
+    {
+        // Arrange
+        var page = 1;
+        var pageSize = 10;
+        var totalItems = 12;
+        var events = CreateEvents(count: totalItems);
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events);
+
+        // Act
+        var result = _service.GetAll(title: null, from: null, to: null, page: page, pageSize: pageSize);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Equal(totalItems, result.Data.TotalItems);
+        Assert.Equal(page, result.Data.PageNumber);
+        Assert.Equal(pageSize, result.Data.PageSize);
+        Assert.Equal(pageSize, result.Data.Items.Count());
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
+    public void GetAll_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    {
+        // Arrange
+        var searchSubstring = "ing";
+        var titles = new List<string> { "Jogging", "Running", "Theathre", "JUMPING", "Basketball" };
+        var expectedTitles = new List<string> { "Jogging", "Running", "JUMPING" };
+        var notExpectedTitle = "Theathre";
+        var events = CreateEvents(count: titles.Count, titles: titles);
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events);
+
+        // Act
+        var result = _service.GetAll(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Equal(expectedTitles.Count, result.Data.Items.Count());
+        Assert.All(result.Data.Items, @event => expectedTitles.Contains(@event.Title));
+        Assert.DoesNotContain(notExpectedTitle, result.Data.Items.Select(@event => @event.Title));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
+    public void GetAll_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    {
+        // Arrange
+        var searchStartAt = new DateTime(2026, 03, 15);
+        var startAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 15), new(2026, 03, 16) };
+        var expectedStartAtDates = new List<DateTime> { new(2026, 03, 15), new(2026, 03, 16) };
+        var notExpectedStartAtDate = new DateTime(2026, 03, 14);
+        var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates);
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events);
+
+        // Act
+        var result = _service.GetAll(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Equal(expectedStartAtDates.Count, result.Data.Items.Count());
+        Assert.All(result.Data.Items, @event => expectedStartAtDates.Contains(@event.StartAt));
+        Assert.DoesNotContain(notExpectedStartAtDate, result.Data.Items.Select(@event => @event.StartAt));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
+    public void GetAll_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    {
+        // Arrange
+        var searchEndAt = new DateTime(2026, 03, 15);
+        var endAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 16), new(2026, 03, 17) };
+        var expectedEndAtDate = new DateTime(2026, 03, 14);
+        var notExpectedEndDate = new DateTime(2026, 03, 16);
+        var events = CreateEvents(count: endAtDates.Count, endAtDates: endAtDates);
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events);
+
+        // Act
+        var result = _service.GetAll(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Single(result.Data.Items);
+        Assert.Contains(expectedEndAtDate, result.Data.Items.Select(@event => @event.EndAt));
+        Assert.DoesNotContain(notExpectedEndDate, result.Data.Items.Select(@event => @event.EndAt));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
+    public void GetAll_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    {
+        // Arrange
+        //  14, (15,  16, 17) 
+        //       ||
+        // (24,  25), 26, 27
+        // Only item with StartAt: 15 and EndAt: 25 will be in result
+        var searchStartAt = new DateTime(2026, 03, 15);
+        var searchEndAt = new DateTime(2026, 03, 25);
+        var startAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 15), new(2026, 03, 16), new(2026, 03, 17) };
+        var endAtDates = new List<DateTime> { new(2026, 03, 24), new(2026, 03, 25), new(2026, 03, 26), new(2026, 03, 27) };
+        var expectedStartAtDate = new DateTime(2026, 03, 15);
+        var expectedEndAtDate = new DateTime(2026, 03, 25);
+        var notExpectedStartAtDate = new DateTime(2026, 03, 14);
+        var notExpectedEndAtDate = new DateTime(2026, 03, 26);
+
+        var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates, endAtDates: endAtDates);
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events);
+
+        // Act
+        var result = _service.GetAll(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Single(result.Data.Items, @event => @event.StartAt == expectedStartAtDate && @event.EndAt == expectedEndAtDate);
+        Assert.DoesNotContain(notExpectedStartAtDate, result.Data.Items.Select(@event => @event.StartAt));
+        Assert.DoesNotContain(notExpectedEndAtDate, result.Data.Items.Select(@event => @event.EndAt));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
+    public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var id = 1;
+        var exceptionMessage = $"Event with Id: {id} not found";
+
+        _repository
+            .Setup(repository => repository.GetById(id))
+            .Throws(new KeyNotFoundException(exceptionMessage));
+
+        // Act
+        var result = _service.GetById(id);
+
+        // Assert
+        Assert.IsType<ServiceResponse<EventDto>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(exceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetById(id), Times.Once);
     }
 
     [Fact]
@@ -130,26 +306,20 @@ public class EventServiceTests
             .Verify(repository => repository.Remove(id), Times.Once);
     }
 
-    [Fact]
-    public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTime>? startAtDates = null, List<DateTime>? endAtDates = null)
     {
-        // Arrange
-        var id = 1;
-        var exceptionMessage = $"Event with Id: {id} not found";
+        var list = new List<Event>();
+        for (int i = 0; i < count; i++)
+        {
+            list.Add(new Event
+            {
+                Id = i + 1,
+                Title = titles != null ? titles[i] : i.ToString(),
+                StartAt = startAtDates != null ? startAtDates[i] : DateTime.MinValue,
+                EndAt = endAtDates != null ? endAtDates[i] : DateTime.MaxValue
+            });
+        }
 
-        _repository
-            .Setup(repository => repository.GetById(id))
-            .Throws(new KeyNotFoundException(exceptionMessage));
-
-        // Act
-        var result = _service.GetById(id);
-
-        // Assert
-        Assert.IsType<ServiceResponse<EventDto>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(exceptionMessage, result.Errors);
-
-        _repository
-            .Verify(repository => repository.GetById(id), Times.Once);
+        return list.AsQueryable();
     }
 }

@@ -12,18 +12,9 @@ public class EventService(IEventRepository _repository) : IEventService
         try
         {
             var query = _repository.GetAll();
-            if (title != null)
-            {
-                query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-            }
-            else if (from != null)
-            {
-                query = query.Where(@event => @event.StartAt >= from);
-            }
-            else if (to != null)
-            {
-                query = query.Where(@event => @event.EndAt <= to);
-            }
+            if (title != null) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            if (from != null) query = query.Where(@event => @event.StartAt >= from);
+            if (to != null) query = query.Where(@event => @event.EndAt <= to);
 
             var filteredCount = query.Count();
 
