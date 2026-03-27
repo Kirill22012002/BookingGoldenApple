@@ -4,6 +4,7 @@ using BGA.API.Presentation;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
 using Microsoft.AspNetCore.Mvc;
+using BGA.API.Presentation.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ builder.Services.AddControllers()
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "Request Validation Errors",
+                Type = StatusCodes.Status400BadRequest.GetProblemType(),
                 Detail = string.Join(".", errors.Select(kv => $"{kv.Key}: {kv.Value}"))
             };
 
