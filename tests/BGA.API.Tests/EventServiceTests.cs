@@ -172,6 +172,51 @@ public class EventServiceTests
             .Verify(repository => repository.GetAll(), Times.Once);
     }
 
+    [Theory]
+    [InlineData("ing", "2026-03-26", "2026-03-27", true)]
+    [InlineData("ing", "2026-03-26", "2026-03-28", true)]
+    [InlineData("ing", "2026-03-25", "2026-03-26", true)]
+    [InlineData("ing", "2026-03-26", "2026-03-26", false)]
+    [InlineData("jogging", "2026-03-26", "2026-03-27", true)]
+    [InlineData("JOGGING", "2026-03-26", "2026-03-27", true)]
+    [InlineData("yo", "2026-03-26", "2026-03-27", true)]
+    [InlineData("running", "2026-03-27", "2026-03-28", true)]
+    [InlineData("run", "2026-03-27", "2026-03-28", true)]
+    [InlineData("ing", "2026-03-27", "2026-03-28", true)]
+    [InlineData("theatre", "2026-03-26", "2026-03-28", true)]
+    [InlineData("ing", "2026-03-28", "2026-03-29", false)]
+    [InlineData("jog", "2026-03-26", "2026-03-27", true)]
+    public void GetAll_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
+    {
+        // Arrange
+        var events = new List<Event>()
+        {
+            new() { Id = 1, Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = 2, Title = "Theatre", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
+            new() { Id = 3, Title = "Morning jog", StartAt = new DateTime(2026, 03, 25), EndAt = new DateTime(2026, 03, 26) },
+            new() { Id = 4, Title = "JOGGING", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = 5, Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
+            new() { Id = 6, Title = "Yoga", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = 7, Title = "Running", StartAt = new DateTime(2026, 03, 27), EndAt = new DateTime(2026, 03, 28) }
+        };
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Returns(events.AsQueryable());
+
+        // Act
+        var result = _service.GetAll(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<EventDto>>>(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Equal(isInclude, result.Data.Items.Any(@event =>
+            @event.Title.Contains(searchTitle, StringComparison.OrdinalIgnoreCase) &&
+            @event.StartAt == searchStartAt &&
+            @event.EndAt == searchEndAt));
+    }
+
     [Fact]
     public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
