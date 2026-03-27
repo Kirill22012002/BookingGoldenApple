@@ -223,6 +223,9 @@ public class EventServiceTests
             @event.Title.Contains(searchTitle, StringComparison.OrdinalIgnoreCase) &&
             @event.StartAt == searchStartAt &&
             @event.EndAt == searchEndAt));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
     }
 
     [Fact]
