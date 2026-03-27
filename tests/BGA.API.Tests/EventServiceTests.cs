@@ -172,20 +172,28 @@ public class EventServiceTests
             .Verify(repository => repository.GetAll(), Times.Once);
     }
 
+    public static IEnumerable<object[]> MultipleFilters()
+    {
+        return
+        [
+            [ "ing", "2026-03-26", "2026-03-27", true ],
+            [ "ing", "2026-03-26", "2026-03-28", true ],
+            [ "ing", "2026-03-25", "2026-03-26", true ],
+            [ "ing", "2026-03-26", "2026-03-26", false ],
+            [ "jogging", "2026-03-26", "2026-03-27", true ],
+            [ "JOGGING", "2026-03-26", "2026-03-27", true ],
+            [ "yo", "2026-03-26", "2026-03-27", true ],
+            [ "running", "2026-03-27", "2026-03-28", true ],
+            [ "run", "2026-03-27", "2026-03-28", true ],
+            [ "ing", "2026-03-27", "2026-03-28", true ],
+            [ "theatre", "2026-03-26", "2026-03-28", true ],
+            [ "ing", "2026-03-28", "2026-03-29", false ],
+            [ "jog", "2026-03-26", "2026-03-27", true ]
+        ];
+    }
+
     [Theory]
-    [InlineData("ing", "2026-03-26", "2026-03-27", true)]
-    [InlineData("ing", "2026-03-26", "2026-03-28", true)]
-    [InlineData("ing", "2026-03-25", "2026-03-26", true)]
-    [InlineData("ing", "2026-03-26", "2026-03-26", false)]
-    [InlineData("jogging", "2026-03-26", "2026-03-27", true)]
-    [InlineData("JOGGING", "2026-03-26", "2026-03-27", true)]
-    [InlineData("yo", "2026-03-26", "2026-03-27", true)]
-    [InlineData("running", "2026-03-27", "2026-03-28", true)]
-    [InlineData("run", "2026-03-27", "2026-03-28", true)]
-    [InlineData("ing", "2026-03-27", "2026-03-28", true)]
-    [InlineData("theatre", "2026-03-26", "2026-03-28", true)]
-    [InlineData("ing", "2026-03-28", "2026-03-29", false)]
-    [InlineData("jog", "2026-03-26", "2026-03-27", true)]
+    [MemberData(nameof(MultipleFilters))]
     public void GetAll_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
     {
         // Arrange
