@@ -12,8 +12,8 @@ builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = ctx =>
     {
-        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
-        ctx.ProblemDetails.Extensions["timestamp"] = DateTime.UtcNow;
+        ctx.ProblemDetails.Extensions.TryAdd("traceId", ctx.HttpContext.TraceIdentifier);
+        ctx.ProblemDetails.Extensions.TryAdd("timestamp", DateTime.UtcNow);
         ctx.ProblemDetails.Instance = $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
     };
 });
@@ -23,21 +23,14 @@ builder.Services.AddControllers()
     {
         options.InvalidModelStateResponseFactory = context =>
         {
-            var errors = context.ModelState
-                .Where(kv => kv.Value?.Errors.Count > 0)
-                .ToDictionary(
-                    kv => kv.Key,
-                    kv => kv.Value!.Errors.Select(e => e.ErrorMessage));
-
-            var problemDetails = new ValidationProblemDetails(context.ModelState)
+            var problemDetails = new ProblemDetails
             {
                 Status = StatusCodes.Status400BadRequest,
-                Title = "Request Validation Errors",
-                Type = StatusCodes.Status400BadRequest.GetProblemType(),
-                Detail = string.Join(".", errors.Select(kv => $"{kv.Key}: {kv.Value}"))
+                Title = "One or more validation errors occured.",
+                Type = StatusCodes.Status400BadRequest.GetProblemType()
             };
 
-            return new BadRequestObjectResult(problemDetails);
+            return new JsonResult(problemDetails);
         };
     });
 
