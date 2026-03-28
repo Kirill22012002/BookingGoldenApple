@@ -5,38 +5,33 @@ using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
 using Microsoft.AspNetCore.Mvc;
 using BGA.API.Presentation.Extensions;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddProblemDetails(options =>
-{
-    options.CustomizeProblemDetails = ctx =>
-    {
-        ctx.ProblemDetails.Extensions.TryAdd("traceId", ctx.HttpContext.TraceIdentifier);
-        ctx.ProblemDetails.Extensions.TryAdd("timestamp", DateTime.UtcNow);
-        ctx.ProblemDetails.Instance = $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
-    };
-});
+builder.Services.AddProblemDetails();
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
         {
-            var problemDetails = new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "One or more validation errors occured.",
-                Type = StatusCodes.Status400BadRequest.GetProblemType()
-            };
+            var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+            var problemDetails = factory.CreateValidationProblemDetails(
+                httpContext: context.HttpContext,
+                modelStateDictionary: context.ModelState,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "One or more validation errors occured.",
+                type: StatusCodes.Status400BadRequest.GetProblemType());
 
-            return new JsonResult(problemDetails);
+            return new BadRequestObjectResult(problemDetails);
         };
     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<ProblemDetailsFactory, CustomProblemDetailsFactory>(); // make transient
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddSingleton<IEventRepository, EventRepository>();
 

@@ -1,5 +1,5 @@
 using BGA.API.Presentation.Extensions;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace BGA.API.Presentation;
 
@@ -32,13 +32,13 @@ public class ExceptionHandlingMiddleware(
         var statusCode = MapException(exception);
         context.Response.StatusCode = statusCode;
 
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = "An error occured",
-            Type = statusCode.GetProblemType(),
-            Detail = exception.Message
-        };
+        var factory = context.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        var problemDetails = factory.CreateProblemDetails(
+            httpContext: context,
+            statusCode: statusCode,
+            title: "An error occured",
+            type: statusCode.GetProblemType(),
+            detail: exception.Message);
 
         await context.Response.WriteAsJsonAsync(problemDetails);
     }
