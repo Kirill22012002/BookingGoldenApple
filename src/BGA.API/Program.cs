@@ -31,7 +31,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<ProblemDetailsFactory, CustomProblemDetailsFactory>(); // make transient
+builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddSingleton<IEventRepository, EventRepository>();
 
