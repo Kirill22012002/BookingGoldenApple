@@ -15,8 +15,16 @@ public class EventsController(IEventService _eventService) : ControllerBase
         [FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
+
         var response = _eventService.GetAll(title, from, to, page, pageSize);
-        return Ok(response?.Data?.MapToDto());
+
+        return response.Succeeded
+            ? Ok(response?.Data?.MapToDto())
+            : ValidationProblem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "One or more validation errors occured",
+                type: StatusCodes.Status400BadRequest.GetProblemType(),
+                modelStateDictionary: response.ValidationErrors.ToModelStateDictionary());
     }
 
     [HttpGet("{id:int}")]
@@ -30,7 +38,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Event not found",
                 type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(".", response.Errors));
+                detail: string.Join(". ", response.Errors));
     }
 
     [HttpPost]
@@ -55,7 +63,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Event not found",
                 type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(".", response.Errors));
+                detail: string.Join(". ", response.Errors));
     }
 
     [HttpDelete("{id:int}")]
@@ -69,6 +77,6 @@ public class EventsController(IEventService _eventService) : ControllerBase
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Event not found",
                 type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(".", response.Errors));
+                detail: string.Join(". ", response.Errors));
     }
 }

@@ -5,12 +5,16 @@ public class ServiceResponse
     public bool Succeeded { get; set; }
     public string? Message { get; set; }
     public List<string> Errors { get; set; } = [];
+    public Dictionary<string, string> ValidationErrors { get; set; } = [];
 
     public static ServiceResponse Success()
         => new() { Succeeded = true, Message = "Operation successful" };
 
     public static ServiceResponse Failure(List<string> errors)
         => new() { Succeeded = false, Errors = errors, Message = "Operation failed" };
+
+    public static ServiceResponse Failure(Dictionary<string, string> validationErrors)
+        => new() { Succeeded = false, ValidationErrors = validationErrors, Message = "Operation failed" };
 }
 
 public class ServiceResponse<T> : ServiceResponse
@@ -22,6 +26,9 @@ public class ServiceResponse<T> : ServiceResponse
 
     public static new ServiceResponse<T> Failure(List<string> errors)
         => new() { Succeeded = false, Errors = errors, Message = "Operation failed" };
+
+    public static new ServiceResponse<T> Failure(Dictionary<string, string> validationErrors)
+        => new() { Succeeded = false, ValidationErrors = validationErrors, Message = "Operation failed" };
 }
 
 public record PaginatedResult<T>

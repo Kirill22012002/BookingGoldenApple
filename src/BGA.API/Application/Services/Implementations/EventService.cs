@@ -8,6 +8,14 @@ public class EventService(IEventRepository _repository) : IEventService
 {
     public ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
+        Dictionary<string, string> validationErrors = [];
+
+        if (page < 1) validationErrors.TryAdd(nameof(page), $"{nameof(page)} can be more or equal than 1");
+        if (pageSize < 0) validationErrors.TryAdd(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
+        if (from != null && to != null && from > to) validationErrors.TryAdd(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}");
+
+        if (validationErrors.Count != 0) return ServiceResponse<PaginatedResult<Event>>.Failure(validationErrors);
+
         try
         {
             var query = _repository.GetAll();
