@@ -12,7 +12,7 @@ public class EventService(IEventRepository _repository) : IEventService
 
         if (page < 1) validationErrors.TryAdd(nameof(page), $"{nameof(page)} can be more or equal than 1");
         if (pageSize < 0) validationErrors.TryAdd(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
-        if (from != null && to != null && from > to) validationErrors.TryAdd(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}");
+        if (from.HasValue && to.HasValue && from.Value > to.Value) validationErrors.TryAdd(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}");
 
         if (validationErrors.Count != 0) return ServiceResponse<PaginatedResult<Event>>.Failure(validationErrors);
 
