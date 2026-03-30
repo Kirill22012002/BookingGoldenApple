@@ -74,7 +74,7 @@ public class EventService(IEventRepository _repository) : IEventService
 
             return success
                 ? ServiceResponse.Success()
-                : ServiceResponse.Failure(["Cannot create event"]);
+                : ServiceResponse.Failure(["Cannot update event"]);
         }
         catch (Exception ex)
         {

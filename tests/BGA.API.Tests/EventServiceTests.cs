@@ -228,7 +228,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetAll_WhenRepositoryThrowsException_ReturnsServiceResponseWithFailure()
+    public void GetAll_WhenRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
@@ -250,15 +250,45 @@ public class EventServiceTests
     }
 
     [Fact]
+    public void GetById_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
+    {
+        // Arrange
+        var id = 1;
+        var @event = new Event()
+        {
+            Id = id,
+            Title = "Jumping",
+            Description = "Jumping with other beautiful women",
+            StartAt = new DateTime(2026, 03, 26),
+            EndAt = new DateTime(2026, 03, 27)
+        };
+
+        _repository
+            .Setup(repository => repository.GetById(id))
+            .Returns(@event);
+
+        // Act
+        var result = _service.GetById(id);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Event>>(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal(@event, result.Data);
+
+        _repository
+            .Verify(repository => repository.GetById(id), Times.Once);
+    }
+
+    [Fact]
     public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var id = 1;
-        var exceptionMessage = $"Event with Id: {id} not found";
+        var expectedExceptionMessage = $"Event with Id: {id} not found";
 
         _repository
             .Setup(repository => repository.GetById(id))
-            .Throws(new KeyNotFoundException(exceptionMessage));
+            .Throws(new KeyNotFoundException(expectedExceptionMessage));
 
         // Act
         var result = _service.GetById(id);
@@ -266,14 +296,14 @@ public class EventServiceTests
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
         Assert.False(result.Succeeded);
-        Assert.Contains(exceptionMessage, result.Errors);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
             .Verify(repository => repository.GetById(id), Times.Once);
     }
 
     [Fact]
-    public void Create_WithValidEvent_ReturnsServiceResponseWithEvent()
+    public void Create_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
     {
         // Arrange
         var @event = new Event()
@@ -303,6 +333,66 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Create(It.IsAny<Event>()), Times.Once);
+    }
+
+    [Fact]
+    public void Create_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedErrorMessage = "Cannot create event";
+        var @event = new Event()
+        {
+            Id = 1,
+            Title = "Cycling",
+            Description = "Cycling with other crazy people",
+            StartAt = new DateTime(2026, 05, 25),
+            EndAt = new DateTime(2026, 05, 29)
+        };
+
+        _repository
+            .Setup(repository => repository.Create(It.IsAny<Event>()))
+            .Returns(false);
+
+        // Act
+        var result = _service.Create(@event);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Event>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedErrorMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Create(It.IsAny<Event>()), Times.Once);
+    }
+
+    [Fact]
+    public void Create_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Database error";
+        var @event = new Event()
+        {
+            Id = 1,
+            Title = "Cycling",
+            Description = "Cycling with other crazy people",
+            StartAt = new DateTime(2026, 05, 25),
+            EndAt = new DateTime(2026, 05, 29)
+        };
+
+        _repository
+            .Setup(repository => repository.Create(@event))
+            .Throws(new Exception(expectedExceptionMessage));
+
+        // Act
+        var result = _service.Create(@event);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Event>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Create(@event), Times.Once);
     }
 
     [Fact]
@@ -366,6 +456,37 @@ public class EventServiceTests
     }
 
     [Fact]
+    public void Update_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedErrorMessage = "Cannot update event";
+        var id = 1;
+        var @event = new Event()
+        {
+            Id = id,
+            Title = "Cycling",
+            Description = "Cycling with other crazy people",
+            StartAt = new DateTime(2026, 05, 25),
+            EndAt = new DateTime(2026, 05, 29)
+        };
+
+        _repository
+            .Setup(repository => repository.Update(id, @event))
+            .Returns(false);
+
+        // Act
+        var result = _service.Update(id, @event);
+
+        // Assert
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedErrorMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Update(id, @event), Times.Once);
+    }
+
+    [Fact]
     public void Remove_WithValidId_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
@@ -384,6 +505,53 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Remove(id), Times.Once);
+    }
+
+    [Fact]
+    public void Remove_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedErrorMessage = "Cannot remove event";
+        var id = 1;
+
+        _repository
+            .Setup(repository => repository.Remove(id))
+            .Returns(false);
+
+        // Act
+        var result = _service.Remove(id);
+
+        // Assert
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedErrorMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Remove(id), Times.Once);
+    }
+
+    [Fact]
+    public void Remove_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Database error";
+        var id = 1;
+
+        _repository
+            .Setup(repository => repository.Remove(id))
+            .Throws(new Exception(expectedExceptionMessage));
+
+        // Act
+        var result = _service.Remove(id);
+
+        // Assert
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.Remove(id), Times.Once);
+
     }
 
     private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTime>? startAtDates = null, List<DateTime>? endAtDates = null)
