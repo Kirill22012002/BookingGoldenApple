@@ -228,6 +228,28 @@ public class EventServiceTests
     }
 
     [Fact]
+    public void GetAll_WhenRepositoryThrowsException_ReturnsServiceResponseWithFailure()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Database error";
+
+        _repository
+            .Setup(repository => repository.GetAll())
+            .Throws(new Exception(expectedExceptionMessage));
+
+        // Act
+        var result = _service.GetAll(null, null, null, 1, 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Once);
+    }
+
+    [Fact]
     public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
