@@ -271,12 +271,13 @@ public class EventServiceTests
     {
         return
         [
-            [ null,                         null,                         false ],
-            [ null,                         new DateTime(2026, 03, 28),   false ],
-            [ new DateTime(2026, 03, 25),   null,                         false ],
-            [ new DateTime(2026, 03, 26),   new DateTime(2026, 03, 26),   false ],
-            [ new DateTime(2026, 03, 26),   new DateTime(2026, 03, 27),   false ],
-            [ new DateTime(2026, 03, 28),   new DateTime(2026, 03, 27),   true  ]
+            [ null,                                  null,                                  false ],
+            [ null,                                  new DateTime(2026, 03, 28),            false ],
+            [ new DateTime(2026, 03, 25),            null,                                  false ],
+            [ new DateTime(2026, 03, 26),            new DateTime(2026, 03, 26),            false ],
+            [ new DateTime(2026, 03, 26),            new DateTime(2026, 03, 27),            false ],
+            [ new DateTime(2026, 03, 30, 10, 0, 0),  new DateTime(2026, 03, 30, 10, 0, 1),  false ],
+            [ new DateTime(2026, 03, 28),            new DateTime(2026, 03, 27),            true  ]
         ];
     }
 
