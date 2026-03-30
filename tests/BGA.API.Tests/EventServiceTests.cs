@@ -228,7 +228,113 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetAll_WhenRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public void GetAll_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    {
+        // Arrange
+        var expectedValidationErrorKey = "page";
+        var expectedValidationErrorValue = "page can be more or equal than 1";
+
+        // Act
+        var result = _service.GetAll(null, null, null, 0, 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.False(result.Succeeded);
+        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
+        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Never);
+    }
+
+    [Fact]
+    public void GetAll_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    {
+        // Arrange
+        var expectedValidationErrorKey = "pageSize";
+        var expectedValidationErrorValue = "pageSize can be more or equal than 0";
+
+        // Act
+        var result = _service.GetAll(null, null, null, 1, -1);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.False(result.Succeeded);
+        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
+        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Never);
+    }
+
+    public static IEnumerable<object?[]> DifferentDates()
+    {
+        return
+        [
+            [ null,                         null,                         false ],
+            [ null,                         new DateTime(2026, 03, 28),   false ],
+            [ new DateTime(2026, 03, 25),   null,                         false ],
+            [ new DateTime(2026, 03, 26),   new DateTime(2026, 03, 26),   false ],
+            [ new DateTime(2026, 03, 26),   new DateTime(2026, 03, 27),   false ],
+            [ new DateTime(2026, 03, 28),   new DateTime(2026, 03, 27),   true  ]
+        ];
+    }
+
+    [Theory]
+    [MemberData(nameof(DifferentDates))]
+    public void GetAll_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
+    {
+        // Arrange & Act
+        var result = _service.GetAll(null, from, to, 1, 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.Equal(anyValidationErrors, result.ValidationErrors.Count != 0);
+    }
+
+    [Fact]
+    public void GetAll_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    {
+        // Arrange
+        var expectedValidationErrorKey = "to";
+        var expectedValidationErrorValue = "to can be more or equal than from";
+
+        // Act
+        var result = _service.GetAll(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), 1, 10);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.False(result.Succeeded);
+        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
+        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Never);
+    }
+
+    [Fact]
+    public void GetAll_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
+    {
+        // Arrange & Act
+        var result = _service.GetAll(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), -1, -1);
+
+        // Assert
+        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Equal(3, result.ValidationErrors.Count);
+        Assert.True(result.ValidationErrors.ContainsKey("page"));
+        Assert.True(result.ValidationErrors.ContainsValue("page can be more or equal than 1"));
+        Assert.True(result.ValidationErrors.ContainsKey("pageSize"));
+        Assert.True(result.ValidationErrors.ContainsValue("pageSize can be more or equal than 0"));
+        Assert.True(result.ValidationErrors.ContainsKey("to"));
+        Assert.True(result.ValidationErrors.ContainsValue("to can be more or equal than from"));
+
+        _repository
+            .Verify(repository => repository.GetAll(), Times.Never);
+    }
+
+    [Fact]
+    public void GetAll_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
