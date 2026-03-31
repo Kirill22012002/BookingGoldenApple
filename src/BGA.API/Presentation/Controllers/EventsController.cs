@@ -13,7 +13,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
     [HttpGet]
     public IActionResult Get(
         [FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        [FromQuery][Range(1, int.MaxValue)] int page = 1, [FromQuery][Range(0, int.MaxValue)] int pageSize = 10)
     {
 
         var response = _eventService.GetAll(title, from, to, page, pageSize);
