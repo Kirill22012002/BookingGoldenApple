@@ -19,12 +19,18 @@ public class EventsController(IEventService _eventService) : ControllerBase
         var response = _eventService.GetAll(title, from, to, page, pageSize);
 
         return response.Succeeded
-            ? Ok(response?.Data?.MapToDto())
-            : ValidationProblem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "One or more validation errors occured",
-                type: StatusCodes.Status400BadRequest.GetProblemType(),
-                modelStateDictionary: response.ValidationErrors.ToModelStateDictionary());
+            ? Ok(response.Data?.MapToDto())
+            : response.ValidationErrors.Count > 0
+                ? ValidationProblem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "One or more validation errors occured",
+                    type: StatusCodes.Status400BadRequest.GetProblemType(),
+                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
+                : Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Event not found",
+                    type: StatusCodes.Status404NotFound.GetProblemType(),
+                    detail: string.Join(". ", response.Errors));
     }
 
     [HttpGet("{id:int}")]
@@ -34,11 +40,17 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? Ok(response?.Data?.MapToDto())
-            : Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                title: "Event not found",
-                type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(". ", response.Errors));
+            : response.ValidationErrors.Count > 0
+                ? ValidationProblem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "One or more validation errors occured",
+                    type: StatusCodes.Status400BadRequest.GetProblemType(),
+                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
+                : Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Event not found",
+                    type: StatusCodes.Status404NotFound.GetProblemType(),
+                    detail: string.Join(". ", response.Errors));
     }
 
     [HttpPost]
@@ -46,9 +58,21 @@ public class EventsController(IEventService _eventService) : ControllerBase
     {
         var @event = dto.MapToEntity();
         var response = _eventService.Create(@event);
-        var responseDto = response?.Data?.MapToDto();
+        var responseDto = response.Data?.MapToDto();
 
-        return CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto);
+        return response.Succeeded
+            ? CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto)
+            : response.ValidationErrors.Count > 0
+                ? ValidationProblem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "One or more validation errors occured",
+                    type: StatusCodes.Status400BadRequest.GetProblemType(),
+                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
+                : Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Event not found",
+                    type: StatusCodes.Status404NotFound.GetProblemType(),
+                    detail: string.Join(". ", response.Errors));
     }
 
     [HttpPut("{id:int}")]
@@ -59,11 +83,17 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                title: "Event not found",
-                type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(". ", response.Errors));
+            : response.ValidationErrors.Count > 0
+                ? ValidationProblem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "One or more validation errors occured",
+                    type: StatusCodes.Status400BadRequest.GetProblemType(),
+                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
+                : Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Event not found",
+                    type: StatusCodes.Status404NotFound.GetProblemType(),
+                    detail: string.Join(". ", response.Errors));
     }
 
     [HttpDelete("{id:int}")]
@@ -73,10 +103,16 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                title: "Event not found",
-                type: StatusCodes.Status404NotFound.GetProblemType(),
-                detail: string.Join(". ", response.Errors));
+            : response.ValidationErrors.Count > 0
+                ? ValidationProblem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "One or more validation errors occured",
+                    type: StatusCodes.Status400BadRequest.GetProblemType(),
+                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
+                : Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Event not found",
+                    type: StatusCodes.Status404NotFound.GetProblemType(),
+                    detail: string.Join(". ", response.Errors));
     }
 }
