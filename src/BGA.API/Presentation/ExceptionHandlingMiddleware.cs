@@ -47,6 +47,7 @@ public class ExceptionHandlingMiddleware(
     {
         KeyNotFoundException => StatusCodes.Status404NotFound,
         ArgumentException => StatusCodes.Status400BadRequest,
+        OperationCanceledException => StatusCodes.Status499ClientClosedRequest,
         _ => StatusCodes.Status500InternalServerError
     };
 }
