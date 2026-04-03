@@ -198,13 +198,13 @@ public class EventServiceTests
         // Arrange
         var events = new List<Event>()
         {
-            new() { Id = 1, Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = 2, Title = "Theatre", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
-            new() { Id = 3, Title = "Morning jog", StartAt = new DateTime(2026, 03, 25), EndAt = new DateTime(2026, 03, 26) },
-            new() { Id = 4, Title = "JOGGING", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = 5, Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
-            new() { Id = 6, Title = "Yoga", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = 7, Title = "Running", StartAt = new DateTime(2026, 03, 27), EndAt = new DateTime(2026, 03, 28) }
+            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = Guid.NewGuid(), Title = "Theatre", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
+            new() { Id = Guid.NewGuid(), Title = "Morning jog", StartAt = new DateTime(2026, 03, 25), EndAt = new DateTime(2026, 03, 26) },
+            new() { Id = Guid.NewGuid(), Title = "JOGGING", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
+            new() { Id = Guid.NewGuid(), Title = "Yoga", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
+            new() { Id = Guid.NewGuid(), Title = "Running", StartAt = new DateTime(2026, 03, 27), EndAt = new DateTime(2026, 03, 28) }
         };
 
         _repository
@@ -360,7 +360,7 @@ public class EventServiceTests
     public void GetById_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
     {
         // Arrange
-        var id = 1;
+        var id = Guid.NewGuid();
         var @event = new Event()
         {
             Id = id,
@@ -390,7 +390,7 @@ public class EventServiceTests
     public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
-        var id = 1;
+        var id = Guid.NewGuid();
         var expectedExceptionMessage = $"Event with Id: {id} not found";
 
         _repository
@@ -415,7 +415,7 @@ public class EventServiceTests
         // Arrange
         var @event = new Event()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
             StartAt = new DateTime(2026, 05, 25),
@@ -449,7 +449,7 @@ public class EventServiceTests
         var expectedErrorMessage = "Cannot create event";
         var @event = new Event()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
             StartAt = new DateTime(2026, 05, 25),
@@ -479,7 +479,7 @@ public class EventServiceTests
         var expectedExceptionMessage = "Database error";
         var @event = new Event()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
             StartAt = new DateTime(2026, 05, 25),
@@ -506,7 +506,7 @@ public class EventServiceTests
     public void Update_WithValidEvent_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
-        var id = 1;
+        var id = Guid.NewGuid();
         var @event = new Event()
         {
             Id = id,
@@ -535,7 +535,7 @@ public class EventServiceTests
     public void Update_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
-        var id = 1;
+        var id = Guid.NewGuid();
         var exceptionMessage = $"Event with Id: {id} not found";
         var @event = new Event()
         {
@@ -567,7 +567,7 @@ public class EventServiceTests
     {
         // Arrange
         var expectedErrorMessage = "Cannot update event";
-        var id = 1;
+        var id = Guid.NewGuid();
         var @event = new Event()
         {
             Id = id,
@@ -597,7 +597,7 @@ public class EventServiceTests
     public void Remove_WithValidId_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
-        var id = 1;
+        var id = Guid.NewGuid();
 
         _repository
             .Setup(repository => repository.Remove(id))
@@ -619,7 +619,7 @@ public class EventServiceTests
     {
         // Arrange
         var expectedErrorMessage = "Cannot remove event";
-        var id = 1;
+        var id = Guid.NewGuid();
 
         _repository
             .Setup(repository => repository.Remove(id))
@@ -642,7 +642,7 @@ public class EventServiceTests
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
-        var id = 1;
+        var id = Guid.NewGuid();
 
         _repository
             .Setup(repository => repository.Remove(id))
@@ -668,7 +668,7 @@ public class EventServiceTests
         {
             list.Add(new Event
             {
-                Id = i + 1,
+                Id = Guid.NewGuid(),
                 Title = titles != null ? titles[i] : i.ToString(),
                 StartAt = startAtDates != null ? startAtDates[i] : DateTime.MinValue,
                 EndAt = endAtDates != null ? endAtDates[i] : DateTime.MaxValue

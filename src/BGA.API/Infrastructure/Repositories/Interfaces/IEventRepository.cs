@@ -5,8 +5,8 @@ namespace BGA.API.Infrastructure.Repositories.Interfaces;
 public interface IEventRepository
 {
     IQueryable<Event> GetAll();
-    Event GetById(int id);
+    Event GetById(Guid id);
     bool Create(Event @event);
-    bool Update(int id, Event @event);
-    bool Remove(int id);
+    bool Update(Guid id, Event @event);
+    bool Remove(Guid id);
 }

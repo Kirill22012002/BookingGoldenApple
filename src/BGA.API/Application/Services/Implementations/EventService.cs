@@ -45,7 +45,7 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse<Event> GetById(int id)
+    public ServiceResponse<Event> GetById(Guid id)
     {
         try
         {
@@ -74,7 +74,7 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse Update(int id, Event @event)
+    public ServiceResponse Update(Guid id, Event @event)
     {
         try
         {
@@ -90,7 +90,7 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse Remove(int id)
+    public ServiceResponse Remove(Guid id)
     {
         try
         {

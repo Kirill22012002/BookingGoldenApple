@@ -10,7 +10,7 @@ public static class EventExtensions
     {
         return new Event
         {
-            Id = 0,
+            Id = Guid.Empty,
             Title = dto.Title ?? "",
             Description = dto.Description,
             StartAt = dto.StartAt,
@@ -18,7 +18,7 @@ public static class EventExtensions
         };
     }
 
-    public static Event MapToEntity(this PutEventDto dto, int id)
+    public static Event MapToEntity(this PutEventDto dto, Guid id)
     {
         return new Event
         {

@@ -6,15 +6,14 @@ namespace BGA.API.Infrastructure.Repositories.Implementations;
 
 public class EventRepository : IEventRepository
 {
-    private readonly ConcurrentDictionary<int, Event> _events = [];
-    private int _eventId = 0;
+    private readonly ConcurrentDictionary<Guid, Event> _events = [];
 
     public IQueryable<Event> GetAll()
     {
         return _events.Values.AsQueryable();
     }
 
-    public Event GetById(int id)
+    public Event GetById(Guid id)
     {
         var @event = _events.GetValueOrDefault(id);
         if (@event == null)
@@ -27,16 +26,11 @@ public class EventRepository : IEventRepository
 
     public bool Create(Event @event)
     {
-        if (@event.Id <= 0)
-        {
-            Interlocked.Increment(ref _eventId);
-            @event.Id = _eventId;
-        }
-
+        @event.Id = Guid.NewGuid();
         return _events.TryAdd(@event.Id, @event);
     }
 
-    public bool Update(int id, Event @event)
+    public bool Update(Guid id, Event @event)
     {
         var oldEvent = _events.GetValueOrDefault(id);
         if (oldEvent == null)
@@ -47,7 +41,7 @@ public class EventRepository : IEventRepository
         return _events.TryUpdate(id, @event, oldEvent);
     }
 
-    public bool Remove(int id)
+    public bool Remove(Guid id)
     {
         return _events.TryRemove(id, out var _);
     }

@@ -33,8 +33,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
                     detail: string.Join(". ", response.Errors));
     }
 
-    [HttpGet("{id:int}")]
-    public IActionResult Get([FromRoute][Range(1, int.MaxValue)] int id)
+    [HttpGet("{id:guid}")]
+    public IActionResult Get([FromRoute] Guid id)
     {
         var response = _eventService.GetById(id);
 
@@ -75,8 +75,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
                     detail: string.Join(". ", response.Errors));
     }
 
-    [HttpPut("{id:int}")]
-    public IActionResult Update([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] PutEventDto dto)
+    [HttpPut("{id:guid}")]
+    public IActionResult Update([FromRoute] Guid id, [FromBody] PutEventDto dto)
     {
         var @event = dto.MapToEntity(id);
         var response = _eventService.Update(id, @event);
@@ -96,8 +96,8 @@ public class EventsController(IEventService _eventService) : ControllerBase
                     detail: string.Join(". ", response.Errors));
     }
 
-    [HttpDelete("{id:int}")]
-    public IActionResult Remove([FromRoute][Range(1, int.MaxValue)] int id)
+    [HttpDelete("{id:guid}")]
+    public IActionResult Remove([FromRoute] Guid id)
     {
         var response = _eventService.Remove(id);
 
