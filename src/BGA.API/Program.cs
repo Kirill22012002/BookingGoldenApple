@@ -6,6 +6,8 @@ using BGA.API.Infrastructure.Repositories.Implementations;
 using Microsoft.AspNetCore.Mvc;
 using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using BGA.API.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +33,12 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("InMemoryDatabase"));
+
 builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddSingleton<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 var app = builder.Build();
 

@@ -3,12 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BGA.API.Infrastructure;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     public DbSet<Event> Events { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseInMemoryDatabase("DatabaseInMemory");
-    }
 }
