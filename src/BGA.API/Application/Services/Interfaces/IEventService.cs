@@ -4,9 +4,9 @@ namespace BGA.API.Application.Services.Interfaces;
 
 public interface IEventService
 {
-    ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize);
-    ServiceResponse<Event> GetById(Guid id);
-    ServiceResponse<Event> Create(Event @event);
-    ServiceResponse Update(Guid id, Event @event);
-    ServiceResponse Remove(Guid id);
+    Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<ServiceResponse<Event>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ServiceResponse<Event>> CreateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task<ServiceResponse> UpdateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task<ServiceResponse> RemoveAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -18,7 +18,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetAll_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
+    public async Task GetAll_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
     {
         // Arrange
         var page = 1;
@@ -27,11 +27,11 @@ public class EventServiceTests
         var events = CreateEvents(count: totalItems);
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events);
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events);
 
         // Act
-        var result = _service.GetAll(title: null, from: null, to: null, page: page, pageSize: pageSize);
+        var result = await _service.GetAllAsync(title: null, from: null, to: null, page: page, pageSize: pageSize, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -43,11 +43,11 @@ public class EventServiceTests
         Assert.Equal(pageSize, result.Data.Items.Count());
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetAll_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAll_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchSubstring = "ing";
@@ -57,11 +57,11 @@ public class EventServiceTests
         var events = CreateEvents(count: titles.Count, titles: titles);
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events);
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events);
 
         // Act
-        var result = _service.GetAll(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10);
+        var result = await _service.GetAllAsync(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -72,11 +72,11 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedTitle, result.Data.Items.Select(@event => @event.Title));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetAll_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAll_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchStartAt = new DateTime(2026, 03, 15);
@@ -86,11 +86,11 @@ public class EventServiceTests
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates);
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events);
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events);
 
         // Act
-        var result = _service.GetAll(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10);
+        var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -101,11 +101,11 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedStartAtDate, result.Data.Items.Select(@event => @event.StartAt));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetAll_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAll_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchEndAt = new DateTime(2026, 03, 15);
@@ -115,11 +115,11 @@ public class EventServiceTests
         var events = CreateEvents(count: endAtDates.Count, endAtDates: endAtDates);
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events);
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events);
 
         // Act
-        var result = _service.GetAll(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10);
+        var result = await _service.GetAllAsync(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -130,11 +130,11 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedEndDate, result.Data.Items.Select(@event => @event.EndAt));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetAll_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAll_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         //  14, (15,  16, 17) 
@@ -153,11 +153,11 @@ public class EventServiceTests
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates, endAtDates: endAtDates);
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events);
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events);
 
         // Act
-        var result = _service.GetAll(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
+        var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -168,7 +168,7 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedEndAtDate, result.Data.Items.Select(@event => @event.EndAt));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     public static IEnumerable<object[]> MultipleFilters()
@@ -193,7 +193,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(MultipleFilters))]
-    public void GetAll_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
+    public async Task GetAll_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
     {
         // Arrange
         var events = new List<Event>()
@@ -208,11 +208,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Returns(events.AsQueryable());
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(events.AsQueryable());
 
         // Act
-        var result = _service.GetAll(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10);
+        var result = await _service.GetAllAsync(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -224,18 +224,18 @@ public class EventServiceTests
             @event.EndAt == searchEndAt));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetAll_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAll_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "page";
         var expectedValidationErrorValue = "page can be more or equal than 1";
 
         // Act
-        var result = _service.GetAll(null, null, null, 0, 10);
+        var result = await _service.GetAllAsync(null, null, null, 0, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -244,18 +244,18 @@ public class EventServiceTests
         Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Never);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public void GetAll_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAll_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "pageSize";
         var expectedValidationErrorValue = "pageSize can be more or equal than 0";
 
         // Act
-        var result = _service.GetAll(null, null, null, 1, -1);
+        var result = await _service.GetAllAsync(null, null, null, 1, -1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -264,7 +264,7 @@ public class EventServiceTests
         Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Never);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     public static IEnumerable<object?[]> DifferentDates()
@@ -283,10 +283,10 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(DifferentDates))]
-    public void GetAll_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
+    public async Task GetAll_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
     {
         // Arrange & Act
-        var result = _service.GetAll(null, from, to, 1, 10);
+        var result = await _service.GetAllAsync(null, from, to, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -294,14 +294,14 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetAll_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAll_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "to";
         var expectedValidationErrorValue = "to can be more or equal than from";
 
         // Act
-        var result = _service.GetAll(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), 1, 10);
+        var result = await _service.GetAllAsync(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -310,14 +310,14 @@ public class EventServiceTests
         Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Never);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public void GetAll_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
+    public async Task GetAll_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
     {
         // Arrange & Act
-        var result = _service.GetAll(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), -1, -1);
+        var result = await _service.GetAllAsync(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), -1, -1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -331,21 +331,21 @@ public class EventServiceTests
         Assert.True(result.ValidationErrors.ContainsValue("to can be more or equal than from"));
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Never);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public void GetAll_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task GetAll_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
 
         _repository
-            .Setup(repository => repository.GetAll())
-            .Throws(new Exception(expectedExceptionMessage));
+            .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new Exception(expectedExceptionMessage));
 
         // Act
-        var result = _service.GetAll(null, null, null, 1, 10);
+        var result = await _service.GetAllAsync(null, null, null, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -353,11 +353,11 @@ public class EventServiceTests
         Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.GetAll(), Times.Once);
+            .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetById_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
+    public async Task GetById_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -371,11 +371,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.GetById(id))
-            .Returns(@event);
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(@event);
 
         // Act
-        var result = _service.GetById(id);
+        var result = await _service.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
@@ -383,22 +383,22 @@ public class EventServiceTests
         Assert.Equal(@event, result.Data);
 
         _repository
-            .Verify(repository => repository.GetById(id), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var id = Guid.NewGuid();
         var expectedExceptionMessage = $"Event with Id: {id} not found";
 
         _repository
-            .Setup(repository => repository.GetById(id))
-            .Throws(new KeyNotFoundException(expectedExceptionMessage));
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new KeyNotFoundException(expectedExceptionMessage));
 
         // Act
-        var result = _service.GetById(id);
+        var result = await _service.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
@@ -406,11 +406,11 @@ public class EventServiceTests
         Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.GetById(id), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Create_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
+    public async Task Create_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
     {
         // Arrange
         var @event = new Event()
@@ -423,11 +423,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Create(It.IsAny<Event>()))
-            .Returns(true);
+            .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
 
         // Act
-        var result = _service.Create(@event);
+        var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
@@ -439,11 +439,11 @@ public class EventServiceTests
         Assert.Equal(@event.EndAt, result.Data.EndAt);
 
         _repository
-            .Verify(repository => repository.Create(It.IsAny<Event>()), Times.Once);
+            .Verify(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Create_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task Create_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot create event";
@@ -457,11 +457,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Create(It.IsAny<Event>()))
-            .Returns(false);
+            .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(false);
 
         // Act
-        var result = _service.Create(@event);
+        var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
@@ -469,11 +469,11 @@ public class EventServiceTests
         Assert.Contains(expectedErrorMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Create(It.IsAny<Event>()), Times.Once);
+            .Verify(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Create_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task Create_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
@@ -487,11 +487,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Create(@event))
-            .Throws(new Exception(expectedExceptionMessage));
+            .Setup(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new Exception(expectedExceptionMessage));
 
         // Act
-        var result = _service.Create(@event);
+        var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<Event>>(result);
@@ -499,11 +499,11 @@ public class EventServiceTests
         Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Create(@event), Times.Once);
+            .Verify(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Update_WithValidEvent_ReturnsServiceResponseWithSuccess()
+    public async Task Update_WithValidEvent_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -517,22 +517,22 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Update(id, It.IsAny<Event>()))
-            .Returns(true);
+            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
 
         // Act
-        var result = _service.Update(id, @event);
+        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
         Assert.True(result.Succeeded);
 
         _repository
-            .Verify(repository => repository.Update(id, It.IsAny<Event>()), Times.Once);
+            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Update_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task Update_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -547,11 +547,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Update(id, It.IsAny<Event>()))
-            .Throws(new KeyNotFoundException(exceptionMessage));
+            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new KeyNotFoundException(exceptionMessage));
 
         // Act
-        var result = _service.Update(id, @event);
+        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -559,11 +559,11 @@ public class EventServiceTests
         Assert.Contains(exceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Update(id, It.IsAny<Event>()), Times.Once);
+            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Update_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task Update_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot update event";
@@ -578,11 +578,11 @@ public class EventServiceTests
         };
 
         _repository
-            .Setup(repository => repository.Update(id, @event))
-            .Returns(false);
+            .Setup(repository => repository.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(false);
 
         // Act
-        var result = _service.Update(id, @event);
+        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -590,43 +590,43 @@ public class EventServiceTests
         Assert.Contains(expectedErrorMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Update(id, @event), Times.Once);
+            .Verify(repository => repository.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Remove_WithValidId_ReturnsServiceResponseWithSuccess()
+    public async Task Remove_WithValidId_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.Remove(id))
-            .Returns(true);
+            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
 
         // Act
-        var result = _service.Remove(id);
+        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
         Assert.True(result.Succeeded);
 
         _repository
-            .Verify(repository => repository.Remove(id), Times.Once);
+            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Remove_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task Remove_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot remove event";
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.Remove(id))
-            .Returns(false);
+            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(false);
 
         // Act
-        var result = _service.Remove(id);
+        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -634,22 +634,22 @@ public class EventServiceTests
         Assert.Contains(expectedErrorMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Remove(id), Times.Once);
+            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public void Remove_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task Remove_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.Remove(id))
-            .Throws(new Exception(expectedExceptionMessage));
+            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new Exception(expectedExceptionMessage));
 
         // Act
-        var result = _service.Remove(id);
+        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -657,7 +657,7 @@ public class EventServiceTests
         Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.Remove(id), Times.Once);
+            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
     }
 

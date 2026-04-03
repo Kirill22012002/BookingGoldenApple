@@ -1,12 +1,13 @@
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(IEventRepository _repository) : IEventService
 {
-    public ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
+    public async Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         Dictionary<string, string> validationErrors = [];
 
@@ -18,7 +19,7 @@ public class EventService(IEventRepository _repository) : IEventService
 
         try
         {
-            var query = _repository.GetAll();
+            var query = await _repository.GetAllAsync(cancellationToken);
             if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
             if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
             if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
@@ -45,12 +46,14 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse<Event> GetById(Guid id)
+    public async Task<ServiceResponse<Event>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var @event = _repository.GetById(id);
-            return ServiceResponse<Event>.Success(@event);
+            var @event = await _repository.GetByIdAsync(id, cancellationToken);
+            return @event != null
+                ? ServiceResponse<Event>.Success(@event)
+                : ServiceResponse<Event>.Failure(["Event not found"]);
         }
         catch (Exception ex)
         {
@@ -58,11 +61,11 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse<Event> Create(Event @event)
+    public async Task<ServiceResponse<Event>> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Create(@event);
+            var success = await _repository.CreateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse<Event>.Success(@event)
@@ -74,11 +77,11 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse Update(Guid id, Event @event)
+    public async Task<ServiceResponse> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Update(id, @event);
+            var success = await _repository.UpdateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()
@@ -90,11 +93,11 @@ public class EventService(IEventRepository _repository) : IEventService
         }
     }
 
-    public ServiceResponse Remove(Guid id)
+    public async Task<ServiceResponse> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Remove(id);
+            var success = await _repository.RemoveAsync(id, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()

@@ -11,12 +11,12 @@ namespace BGA.API.Presentation.Controllers;
 public class EventsController(IEventService _eventService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get(
-        [FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to,
+    public async Task<IActionResult> GetAsync(
+        [FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken cancellationToken,
         [FromQuery][Range(1, int.MaxValue)] int page = 1, [FromQuery][Range(0, int.MaxValue)] int pageSize = 10)
     {
 
-        var response = _eventService.GetAll(title, from, to, page, pageSize);
+        var response = await _eventService.GetAllAsync(title, from, to, page, pageSize, cancellationToken);
 
         return response.Succeeded
             ? Ok(response.Data?.MapToDto())
@@ -34,9 +34,9 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public IActionResult Get([FromRoute] Guid id)
+    public async Task<IActionResult> GetAsync([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var response = _eventService.GetById(id);
+        var response = await _eventService.GetByIdAsync(id, cancellationToken);
 
         return response.Succeeded
             ? Ok(response?.Data?.MapToDto())
@@ -54,14 +54,14 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Add([FromBody] AddEventDto dto)
+    public async Task<IActionResult> AddAsync([FromBody] AddEventDto dto, CancellationToken cancellationToken)
     {
         var @event = dto.MapToEntity();
-        var response = _eventService.Create(@event);
+        var response = await _eventService.CreateAsync(@event, cancellationToken);
         var responseDto = response.Data?.MapToDto();
 
         return response.Succeeded
-            ? CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto)
+            ? CreatedAtAction(nameof(GetAsync), new { id = responseDto?.Id }, responseDto)
             : response.ValidationErrors.Count > 0
                 ? ValidationProblem(
                     statusCode: StatusCodes.Status400BadRequest,
@@ -76,10 +76,10 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public IActionResult Update([FromRoute] Guid id, [FromBody] PutEventDto dto)
+    public async Task<IActionResult> UpdateAsync([FromRoute] Guid id, [FromBody] PutEventDto dto, CancellationToken cancellationToken)
     {
         var @event = dto.MapToEntity(id);
-        var response = _eventService.Update(id, @event);
+        var response = await _eventService.UpdateAsync(@event, cancellationToken);
 
         return response.Succeeded
             ? NoContent()
@@ -97,9 +97,9 @@ public class EventsController(IEventService _eventService) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public IActionResult Remove([FromRoute] Guid id)
+    public async Task<IActionResult> Remove([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var response = _eventService.Remove(id);
+        var response = await _eventService.RemoveAsync(id, cancellationToken);
 
         return response.Succeeded
             ? NoContent()

@@ -4,9 +4,9 @@ namespace BGA.API.Infrastructure.Repositories.Interfaces;
 
 public interface IEventRepository
 {
-    IQueryable<Event> GetAll();
-    Event GetById(Guid id);
-    bool Create(Event @event);
-    bool Update(Guid id, Event @event);
-    bool Remove(Guid id);
+    Task<IQueryable<Event>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> CreateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default);
 }
