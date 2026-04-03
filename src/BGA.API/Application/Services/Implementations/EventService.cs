@@ -1,55 +1,108 @@
-using BGA.API.Presentation.Dtos;
-using BGA.API.Application.Extensions;
-using BGA.API.Infrastructure.Repositories;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.Repositories.Interfaces;
+using BGA.API.Infrastructure.Models;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class EventService(EventRepository _repository) : IEventService
+public class EventService(IEventRepository _repository) : IEventService
 {
-    public List<EventDto> GetAll()
+    public ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        var events = _repository.AsEnumerable();
-        return events.MapToDtos().ToList();
-    }
+        Dictionary<string, string> validationErrors = [];
 
-    public EventDto GetById(int id)
-    {
-        var @event = _repository.Single(x => x.Id == id);
-        return @event.MapToDto();
-    }
+        if (page < 1) validationErrors.TryAdd(nameof(page), $"{nameof(page)} can be more or equal than 1");
+        if (pageSize < 0) validationErrors.TryAdd(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
+        if (from.HasValue && to.HasValue && from.Value > to.Value) validationErrors.TryAdd(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}");
 
-    public EventDto Create(AddEventDto dto)
-    {
-        var @event = dto.MapToEntity();
-        _repository.Add(@event);
-        return @event.MapToDto();
-    }
+        if (validationErrors.Count != 0) return ServiceResponse<PaginatedResult<Event>>.Failure(validationErrors);
 
-    public void Change(int id, PutEventDto dto)
-    {
-        var index = _repository.FindIndex(x => x.Id == id);
-        if (index != -1)
+        try
         {
-            var @event = dto.MapToEntity(id);
-            _repository[index] = @event;
+            var query = _repository.GetAll();
+            if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
+            if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
+
+            var filteredCount = query.Count();
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize);
+
+            var paginatedResult = new PaginatedResult<Event>()
+            {
+                Items = items.AsEnumerable(),
+                TotalItems = filteredCount,
+                PageNumber = page,
+                PageSize = items.Count()
+            };
+
+            return ServiceResponse<PaginatedResult<Event>>.Success(paginatedResult);
         }
-        else
+        catch (Exception ex)
         {
-            throw new InvalidOperationException();
+            return ServiceResponse<PaginatedResult<Event>>.Failure([ex.Message]);
         }
     }
 
-    public void Remove(int id)
+    public ServiceResponse<Event> GetById(int id)
     {
-        var index = _repository.FindIndex(x => x.Id == id);
-        if (index != -1)
+        try
         {
-            _repository.RemoveAt(index);
+            var @event = _repository.GetById(id);
+            return ServiceResponse<Event>.Success(@event);
         }
-        else
+        catch (Exception ex)
         {
-            throw new InvalidOperationException();
+            return ServiceResponse<Event>.Failure([ex.Message]);
+        }
+    }
+
+    public ServiceResponse<Event> Create(Event @event)
+    {
+        try
+        {
+            var success = _repository.Create(@event);
+
+            return success
+                ? ServiceResponse<Event>.Success(@event)
+                : ServiceResponse<Event>.Failure(["Cannot create event"]);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse<Event>.Failure([ex.Message]);
+        }
+    }
+
+    public ServiceResponse Update(int id, Event @event)
+    {
+        try
+        {
+            var success = _repository.Update(id, @event);
+
+            return success
+                ? ServiceResponse.Success()
+                : ServiceResponse.Failure(["Cannot update event"]);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse.Failure([ex.Message]);
+        }
+    }
+
+    public ServiceResponse Remove(int id)
+    {
+        try
+        {
+            var success = _repository.Remove(id);
+
+            return success
+                ? ServiceResponse.Success()
+                : ServiceResponse.Failure(["Cannot remove event"]);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResponse.Failure([ex.Message]);
         }
     }
 }

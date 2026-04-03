@@ -43,11 +43,33 @@ or
 http://localhost:5068/swagger/index.html
 `
 
+### Building and Running the tests
+```powershell
+dotnet build tests/BGA.API.Tests/BGA.API.Tests.csproj
+```
+
+```powershell
+dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
+```
+
 ## API Documentation
 
 ### Endpoints: 
-- GET:    /events       - get list of all events
-- GET:    /events/{id}  - get event by id; if not found returns 404
-- POST:   /events       - create event
-- PUT:    /events/{id}  - update event
-- DELETE: /events/{id}  - remove event; if not found returns 404
+- `GET`:    /events       - get list of all events
+- `GET`:    /events/{id}  - get event by id; if not found returns 404
+- `POST`:   /events       - create event
+- `PUT`:    /events/{id}  - update event
+- `DELETE`: /events/{id}  - remove event; if not found returns 404
+
+#### `GET`: /event has the following filters and pagination parameters. All filters work together (logical AND)
+- title - optional, search by name, case-insensitive, partial match.
+- from - optional, events that begin no earlier than the specified date.
+- to - optional, events that end no later than the specified date.
+- page - optional, with default value: 1, the page to return
+- pageSize - optional, with default value: 10, the number of elements on a page
+
+#### `GET`: /events returns the following result
+- items - the result of pagination and filtering
+- totalItems - the total number of events
+- pageNumber - the current page number
+- pageSize - the number of elements on the current page
