@@ -8,7 +8,9 @@ namespace BGA.API.Presentation.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class EventsController(IEventService _eventService) : ControllerBase
+public class EventsController(
+    IEventService _eventService,
+    IBookingService _bookingService) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> Get(
@@ -20,17 +22,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? Ok(response.Data?.MapToDto())
-            : response.ValidationErrors.Count > 0
-                ? ValidationProblem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "One or more validation errors occured",
-                    type: StatusCodes.Status400BadRequest.GetProblemType(),
-                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
-                : Problem(
-                    statusCode: StatusCodes.Status404NotFound,
-                    title: "Event not found",
-                    type: StatusCodes.Status404NotFound.GetProblemType(),
-                    detail: string.Join(". ", response.Errors));
+            : ProblemResponse(response);
     }
 
     [HttpGet("{id:guid}")]
@@ -40,17 +32,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? Ok(response?.Data?.MapToDto())
-            : response.ValidationErrors.Count > 0
-                ? ValidationProblem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "One or more validation errors occured",
-                    type: StatusCodes.Status400BadRequest.GetProblemType(),
-                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
-                : Problem(
-                    statusCode: StatusCodes.Status404NotFound,
-                    title: "Event not found",
-                    type: StatusCodes.Status404NotFound.GetProblemType(),
-                    detail: string.Join(". ", response.Errors));
+            : ProblemResponse(response);
     }
 
     [HttpPost]
@@ -62,17 +44,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto)
-            : response.ValidationErrors.Count > 0
-                ? ValidationProblem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "One or more validation errors occured",
-                    type: StatusCodes.Status400BadRequest.GetProblemType(),
-                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
-                : Problem(
-                    statusCode: StatusCodes.Status404NotFound,
-                    title: "Event not found",
-                    type: StatusCodes.Status404NotFound.GetProblemType(),
-                    detail: string.Join(". ", response.Errors));
+            : ProblemResponse(response);
     }
 
     [HttpPut("{id:guid}")]
@@ -83,17 +55,7 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : response.ValidationErrors.Count > 0
-                ? ValidationProblem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "One or more validation errors occured",
-                    type: StatusCodes.Status400BadRequest.GetProblemType(),
-                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
-                : Problem(
-                    statusCode: StatusCodes.Status404NotFound,
-                    title: "Event not found",
-                    type: StatusCodes.Status404NotFound.GetProblemType(),
-                    detail: string.Join(". ", response.Errors));
+            : ProblemResponse(response);
     }
 
     [HttpDelete("{id:guid}")]
@@ -103,16 +65,16 @@ public class EventsController(IEventService _eventService) : ControllerBase
 
         return response.Succeeded
             ? NoContent()
-            : response.ValidationErrors.Count > 0
-                ? ValidationProblem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "One or more validation errors occured",
-                    type: StatusCodes.Status400BadRequest.GetProblemType(),
-                    modelStateDictionary: response.ValidationErrors.ToModelStateDictionary())
-                : Problem(
-                    statusCode: StatusCodes.Status404NotFound,
-                    title: "Event not found",
-                    type: StatusCodes.Status404NotFound.GetProblemType(),
-                    detail: string.Join(". ", response.Errors));
+            : ProblemResponse(response);
+    }
+
+    [HttpPost("{id:guid}/book")]
+    public async Task<IActionResult> Book([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var response = await _bookingService.CreateBookingAsync(id, cancellationToken);
+
+        return response.Succeeded
+            ? AcceptedAtAction(nameof(BookingsController.Get), new { id = response?.Data?.Id }, new { id = response?.Data?.Id, eventId = response?.Data?.EventId, status = response?.Data?.Status })
+            : ProblemResponse(response);
     }
 }
