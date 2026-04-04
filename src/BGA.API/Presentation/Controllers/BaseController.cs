@@ -6,7 +6,7 @@ namespace BGA.API.Presentation.Controllers;
 
 public class BaseController : ControllerBase
 {
-    public IActionResult ProblemResponse(ServiceResponse response)
+    protected IActionResult ProblemResponse(ServiceResponse response)
     {
         return response.ValidationErrors.Count > 0
                 ? ValidationProblem(
