@@ -75,7 +75,11 @@ public class EventsController(
         var responseDto = response.Data?.MapToDto();
 
         return response.Succeeded
-            ? AcceptedAtAction(nameof(BookingsController.Get), new { id = responseDto?.Id }, new { id = responseDto?.Id, eventId = responseDto?.EventId, status = responseDto?.Status })
+            ? AcceptedAtAction(
+                actionName: nameof(BookingsController.Get),
+                controllerName: ControllerName<BookingsController>(),
+                routeValues: new { id = responseDto?.Id },
+                value: new { id = responseDto?.Id, eventId = responseDto?.EventId, status = responseDto?.Status })
             : ProblemResponse(response);
     }
 }

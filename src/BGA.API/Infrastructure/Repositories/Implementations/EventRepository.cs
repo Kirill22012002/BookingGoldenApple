@@ -17,6 +17,12 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
         return await _dbContext.Events.SingleOrDefaultAsync(@event => @event.Id == id, cancellationToken);
     }
 
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var @event = await GetByIdAsync(id, cancellationToken);
+        return @event != null;
+    }
+
     public async Task<bool> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         await _dbContext.Events.AddAsync(@event, cancellationToken);

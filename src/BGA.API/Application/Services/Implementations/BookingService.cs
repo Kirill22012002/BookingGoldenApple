@@ -5,12 +5,18 @@ using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class BookingService(IBookingRepository _bookingRepository) : IBookingService
+public class BookingService(
+    IBookingRepository _bookingRepository,
+    IEventRepository _eventRepository) : IBookingService
 {
     public async Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
         try
         {
+            var exists = await _eventRepository.ExistsAsync(eventId, cancellationToken);
+            if (!exists)
+                return ServiceResponse<Booking>.Failure(["Event not found"]);
+
             var booking = new Booking
             {
                 EventId = eventId,

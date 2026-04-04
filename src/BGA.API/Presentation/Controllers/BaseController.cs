@@ -20,4 +20,7 @@ public class BaseController : ControllerBase
                     type: StatusCodes.Status404NotFound.GetProblemType(),
                     detail: string.Join(". ", response.Errors));
     }
+
+    protected static string ControllerName<T>() where T : ControllerBase
+        => typeof(T).Name.Replace("Controller", "");
 }
