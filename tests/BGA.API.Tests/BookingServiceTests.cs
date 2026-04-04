@@ -81,6 +81,64 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateBookingAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Cannot create booking";
+        var eventId = Guid.NewGuid();
+        _eventRepository
+            .Setup(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
+
+        _bookingRepository
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.CreateBookingAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Booking>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _eventRepository
+            .Verify(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _bookingRepository
+            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Database error";
+        var eventId = Guid.NewGuid();
+        _eventRepository
+            .Setup(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
+
+        _bookingRepository
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new Exception(expectedExceptionMessage));
+
+        // Act
+        var result = await _service.CreateBookingAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Booking>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _eventRepository
+            .Verify(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _bookingRepository
+            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+    }
+
+    [Fact]
     public async Task GetBookingByIdAsync_WithExistingBooking_ReturnsServiceResponseWithSuccessAndCorrectBooking()
     {
         // Arrange
@@ -187,6 +245,28 @@ public class BookingServiceTests
         _bookingRepository
             .Setup(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Booking)null!);
+
+        // Act
+        var result = await _service.GetBookingByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Booking>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _bookingRepository
+            .Verify(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetBookingByIdAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Database error";
+        var bookingId = Guid.NewGuid();
+        _bookingRepository
+            .Setup(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
+            .ThrowsAsync(new Exception(expectedExceptionMessage));
 
         // Act
         var result = await _service.GetBookingByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken);

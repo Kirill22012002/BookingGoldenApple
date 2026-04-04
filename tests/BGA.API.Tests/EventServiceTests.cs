@@ -410,6 +410,28 @@ public class EventServiceTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_WithNotExistsEvent_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var expectedExceptionMessage = "Event not found";
+        var eventId = Guid.NewGuid();
+        _repository
+            .Setup(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync((Event)null!);
+
+        // Act
+        var result = await _service.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Event>>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+    }
+
+    [Fact]
     public async Task CreateAsync_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
     {
         // Arrange
