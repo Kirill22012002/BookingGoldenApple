@@ -10,7 +10,6 @@ public static class EventExtensions
     {
         return new Event
         {
-            Id = Guid.Empty,
             Title = dto.Title ?? "",
             Description = dto.Description,
             StartAt = dto.StartAt,

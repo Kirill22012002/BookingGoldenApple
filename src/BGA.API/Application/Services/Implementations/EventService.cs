@@ -1,11 +1,10 @@
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class EventService(IEventRepository _repository) : IEventService
+public class EventService(IEventRepository _eventRepository) : IEventService
 {
     public async Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -19,7 +18,7 @@ public class EventService(IEventRepository _repository) : IEventService
 
         try
         {
-            var query = await _repository.GetAllAsync(cancellationToken);
+            var query = await _eventRepository.GetAllAsync(cancellationToken);
             if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
             if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
             if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
@@ -50,7 +49,7 @@ public class EventService(IEventRepository _repository) : IEventService
     {
         try
         {
-            var @event = await _repository.GetByIdAsync(id, cancellationToken);
+            var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
             return @event != null
                 ? ServiceResponse<Event>.Success(@event)
                 : ServiceResponse<Event>.Failure(["Event not found"]);
@@ -65,7 +64,7 @@ public class EventService(IEventRepository _repository) : IEventService
     {
         try
         {
-            var success = await _repository.CreateAsync(@event, cancellationToken);
+            var success = await _eventRepository.CreateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse<Event>.Success(@event)
@@ -81,7 +80,7 @@ public class EventService(IEventRepository _repository) : IEventService
     {
         try
         {
-            var success = await _repository.UpdateAsync(@event, cancellationToken);
+            var success = await _eventRepository.UpdateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()
@@ -97,7 +96,7 @@ public class EventService(IEventRepository _repository) : IEventService
     {
         try
         {
-            var success = await _repository.RemoveAsync(id, cancellationToken);
+            var success = await _eventRepository.RemoveAsync(id, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()

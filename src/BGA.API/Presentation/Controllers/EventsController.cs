@@ -72,9 +72,10 @@ public class EventsController(
     public async Task<IActionResult> Book([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var response = await _bookingService.CreateBookingAsync(id, cancellationToken);
+        var responseDto = response.Data?.MapToDto();
 
         return response.Succeeded
-            ? AcceptedAtAction(nameof(BookingsController.Get), new { id = response?.Data?.Id }, new { id = response?.Data?.Id, eventId = response?.Data?.EventId, status = response?.Data?.Status })
+            ? AcceptedAtAction(nameof(BookingsController.Get), new { id = responseDto?.Id }, new { id = responseDto?.Id, eventId = responseDto?.EventId, status = responseDto?.Status })
             : ProblemResponse(response);
     }
 }

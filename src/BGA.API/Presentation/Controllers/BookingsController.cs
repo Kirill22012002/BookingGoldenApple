@@ -1,4 +1,5 @@
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BGA.API.Presentation.Controllers;
@@ -13,7 +14,7 @@ public class BookingsController(IBookingService _bookingService) : BaseControlle
         var response = await _bookingService.GetBookingByIdAsync(id, cancellationToken);
 
         return response.Succeeded
-            ? Ok(/*response?.Data?.MapToDto()*/)
+            ? Ok(response?.Data?.MapToDto())
             : ProblemResponse(response);
     }
 }

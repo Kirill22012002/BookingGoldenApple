@@ -19,7 +19,6 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 
     public async Task<bool> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        @event.Id = Guid.NewGuid();
         await _dbContext.Events.AddAsync(@event, cancellationToken);
         var result = await _dbContext.SaveChangesAsync(cancellationToken);
         return result >= 1;
