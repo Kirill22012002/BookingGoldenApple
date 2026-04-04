@@ -7,7 +7,8 @@ namespace BGA.API.Application.Services.Implementations;
 
 public class BookingService(
     IBookingRepository _bookingRepository,
-    IEventRepository _eventRepository) : IBookingService
+    IEventRepository _eventRepository,
+    TimeProvider _timeProvider) : IBookingService
 {
     public async Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
@@ -21,7 +22,7 @@ public class BookingService(
             {
                 EventId = eventId,
                 Status = BookingStatus.Pending,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = _timeProvider.GetUtcNow()
             };
 
             var success = await _bookingRepository.CreateAsync(booking, cancellationToken);

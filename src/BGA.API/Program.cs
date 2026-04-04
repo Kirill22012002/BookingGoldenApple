@@ -43,6 +43,8 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
+builder.Services.AddSingleton(TimeProvider.System);
+
 var app = builder.Build();
 
 app.UseExceptionHandler(); // fallback

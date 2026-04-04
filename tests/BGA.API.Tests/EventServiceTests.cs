@@ -18,7 +18,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
+    public async Task GetAllAsync_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
     {
         // Arrange
         var page = 1;
@@ -47,7 +47,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchSubstring = "ing";
@@ -76,7 +76,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchStartAt = new DateTime(2026, 03, 15);
@@ -105,7 +105,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         var searchEndAt = new DateTime(2026, 03, 15);
@@ -134,7 +134,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
         //  14, (15,  16, 17) 
@@ -193,7 +193,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(MultipleFilters))]
-    public async Task GetAll_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
+    public async Task GetAllAsync_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
     {
         // Arrange
         var events = new List<Event>()
@@ -228,7 +228,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "page";
@@ -248,7 +248,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "pageSize";
@@ -283,7 +283,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(DifferentDates))]
-    public async Task GetAll_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
+    public async Task GetAllAsync_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
     {
         // Arrange & Act
         var result = await _service.GetAllAsync(null, from, to, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -294,7 +294,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
     {
         // Arrange
         var expectedValidationErrorKey = "to";
@@ -314,7 +314,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
+    public async Task GetAllAsync_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
     {
         // Arrange & Act
         var result = await _service.GetAllAsync(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), -1, -1, cancellationToken: TestContext.Current.CancellationToken);
@@ -335,7 +335,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAll_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task GetAllAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
@@ -357,7 +357,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetById_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
+    public async Task GetByIdAsync_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -387,7 +387,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetById_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task GetByIdAsync_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -410,7 +410,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Create_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
+    public async Task CreateAsync_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
     {
         // Arrange
         var @event = new Event()
@@ -443,7 +443,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Create_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task CreateAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot create event";
@@ -473,7 +473,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Create_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task CreateAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
@@ -503,7 +503,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Update_WithValidEvent_ReturnsServiceResponseWithSuccess()
+    public async Task UpdateAsync_WithValidEvent_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -532,7 +532,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Update_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task UpdateAsync_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -563,7 +563,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Update_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task UpdateAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot update event";
@@ -594,7 +594,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Remove_WithValidId_ReturnsServiceResponseWithSuccess()
+    public async Task RemoveAsync_WithValidId_ReturnsServiceResponseWithSuccess()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -615,7 +615,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Remove_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task RemoveAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedErrorMessage = "Cannot remove event";
@@ -638,7 +638,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Remove_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task RemoveAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
