@@ -1,9 +1,10 @@
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Models;
+using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class BookingService : IBookingService
+public class BookingService(IBookingRepository _bookingRepository) : IBookingService
 {
     public async Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
