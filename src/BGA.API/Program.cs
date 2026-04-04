@@ -8,6 +8,7 @@ using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using BGA.API.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,8 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
 builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services.AddHostedService<BookingProcessingService>();
 
 var app = builder.Build();
 
