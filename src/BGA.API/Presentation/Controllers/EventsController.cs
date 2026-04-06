@@ -1,8 +1,8 @@
-using BGA.API.Presentation.Dtos;
-using BGA.API.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using BGA.API.Presentation.Extensions;
+using BGA.API.Presentation.Dtos;
+using BGA.API.Application.Services.Interfaces;
 
 namespace BGA.API.Presentation.Controllers;
 

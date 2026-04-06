@@ -1,6 +1,6 @@
-using BGA.API.Application.Services.Interfaces;
-using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using BGA.API.Presentation.Extensions;
+using BGA.API.Application.Services.Interfaces;
 
 namespace BGA.API.Presentation.Controllers;
 

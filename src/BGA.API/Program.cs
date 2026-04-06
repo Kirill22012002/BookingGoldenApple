@@ -1,14 +1,14 @@
-using BGA.API.Application.Services.Implementations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Application.Services.Implementations;
 using BGA.API.Presentation;
+using BGA.API.Presentation.Extensions;
+using BGA.API.Infrastructure;
+using BGA.API.Infrastructure.BackgroundServices;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
-using Microsoft.AspNetCore.Mvc;
-using BGA.API.Presentation.Extensions;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using BGA.API.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using BGA.API.Infrastructure.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
