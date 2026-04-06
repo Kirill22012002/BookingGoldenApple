@@ -6,7 +6,7 @@ namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(IEventRepository _eventRepository) : IEventService
 {
-    public async Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         Dictionary<string, string> validationErrors = [];
 

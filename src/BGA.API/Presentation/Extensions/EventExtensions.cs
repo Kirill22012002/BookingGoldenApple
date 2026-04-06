@@ -10,7 +10,7 @@ public static class EventExtensions
     {
         return new Event
         {
-            Title = dto.Title ?? "",
+            Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
             EndAt = dto.EndAt
@@ -22,7 +22,7 @@ public static class EventExtensions
         return new Event
         {
             Id = id,
-            Title = dto.Title ?? "",
+            Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
             EndAt = dto.EndAt
@@ -35,7 +35,7 @@ public static class EventExtensions
         {
             Id = entity.Id,
             Title = entity.Title,
-            Description = entity.Description ?? "",
+            Description = entity.Description,
             StartAt = entity.StartAt,
             EndAt = entity.EndAt
         };

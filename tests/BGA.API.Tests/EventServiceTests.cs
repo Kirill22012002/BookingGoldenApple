@@ -79,10 +79,11 @@ public class EventServiceTests
     public async Task GetAllAsync_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
-        var searchStartAt = new DateTime(2026, 03, 15);
-        var startAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 15), new(2026, 03, 16) };
-        var expectedStartAtDates = new List<DateTime> { new(2026, 03, 15), new(2026, 03, 16) };
-        var notExpectedStartAtDate = new DateTime(2026, 03, 14);
+
+        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
+        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
+        var expectedStartAtDates = new List<DateTimeOffset> { new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
+        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates);
 
         _repository
@@ -108,10 +109,10 @@ public class EventServiceTests
     public async Task GetAllAsync_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
     {
         // Arrange
-        var searchEndAt = new DateTime(2026, 03, 15);
-        var endAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 16), new(2026, 03, 17) };
-        var expectedEndAtDate = new DateTime(2026, 03, 14);
-        var notExpectedEndDate = new DateTime(2026, 03, 16);
+        var searchEndAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
+        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 17, 0, 0, 0, TimeSpan.FromHours(0)) };
+        var expectedEndAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
+        var notExpectedEndDate = new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0));
         var events = CreateEvents(count: endAtDates.Count, endAtDates: endAtDates);
 
         _repository
@@ -141,14 +142,14 @@ public class EventServiceTests
         //       ||
         // (24,  25), 26, 27
         // Only item with StartAt: 15 and EndAt: 25 will be in result
-        var searchStartAt = new DateTime(2026, 03, 15);
-        var searchEndAt = new DateTime(2026, 03, 25);
-        var startAtDates = new List<DateTime> { new(2026, 03, 14), new(2026, 03, 15), new(2026, 03, 16), new(2026, 03, 17) };
-        var endAtDates = new List<DateTime> { new(2026, 03, 24), new(2026, 03, 25), new(2026, 03, 26), new(2026, 03, 27) };
-        var expectedStartAtDate = new DateTime(2026, 03, 15);
-        var expectedEndAtDate = new DateTime(2026, 03, 25);
-        var notExpectedStartAtDate = new DateTime(2026, 03, 14);
-        var notExpectedEndAtDate = new DateTime(2026, 03, 26);
+        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
+        var searchEndAt = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0));
+        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 17, 0, 0, 0, TimeSpan.FromHours(0)) };
+        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 24, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)) };
+        var expectedStartAtDate = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
+        var expectedEndAtDate = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0));
+        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
+        var notExpectedEndAtDate = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0));
 
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates, endAtDates: endAtDates);
 
@@ -175,36 +176,36 @@ public class EventServiceTests
     {
         return
         [
-            [ "ing", "2026-03-26", "2026-03-27", true ],
-            [ "ing", "2026-03-26", "2026-03-28", true ],
-            [ "ing", "2026-03-25", "2026-03-26", true ],
-            [ "ing", "2026-03-26", "2026-03-26", false ],
-            [ "jogging", "2026-03-26", "2026-03-27", true ],
-            [ "JOGGING", "2026-03-26", "2026-03-27", true ],
-            [ "yo", "2026-03-26", "2026-03-27", true ],
-            [ "running", "2026-03-27", "2026-03-28", true ],
-            [ "run", "2026-03-27", "2026-03-28", true ],
-            [ "ing", "2026-03-27", "2026-03-28", true ],
-            [ "theatre", "2026-03-26", "2026-03-28", true ],
-            [ "ing", "2026-03-28", "2026-03-29", false ],
-            [ "jog", "2026-03-26", "2026-03-27", true ]
+            [ "ing",        "2026-03-26T00:00:00-00:00",   "2026-03-27T00:00:00-00:00",   true  ],
+            [ "ing",        "2026-03-26T00:00:00-00:00",   "2026-03-28T00:00:00-00:00",   true  ],
+            [ "ing",        "2026-03-25T00:00:00-00:00",   "2026-03-26T00:00:00-00:00",   true  ],
+            [ "ing",        "2026-03-26T00:00:00-00:00",   "2026-03-26T00:00:00-00:00",   false ],
+            [ "jogging",    "2026-03-26T00:00:00-00:00",   "2026-03-27T00:00:00-00:00",   true  ],
+            [ "JOGGING",    "2026-03-26T00:00:00-00:00",   "2026-03-27T00:00:00-00:00",   true  ],
+            [ "yo",         "2026-03-26T00:00:00-00:00",   "2026-03-27T00:00:00-00:00",   true  ],
+            [ "running",    "2026-03-27T00:00:00-00:00",   "2026-03-28T00:00:00-00:00",   true  ],
+            [ "run",        "2026-03-27T00:00:00-00:00",   "2026-03-28T00:00:00-00:00",   true  ],
+            [ "ing",        "2026-03-27T00:00:00-00:00",   "2026-03-28T00:00:00-00:00",   true  ],
+            [ "theatre",    "2026-03-26T00:00:00-00:00",   "2026-03-28T00:00:00-00:00",   true  ],
+            [ "ing",        "2026-03-28T00:00:00-00:00",   "2026-03-29T00:00:00-00:00",   false ],
+            [ "jog",        "2026-03-26T00:00:00-00:00",   "2026-03-27T00:00:00-00:00",   true  ]
         ];
     }
 
     [Theory]
     [MemberData(nameof(MultipleFilters))]
-    public async Task GetAllAsync_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTime searchStartAt, DateTime searchEndAt, bool isInclude)
+    public async Task GetAllAsync_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTimeOffset searchStartAt, DateTimeOffset searchEndAt, bool isInclude)
     {
         // Arrange
         var events = new List<Event>()
         {
-            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = Guid.NewGuid(), Title = "Theatre", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
-            new() { Id = Guid.NewGuid(), Title = "Morning jog", StartAt = new DateTime(2026, 03, 25), EndAt = new DateTime(2026, 03, 26) },
-            new() { Id = Guid.NewGuid(), Title = "JOGGING", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 28) },
-            new() { Id = Guid.NewGuid(), Title = "Yoga", StartAt = new DateTime(2026, 03, 26), EndAt = new DateTime(2026, 03, 27) },
-            new() { Id = Guid.NewGuid(), Title = "Running", StartAt = new DateTime(2026, 03, 27), EndAt = new DateTime(2026, 03, 28) }
+            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "Theatre", StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "Morning jog", StartAt = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "JOGGING", StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "Jogging", StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "Yoga", StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)) },
+            new() { Id = Guid.NewGuid(), Title = "Running", StartAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), EndAt = new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)) }
         };
 
         _repository
@@ -271,19 +272,19 @@ public class EventServiceTests
     {
         return
         [
-            [ null,                                  null,                                  false ],
-            [ null,                                  new DateTime(2026, 03, 28),            false ],
-            [ new DateTime(2026, 03, 25),            null,                                  false ],
-            [ new DateTime(2026, 03, 26),            new DateTime(2026, 03, 26),            false ],
-            [ new DateTime(2026, 03, 26),            new DateTime(2026, 03, 27),            false ],
-            [ new DateTime(2026, 03, 30, 10, 0, 0),  new DateTime(2026, 03, 30, 10, 0, 1),  false ],
-            [ new DateTime(2026, 03, 28),            new DateTime(2026, 03, 27),            true  ]
+            [ null,                                                                        null,                                                                        false ],
+            [ null,                                                                        new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
+            [ new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)),            null,                                                                        false ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
+            [ new DateTimeOffset(2026, 03, 30, 10, 0, 0, TimeSpan.FromHours(0)),           new DateTimeOffset(2026, 03, 30, 10, 0, 1, TimeSpan.FromHours(0)),           false ],
+            [ new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)),            true  ]
         ];
     }
 
     [Theory]
     [MemberData(nameof(DifferentDates))]
-    public async Task GetAllAsync_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTime? from, DateTime? to, bool anyValidationErrors)
+    public async Task GetAllAsync_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTimeOffset? from, DateTimeOffset? to, bool anyValidationErrors)
     {
         // Arrange & Act
         var result = await _service.GetAllAsync(null, from, to, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -301,7 +302,7 @@ public class EventServiceTests
         var expectedValidationErrorValue = "to can be more or equal than from";
 
         // Act
-        var result = await _service.GetAllAsync(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), 1, 10, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -317,7 +318,7 @@ public class EventServiceTests
     public async Task GetAllAsync_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
     {
         // Arrange & Act
-        var result = await _service.GetAllAsync(null, new DateTime(2026, 01, 30), new DateTime(2026, 01, 29), -1, -1, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
@@ -366,8 +367,8 @@ public class EventServiceTests
             Id = id,
             Title = "Jumping",
             Description = "Jumping with other beautiful women",
-            StartAt = new DateTime(2026, 03, 26),
-            EndAt = new DateTime(2026, 03, 27)
+            StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -440,8 +441,8 @@ public class EventServiceTests
             Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
-            StartAt = new DateTime(2026, 05, 25),
-            EndAt = new DateTime(2026, 05, 29)
+            StartAt = new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -474,8 +475,8 @@ public class EventServiceTests
             Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
-            StartAt = new DateTime(2026, 05, 25),
-            EndAt = new DateTime(2026, 05, 29)
+            StartAt = new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -504,8 +505,8 @@ public class EventServiceTests
             Id = Guid.NewGuid(),
             Title = "Cycling",
             Description = "Cycling with other crazy people",
-            StartAt = new DateTime(2026, 05, 25),
-            EndAt = new DateTime(2026, 05, 29)
+            StartAt = new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -534,8 +535,8 @@ public class EventServiceTests
             Id = id,
             Title = "Jumping",
             Description = "Jumping with other beautiful women",
-            StartAt = new DateTime(2026, 03, 26),
-            EndAt = new DateTime(2026, 03, 27)
+            StartAt = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -564,8 +565,8 @@ public class EventServiceTests
             Id = id,
             Title = "Jogging",
             Description = "Jogging with other strong men",
-            StartAt = new DateTime(2026, 06, 24),
-            EndAt = new DateTime(2026, 06, 28)
+            StartAt = new DateTimeOffset(2026, 06, 24, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 06, 28, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -595,8 +596,8 @@ public class EventServiceTests
             Id = id,
             Title = "Cycling",
             Description = "Cycling with other crazy people",
-            StartAt = new DateTime(2026, 05, 25),
-            EndAt = new DateTime(2026, 05, 29)
+            StartAt = new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)),
+            EndAt = new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0))
         };
 
         _repository
@@ -683,7 +684,7 @@ public class EventServiceTests
 
     }
 
-    private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTime>? startAtDates = null, List<DateTime>? endAtDates = null)
+    private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTimeOffset>? startAtDates = null, List<DateTimeOffset>? endAtDates = null)
     {
         var list = new List<Event>();
         for (int i = 0; i < count; i++)
@@ -692,8 +693,8 @@ public class EventServiceTests
             {
                 Id = Guid.NewGuid(),
                 Title = titles != null ? titles[i] : i.ToString(),
-                StartAt = startAtDates != null ? startAtDates[i] : DateTime.MinValue,
-                EndAt = endAtDates != null ? endAtDates[i] : DateTime.MaxValue
+                StartAt = startAtDates != null ? startAtDates[i] : DateTimeOffset.MinValue,
+                EndAt = endAtDates != null ? endAtDates[i] : DateTimeOffset.MaxValue
             });
         }
 

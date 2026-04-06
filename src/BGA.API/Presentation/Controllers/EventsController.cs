@@ -14,7 +14,7 @@ public class EventsController(
 {
     [HttpGet]
     public async Task<IActionResult> Get(
-        [FromQuery] string? title, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken cancellationToken,
+        [FromQuery] string? title, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, CancellationToken cancellationToken,
         [FromQuery][Range(1, int.MaxValue)] int page = 1, [FromQuery][Range(0, int.MaxValue)] int pageSize = 10)
     {
 

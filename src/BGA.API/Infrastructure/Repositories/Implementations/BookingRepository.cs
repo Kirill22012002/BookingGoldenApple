@@ -14,7 +14,9 @@ public class BookingRepository(ApplicationDbContext _dbContext) : IBookingReposi
 
     public async Task<IEnumerable<Booking>> GetAllInPendingAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Bookings.Where(booking => booking.Status == BookingStatus.Pending).ToListAsync(cancellationToken);
+        return await _dbContext.Bookings
+            .Where(booking => booking.Status == BookingStatus.Pending)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> CreateAsync(Booking booking, CancellationToken cancellationToken = default)
