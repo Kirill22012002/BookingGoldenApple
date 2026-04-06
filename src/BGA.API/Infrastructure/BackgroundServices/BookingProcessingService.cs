@@ -1,7 +1,7 @@
 using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 
-namespace BGA.API.BackgroundServices;
+namespace BGA.API.Infrastructure.BackgroundServices;
 
 public class BookingProcessingService(
     ILogger<BookingProcessingService> _logger,

@@ -8,7 +8,7 @@ using BGA.API.Presentation.Extensions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using BGA.API.BackgroundServices;
+using BGA.API.Infrastructure.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 

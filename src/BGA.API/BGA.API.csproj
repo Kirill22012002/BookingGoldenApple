@@ -13,8 +13,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Infrastructure\Models\Enums\" />
-  </ItemGroup>
-
 </Project>
