@@ -30,10 +30,9 @@ public class BookingProcessingService(
                     }
                     catch (Exception ex)
                     {
-
+                        _logger.LogWarning(ex, "Error while processing booking. BookingId {BookingId}", booking.Id);
                     }
                 }
-
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
