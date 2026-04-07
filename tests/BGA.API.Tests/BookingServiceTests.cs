@@ -55,7 +55,43 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_WithNotExistsEvent_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task CreateBookingAsync_TwiceWithTheSameEventIdAndExistsEvent_ReturnsServiceResponseWithSuccessAndDifferentBookingIds()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        _eventRepository
+            .Setup(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
+
+        _bookingRepository
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+            .Callback<Booking, CancellationToken>((booking, cancellationToken) => booking.Id = Guid.NewGuid())
+            .ReturnsAsync(true);
+
+        // Act
+        var firstBookingResult = await _service.CreateBookingAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
+        var secondBookingResult = await _service.CreateBookingAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse<Booking>>(firstBookingResult);
+        Assert.IsType<ServiceResponse<Booking>>(secondBookingResult);
+        Assert.True(firstBookingResult.Succeeded);
+        Assert.True(secondBookingResult.Succeeded);
+        Assert.NotNull(firstBookingResult.Data);
+        Assert.NotNull(secondBookingResult.Data);
+        Assert.Equal(firstBookingResult.Data.EventId, secondBookingResult.Data.EventId);
+        Assert.NotEqual(firstBookingResult.Data.Id, secondBookingResult.Data.Id);
+
+        _eventRepository
+            .Verify(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+
+        _bookingRepository
+            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_WhenEventRemoved_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange
         var expectedExceptionMessage = "Event not found";
