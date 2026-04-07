@@ -624,7 +624,7 @@ public class EventServiceTests
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(It.IsAny<Event>);
+            .ReturnsAsync(CreateEvent());
 
         _repository
             .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
@@ -653,7 +653,7 @@ public class EventServiceTests
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(It.IsAny<Event>);
+            .ReturnsAsync(CreateEvent());
 
         _repository
             .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
@@ -683,7 +683,7 @@ public class EventServiceTests
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(It.IsAny<Event>);
+            .ReturnsAsync(CreateEvent());
 
         _repository
             .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
@@ -702,6 +702,11 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+    }
+
+    private static Event CreateEvent()
+    {
+        return CreateEvents(1).First();
     }
 
     private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTimeOffset>? startAtDates = null, List<DateTimeOffset>? endAtDates = null)
