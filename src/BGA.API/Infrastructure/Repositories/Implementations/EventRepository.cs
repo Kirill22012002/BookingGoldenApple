@@ -37,16 +37,10 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
         return result >= 1;
     }
 
-    public async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        var entity = await GetByIdAsync(id, cancellationToken);
-        if (entity != null)
-        {
-            _dbContext.Remove(entity);
-            var result = await _dbContext.SaveChangesAsync(cancellationToken);
-            return result >= 1;
-        }
-
-        return false;
+        _dbContext.Remove(@event);
+        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        return result >= 1;
     }
 }

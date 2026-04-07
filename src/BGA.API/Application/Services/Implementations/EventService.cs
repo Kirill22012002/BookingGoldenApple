@@ -96,7 +96,11 @@ public class EventService(IEventRepository _eventRepository) : IEventService
     {
         try
         {
-            var success = await _eventRepository.RemoveAsync(id, cancellationToken);
+            var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
+            if (@event == null)
+                return ServiceResponse.Failure("Event not found", ServiceErrorType.NotFound);
+
+            var success = await _eventRepository.RemoveAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()

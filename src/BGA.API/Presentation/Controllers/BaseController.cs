@@ -12,7 +12,7 @@ public class BaseController : ControllerBase
         switch (response.Exception, response.ErrorType)
         {
             case (DbUpdateConcurrencyException, ServiceErrorType.None):
-            case (null, ServiceErrorType.NotFound):
+            case (_, ServiceErrorType.NotFound):
                 {
                     return Problem(
                         statusCode: StatusCodes.Status404NotFound,
@@ -21,7 +21,7 @@ public class BaseController : ControllerBase
                         detail: string.Join(". ", response.Errors)
                     );
                 }
-            case (null, ServiceErrorType.Validation):
+            case (_, ServiceErrorType.Validation):
                 {
                     return ValidationProblem(
                         statusCode: StatusCodes.Status400BadRequest,
