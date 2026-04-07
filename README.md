@@ -83,7 +83,7 @@ dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
 - status - current status of booking
 And in location you can find URL for getting booking
 
-#### `GET` /bookings/{id} returns the follosing result
+#### `GET` /bookings/{id} returns the following result
 - id - id of booking
 - eventId - id of event
 - status - status of booking processing, can be different (pending, confirmed, rejected)
@@ -104,4 +104,4 @@ And in location you can find URL for getting booking
 
 - create event using `POST` /events
 - create booking using `POST` /events/{id}/book
-- check status of booking using `GET` /booking/{id}
+- check status of booking using `GET` /bookings/{id}
