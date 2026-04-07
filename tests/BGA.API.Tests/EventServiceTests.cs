@@ -623,7 +623,11 @@ public class EventServiceTests
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(It.IsAny<Event>);
+
+        _repository
+            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(true);
 
         // Act
@@ -634,7 +638,10 @@ public class EventServiceTests
         Assert.True(result.Succeeded);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _repository
+            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -645,7 +652,11 @@ public class EventServiceTests
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(It.IsAny<Event>);
+
+        _repository
+            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(false);
 
         // Act
@@ -657,7 +668,10 @@ public class EventServiceTests
         Assert.Contains(expectedErrorMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _repository
+            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -668,7 +682,11 @@ public class EventServiceTests
         var id = Guid.NewGuid();
 
         _repository
-            .Setup(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(It.IsAny<Event>);
+
+        _repository
+            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ThrowsAsync(new Exception(expectedExceptionMessage));
 
         // Act
@@ -680,8 +698,10 @@ public class EventServiceTests
         Assert.Contains(expectedExceptionMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
+        _repository
+            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     private static IQueryable<Event> CreateEvents(int count, List<string>? titles = null, List<DateTimeOffset>? startAtDates = null, List<DateTimeOffset>? endAtDates = null)
