@@ -16,7 +16,7 @@ public class BookingService(
         {
             var exists = await _eventRepository.ExistsAsync(eventId, cancellationToken);
             if (!exists)
-                return ServiceResponse<Booking>.Failure(["Event not found"]);
+                return ServiceResponse<Booking>.Failure("Event not found", ServiceErrorType.NotFound);
 
             var booking = new Booking
             {
@@ -29,11 +29,11 @@ public class BookingService(
 
             return success
                 ? ServiceResponse<Booking>.Success(booking)
-                : ServiceResponse<Booking>.Failure(["Cannot create booking"]);
+                : ServiceResponse<Booking>.Failure("Cannot create booking", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Booking>.Failure([ex.Message]);
+            return ServiceResponse<Booking>.Failure(ex, ex.Message);
         }
     }
 
@@ -44,11 +44,11 @@ public class BookingService(
             var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
             return booking != null
                 ? ServiceResponse<Booking>.Success(booking)
-                : ServiceResponse<Booking>.Failure(["Booking not found"]);
+                : ServiceResponse<Booking>.Failure("Booking not found", ServiceErrorType.NotFound);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Booking>.Failure([ex.Message]);
+            return ServiceResponse<Booking>.Failure(ex, ex.Message);
         }
     }
 }

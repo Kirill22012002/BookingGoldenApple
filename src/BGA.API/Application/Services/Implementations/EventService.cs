@@ -41,7 +41,7 @@ public class EventService(IEventRepository _eventRepository) : IEventService
         }
         catch (Exception ex)
         {
-            return ServiceResponse<PaginatedResult<Event>>.Failure([ex.Message]);
+            return ServiceResponse<PaginatedResult<Event>>.Failure(ex, ex.Message);
         }
     }
 
@@ -52,11 +52,11 @@ public class EventService(IEventRepository _eventRepository) : IEventService
             var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
             return @event != null
                 ? ServiceResponse<Event>.Success(@event)
-                : ServiceResponse<Event>.Failure(["Event not found"]);
+                : ServiceResponse<Event>.Failure("Event not found", ServiceErrorType.NotFound);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Event>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure(ex, ex.Message);
         }
     }
 
@@ -68,11 +68,11 @@ public class EventService(IEventRepository _eventRepository) : IEventService
 
             return success
                 ? ServiceResponse<Event>.Success(@event)
-                : ServiceResponse<Event>.Failure(["Cannot create event"]);
+                : ServiceResponse<Event>.Failure("Cannot create event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Event>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure(ex, ex.Message);
         }
     }
 
@@ -84,11 +84,11 @@ public class EventService(IEventRepository _eventRepository) : IEventService
 
             return success
                 ? ServiceResponse.Success()
-                : ServiceResponse.Failure(["Cannot update event"]);
+                : ServiceResponse.Failure("Cannot update event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse.Failure([ex.Message]);
+            return ServiceResponse.Failure(ex, ex.Message);
         }
     }
 
@@ -100,11 +100,11 @@ public class EventService(IEventRepository _eventRepository) : IEventService
 
             return success
                 ? ServiceResponse.Success()
-                : ServiceResponse.Failure(["Cannot remove event"]);
+                : ServiceResponse.Failure("Cannot remove event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse.Failure([ex.Message]);
+            return ServiceResponse.Failure(ex, ex.Message);
         }
     }
 }
