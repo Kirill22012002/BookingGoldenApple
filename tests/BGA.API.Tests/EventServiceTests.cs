@@ -645,6 +645,32 @@ public class EventServiceTests
     }
 
     [Fact]
+    public async Task RemoveAsync_WhenEventNotFound_ReturnsServiceResponseWithNotSuccess()
+    {
+        // Arrange
+        var expectedErrorMessage = "Event not found";
+        var id = Guid.NewGuid();
+
+        _repository
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync((Event)null!);
+
+        // Act
+        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedErrorMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _repository
+            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+    }
+
+    [Fact]
     public async Task RemoveAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
