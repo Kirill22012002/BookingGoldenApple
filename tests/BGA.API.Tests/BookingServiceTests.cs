@@ -64,9 +64,15 @@ public class BookingServiceTests
             .Setup(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(true);
 
+        var capturedEntities = new List<Booking>();
+
         _bookingRepository
             .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
-            .Callback<Booking, CancellationToken>((booking, cancellationToken) => booking.Id = Guid.NewGuid())
+            .Callback<Booking, CancellationToken>((booking, cancellationToken) =>
+            {
+                booking.Id = Guid.NewGuid();
+                capturedEntities.Add(booking);
+            })
             .ReturnsAsync(true);
 
         // Act
@@ -82,12 +88,16 @@ public class BookingServiceTests
         Assert.NotNull(secondBookingResult.Data);
         Assert.Equal(firstBookingResult.Data.EventId, secondBookingResult.Data.EventId);
         Assert.NotEqual(firstBookingResult.Data.Id, secondBookingResult.Data.Id);
+        Assert.NotSame(capturedEntities[0], capturedEntities[1]);
 
         _eventRepository
             .Verify(repository => repository.ExistsAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
 
         _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+            .Verify(repository => repository.CreateAsync(capturedEntities[0], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _bookingRepository
+            .Verify(repository => repository.CreateAsync(capturedEntities[1], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
