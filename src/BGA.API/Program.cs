@@ -1,11 +1,14 @@
-using BGA.API.Application.Services.Implementations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Application.Services.Implementations;
 using BGA.API.Presentation;
+using BGA.API.Presentation.Extensions;
+using BGA.API.Infrastructure;
+using BGA.API.Infrastructure.BackgroundServices;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
-using Microsoft.AspNetCore.Mvc;
-using BGA.API.Presentation.Extensions;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +34,19 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("InMemoryDatabase"));
+
 builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddSingleton<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+
+builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services.AddHostedService<BookingProcessingService>();
 
 var app = builder.Build();
 

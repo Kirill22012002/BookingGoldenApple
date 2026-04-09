@@ -1,54 +1,46 @@
 using BGA.API.Infrastructure.Repositories.Interfaces;
-using System.Collections.Concurrent;
 using BGA.API.Infrastructure.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BGA.API.Infrastructure.Repositories.Implementations;
 
-public class EventRepository : IEventRepository
+public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 {
-    private readonly ConcurrentDictionary<int, Event> _events = [];
-    private int _eventId = 0;
-
-    public IQueryable<Event> GetAll()
+    public async Task<IQueryable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return _events.Values.AsQueryable();
+        cancellationToken.ThrowIfCancellationRequested();
+        return _dbContext.Events.AsNoTracking().AsQueryable();
     }
 
-    public Event GetById(int id)
+    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var @event = _events.GetValueOrDefault(id);
-        if (@event == null)
-        {
-            throw new KeyNotFoundException($"Event with Id: {id} not found");
-        }
-
-        return @event;
+        return await _dbContext.Events.SingleOrDefaultAsync(@event => @event.Id == id, cancellationToken);
     }
 
-    public bool Create(Event @event)
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        if (@event.Id <= 0)
-        {
-            Interlocked.Increment(ref _eventId);
-            @event.Id = _eventId;
-        }
-
-        return _events.TryAdd(@event.Id, @event);
+        var @event = await GetByIdAsync(id, cancellationToken);
+        return @event != null;
     }
 
-    public bool Update(int id, Event @event)
+    public async Task<bool> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        var oldEvent = _events.GetValueOrDefault(id);
-        if (oldEvent == null)
-        {
-            throw new KeyNotFoundException($"Event with Id: {id} not found");
-        }
-
-        return _events.TryUpdate(id, @event, oldEvent);
+        await _dbContext.Events.AddAsync(@event, cancellationToken);
+        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        return result >= 1;
     }
 
-    public bool Remove(int id)
+    public async Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        return _events.TryRemove(id, out var _);
+        _dbContext.Events.Update(@event);
+        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        return result >= 1;
+    }
+
+    public async Task<bool> RemoveAsync(Event @event, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Remove(@event);
+        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        return result >= 1;
     }
 }

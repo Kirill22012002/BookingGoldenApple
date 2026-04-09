@@ -4,9 +4,9 @@ using BGA.API.Infrastructure.Models;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class EventService(IEventRepository _repository) : IEventService
+public class EventService(IEventRepository _eventRepository) : IEventService
 {
-    public ServiceResponse<PaginatedResult<Event>> GetAll(string? title, DateTime? from, DateTime? to, int page, int pageSize)
+    public async Task<ServiceResponse<PaginatedResult<Event>>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         Dictionary<string, string> validationErrors = [];
 
@@ -18,7 +18,7 @@ public class EventService(IEventRepository _repository) : IEventService
 
         try
         {
-            var query = _repository.GetAll();
+            var query = await _eventRepository.GetAllAsync(cancellationToken);
             if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
             if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
             if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
@@ -41,68 +41,74 @@ public class EventService(IEventRepository _repository) : IEventService
         }
         catch (Exception ex)
         {
-            return ServiceResponse<PaginatedResult<Event>>.Failure([ex.Message]);
+            return ServiceResponse<PaginatedResult<Event>>.Failure(ex, ex.Message);
         }
     }
 
-    public ServiceResponse<Event> GetById(int id)
+    public async Task<ServiceResponse<Event>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var @event = _repository.GetById(id);
-            return ServiceResponse<Event>.Success(@event);
+            var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
+            return @event != null
+                ? ServiceResponse<Event>.Success(@event)
+                : ServiceResponse<Event>.Failure("Event not found", ServiceErrorType.NotFound);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Event>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure(ex, ex.Message);
         }
     }
 
-    public ServiceResponse<Event> Create(Event @event)
+    public async Task<ServiceResponse<Event>> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Create(@event);
+            var success = await _eventRepository.CreateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse<Event>.Success(@event)
-                : ServiceResponse<Event>.Failure(["Cannot create event"]);
+                : ServiceResponse<Event>.Failure("Cannot create event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse<Event>.Failure([ex.Message]);
+            return ServiceResponse<Event>.Failure(ex, ex.Message);
         }
     }
 
-    public ServiceResponse Update(int id, Event @event)
+    public async Task<ServiceResponse> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Update(id, @event);
+            var success = await _eventRepository.UpdateAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()
-                : ServiceResponse.Failure(["Cannot update event"]);
+                : ServiceResponse.Failure("Cannot update event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse.Failure([ex.Message]);
+            return ServiceResponse.Failure(ex, ex.Message);
         }
     }
 
-    public ServiceResponse Remove(int id)
+    public async Task<ServiceResponse> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var success = _repository.Remove(id);
+            var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
+            if (@event == null)
+                return ServiceResponse.Failure("Event not found", ServiceErrorType.NotFound);
+
+            var success = await _eventRepository.RemoveAsync(@event, cancellationToken);
 
             return success
                 ? ServiceResponse.Success()
-                : ServiceResponse.Failure(["Cannot remove event"]);
+                : ServiceResponse.Failure("Cannot remove event", ServiceErrorType.InternalProblem);
         }
         catch (Exception ex)
         {
-            return ServiceResponse.Failure([ex.Message]);
+            return ServiceResponse.Failure(ex, ex.Message);
         }
     }
 }

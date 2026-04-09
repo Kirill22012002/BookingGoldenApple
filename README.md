@@ -55,13 +55,16 @@ dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
 ## API Documentation
 
 ### Endpoints: 
-- `GET`:    /events       - get list of all events
-- `GET`:    /events/{id}  - get event by id; if not found returns 404
-- `POST`:   /events       - create event
-- `PUT`:    /events/{id}  - update event
-- `DELETE`: /events/{id}  - remove event; if not found returns 404
+- `GET`:    /events            - get list of all events
+- `GET`:    /events/{id}       - get event by id; if not found returns 404
+- `POST`:   /events            - create event
+- `PUT`:    /events/{id}       - update event
+- `DELETE`: /events/{id}       - remove event; if not found returns 404
+- `POST`:   /events/{id}/book  - create booking for event; if event not found returns 404
 
-#### `GET`: /event has the following filters and pagination parameters. All filters work together (logical AND)
+- `GET`:    /bookings/{id}     - get booking by id; if not found returns 404
+
+#### `GET`: /events has the following filters and pagination parameters. All filters work together (logical AND)
 - title - optional, search by name, case-insensitive, partial match.
 - from - optional, events that begin no earlier than the specified date.
 - to - optional, events that end no later than the specified date.
@@ -73,3 +76,32 @@ dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
 - totalItems - the total number of events
 - pageNumber - the current page number
 - pageSize - the number of elements on the current page
+
+#### `POST` /events/{id}/book immediately returns the following result
+- id - id of booking
+- eventId - id of event
+- status - current status of booking
+And in location you can find URL for getting booking
+
+#### `GET` /bookings/{id} returns the following result
+- id - id of booking
+- eventId - id of event
+- status - status of booking processing, can be different (pending, confirmed, rejected)
+- createdAt - date of creating booking
+- processedAt - date of processing booking
+
+
+### Models descriptions:
+
+#### BookingStatus can be different
+- pending - created, wait for processing
+- confirmed - processed and confirmed
+- rejected - processed but rejected
+
+### User flows: 
+
+#### Create event => Create booking => Get booking status
+
+- create event using `POST` /events
+- create booking using `POST` /events/{id}/book
+- check status of booking using `GET` /bookings/{id}

@@ -10,20 +10,19 @@ public static class EventExtensions
     {
         return new Event
         {
-            Id = 0,
-            Title = dto.Title ?? "",
+            Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
             EndAt = dto.EndAt
         };
     }
 
-    public static Event MapToEntity(this PutEventDto dto, int id)
+    public static Event MapToEntity(this PutEventDto dto, Guid id)
     {
         return new Event
         {
             Id = id,
-            Title = dto.Title ?? "",
+            Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
             EndAt = dto.EndAt
@@ -36,7 +35,7 @@ public static class EventExtensions
         {
             Id = entity.Id,
             Title = entity.Title,
-            Description = entity.Description ?? "",
+            Description = entity.Description,
             StartAt = entity.StartAt,
             EndAt = entity.EndAt
         };

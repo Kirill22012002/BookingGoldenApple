@@ -54,7 +54,7 @@ public class CustomProblemDetailsFactory : ProblemDetailsFactory
     private static void Customize(ProblemDetails problemDetails, HttpContext httpContext)
     {
         problemDetails.Extensions.TryAdd("traceId", httpContext.TraceIdentifier);
-        problemDetails.Extensions.TryAdd("timestamp", DateTime.UtcNow);
+        problemDetails.Extensions.TryAdd("timestamp", DateTimeOffset.UtcNow);
         problemDetails.Instance = $"{httpContext.Request.Method} {httpContext.Request.Path}";
     }
 }
