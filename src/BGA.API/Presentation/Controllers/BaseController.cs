@@ -30,6 +30,15 @@ public class BaseController : ControllerBase
                         modelStateDictionary: response.ValidationErrors.ToModelStateDictionary()
                     );
                 }
+            case (_, ServiceErrorType.Conflict):
+                {
+                    return Problem(
+                        statusCode: StatusCodes.Status409Conflict,
+                        title: "Conflict",
+                        type: StatusCodes.Status409Conflict.GetProblemType(),
+                        detail: string.Join(". ", response.Errors)
+                    );
+                }
             default:
                 {
                     return Problem(

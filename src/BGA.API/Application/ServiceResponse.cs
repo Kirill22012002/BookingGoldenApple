@@ -52,5 +52,6 @@ public enum ServiceErrorType
     None,
     Validation,
     NotFound,
+    Conflict,
     InternalProblem
 }

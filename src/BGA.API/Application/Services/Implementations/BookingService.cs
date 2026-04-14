@@ -10,26 +10,42 @@ public class BookingService(
     IEventRepository _eventRepository,
     TimeProvider _timeProvider) : IBookingService
 {
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+
     public async Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var exists = await _eventRepository.ExistsAsync(eventId, cancellationToken);
-            if (!exists)
-                return ServiceResponse<Booking>.Failure("Event not found", ServiceErrorType.NotFound);
-
-            var booking = new Booking
+            await _semaphore.WaitAsync(cancellationToken);
+            try
             {
-                EventId = eventId,
-                Status = BookingStatus.Pending,
-                CreatedAt = _timeProvider.GetUtcNow()
-            };
+                var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken);
+                if (@event == null)
+                    return ServiceResponse<Booking>.Failure("Event not found", ServiceErrorType.NotFound);
 
-            var success = await _bookingRepository.CreateAsync(booking, cancellationToken);
+                var successReservation = @event.TryReserveSeats();
+                if (!successReservation)
+                    return ServiceResponse<Booking>.Failure("No available seats for this event", ServiceErrorType.Conflict);
 
-            return success
-                ? ServiceResponse<Booking>.Success(booking)
-                : ServiceResponse<Booking>.Failure("Cannot create booking", ServiceErrorType.InternalProblem);
+                await _eventRepository.UpdateAsync(@event, cancellationToken);
+
+                var booking = new Booking
+                {
+                    EventId = eventId,
+                    Status = BookingStatus.Pending,
+                    CreatedAt = _timeProvider.GetUtcNow()
+                };
+
+                var success = await _bookingRepository.CreateAsync(booking, cancellationToken);
+
+                return success
+                    ? ServiceResponse<Booking>.Success(booking)
+                    : ServiceResponse<Booking>.Failure("Cannot create booking", ServiceErrorType.InternalProblem);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
         catch (Exception ex)
         {

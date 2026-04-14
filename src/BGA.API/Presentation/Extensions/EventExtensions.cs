@@ -8,25 +8,12 @@ public static class EventExtensions
 {
     public static Event MapToEntity(this AddEventDto dto)
     {
-        return new Event
-        {
-            Title = dto.Title,
-            Description = dto.Description,
-            StartAt = dto.StartAt,
-            EndAt = dto.EndAt
-        };
+        return new Event(dto.Title, dto.Description, dto.StartAt, dto.EndAt, dto.TotalSeats);
     }
 
     public static Event MapToEntity(this PutEventDto dto, Guid id)
     {
-        return new Event
-        {
-            Id = id,
-            Title = dto.Title,
-            Description = dto.Description,
-            StartAt = dto.StartAt,
-            EndAt = dto.EndAt
-        };
+        return new Event(id, dto.Title, dto.Description, dto.StartAt, dto.EndAt, dto.TotalSeats);
     }
 
     public static EventDto MapToDto(this Event entity)
@@ -37,7 +24,9 @@ public static class EventExtensions
             Title = entity.Title,
             Description = entity.Description,
             StartAt = entity.StartAt,
-            EndAt = entity.EndAt
+            EndAt = entity.EndAt,
+            TotalSeats = entity.TotalSeats,
+            AvailableSeats = entity.AvailableSeats
         };
     }
 
