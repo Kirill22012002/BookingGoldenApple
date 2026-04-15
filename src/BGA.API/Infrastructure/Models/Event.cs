@@ -33,6 +33,6 @@ public class Event
 
     public void ReleaseSeats(int count = 1)
     {
-        throw new NotImplementedException();
+        AvailableSeats += count;
     }
 }
