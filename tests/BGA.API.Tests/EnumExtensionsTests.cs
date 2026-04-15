@@ -30,5 +30,4 @@ public class EnumExtensionsTests
         // Arrange
         Assert.Equal(expectedResult, result);
     }
-
 }
