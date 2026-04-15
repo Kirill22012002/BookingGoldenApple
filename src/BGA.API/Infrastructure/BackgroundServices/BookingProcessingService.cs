@@ -1,5 +1,4 @@
 using BGA.API.Infrastructure.Models;
-using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Infrastructure.BackgroundServices;
@@ -38,11 +37,11 @@ public class BookingProcessingService(
 
     private async Task ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default)
     {
+        await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+
         using var scope = _serviceScopeFactory.CreateAsyncScope();
         var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
         var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
-
-        await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
 
         await _processingSemaphore.WaitAsync(cancellationToken);
         try

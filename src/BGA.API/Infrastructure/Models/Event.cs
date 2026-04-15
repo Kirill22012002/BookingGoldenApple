@@ -23,21 +23,20 @@ public class Event
     public string? Description { get; set; }
     public DateTimeOffset StartAt { get; set; }
     public DateTimeOffset EndAt { get; set; }
-    public int TotalSeats { get; set; }
-    public int AvailableSeats { get; set; }
+    public int TotalSeats { get; private set; }
+    public int AvailableSeats { get; private set; }
 
     public bool TryReserveSeats(int count = 1)
     {
-        if (AvailableSeats >= count)
-        {
-            AvailableSeats -= count;
-            return true;
-        }
-        return false;
+        if (AvailableSeats < count) return false;
+
+        AvailableSeats -= count;
+        return true;
     }
 
     public void ReleaseSeats(int count = 1)
     {
-        AvailableSeats += count;
+        if (TotalSeats >= AvailableSeats + count) AvailableSeats += count;
+        else AvailableSeats = TotalSeats;
     }
 }
