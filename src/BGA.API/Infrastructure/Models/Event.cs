@@ -28,7 +28,12 @@ public class Event
 
     public bool TryReserveSeats(int count = 1)
     {
-        throw new NotImplementedException();
+        if (AvailableSeats >= count)
+        {
+            AvailableSeats -= count;
+            return true;
+        }
+        return false;
     }
 
     public void ReleaseSeats(int count = 1)
