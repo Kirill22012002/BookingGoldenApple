@@ -526,6 +526,33 @@ public class EventServiceTests
     }
 
     [Fact]
+    public async Task UpdateAsync_WithNotExistsEvent_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var expectedExceptionMessage = "Event not found";
+        var expectedServiceErrorType = ServiceErrorType.NotFound;
+
+        _repository
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync((Event)null!);
+
+        // Act
+        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.IsType<ServiceResponse>(result);
+        Assert.False(result.Succeeded);
+        Assert.Contains(expectedExceptionMessage, result.Errors);
+        Assert.Equal(expectedServiceErrorType, result.ErrorType);
+
+        _repository
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _repository
+            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateAsync_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
     {
         // Arrange

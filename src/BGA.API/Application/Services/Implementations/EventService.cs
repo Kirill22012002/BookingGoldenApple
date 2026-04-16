@@ -82,7 +82,7 @@ public class EventService(IEventRepository _eventRepository) : IEventService
         {
             var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
             if (@event == null)
-                return ServiceResponse<Event>.Failure("Event not found", ServiceErrorType.NotFound);
+                return ServiceResponse.Failure("Event not found", ServiceErrorType.NotFound);
 
             @event.Title = title;
             @event.StartAt = startAt;
