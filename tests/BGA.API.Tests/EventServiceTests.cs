@@ -199,13 +199,13 @@ public class EventServiceTests
         // Arrange
         var events = new List<Event>()
         {
-            new(Guid.NewGuid(),  "Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "Morning jog", null, new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "JOGGING", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "Yoga", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new(Guid.NewGuid(), "Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue)
+            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("Morning jog", null, new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("JOGGING", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("Yoga", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
+            new("Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue)
         };
 
         _repository
@@ -362,7 +362,7 @@ public class EventServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var @event = new Event(id, "Jumping", "Jumping with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Jumping", "Jumping with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
@@ -429,7 +429,7 @@ public class EventServiceTests
     public async Task CreateAsync_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
     {
         // Arrange
-        var @event = new Event(Guid.NewGuid(), "Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
 
         _repository
             .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
@@ -456,7 +456,7 @@ public class EventServiceTests
     {
         // Arrange
         var expectedErrorMessage = "Cannot create event";
-        var @event = new Event(Guid.NewGuid(), "Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
 
         _repository
             .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
@@ -479,7 +479,7 @@ public class EventServiceTests
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
-        var @event = new Event(Guid.NewGuid(), "Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
 
         _repository
             .Setup(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
@@ -502,18 +502,24 @@ public class EventServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var @event = new Event(id, "Jumping", "Jumping with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+
+        _repository
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(CreateEvent());
 
         _repository
             .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(true);
 
         // Act
-        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
         Assert.True(result.Succeeded);
+
+        _repository
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
             .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -525,19 +531,25 @@ public class EventServiceTests
         // Arrange
         var id = Guid.NewGuid();
         var exceptionMessage = $"Event with Id: {id} not found";
-        var @event = new Event(id, "Jogging", "Jogging with other strong men", new DateTimeOffset(2026, 06, 24, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 06, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+
+        _repository
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(CreateEvent());
 
         _repository
             .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ThrowsAsync(new KeyNotFoundException(exceptionMessage));
 
         // Act
-        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
         Assert.False(result.Succeeded);
         Assert.Contains(exceptionMessage, result.Errors);
+
+        _repository
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
             .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -547,16 +559,19 @@ public class EventServiceTests
     public async Task UpdateAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
     {
         // Arrange
-        var expectedErrorMessage = "Cannot update event";
         var id = Guid.NewGuid();
-        var @event = new Event(id, "Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var expectedErrorMessage = "Cannot update event";
 
         _repository
-            .Setup(repository => repository.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
+            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(CreateEvent());
+
+        _repository
+            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(false);
 
         // Act
-        var result = await _service.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<ServiceResponse>(result);
@@ -564,7 +579,10 @@ public class EventServiceTests
         Assert.Contains(expectedErrorMessage, result.Errors);
 
         _repository
-            .Verify(repository => repository.UpdateAsync(@event, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _repository
+            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -691,7 +709,7 @@ public class EventServiceTests
         var list = new List<Event>();
         for (int i = 0; i < count; i++)
         {
-            list.Add(new Event(Guid.NewGuid(), titles != null ? titles[i] : i.ToString(), null, startAtDates != null ? startAtDates[i] : DateTimeOffset.MinValue, endAtDates != null ? endAtDates[i] : DateTimeOffset.MaxValue, int.MaxValue));
+            list.Add(new Event(titles != null ? titles[i] : i.ToString(), null, startAtDates != null ? startAtDates[i] : DateTimeOffset.MinValue, endAtDates != null ? endAtDates[i] : DateTimeOffset.MaxValue, int.MaxValue));
         }
 
         return list.AsQueryable();

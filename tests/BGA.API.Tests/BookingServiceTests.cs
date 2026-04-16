@@ -28,7 +28,7 @@ public class BookingServiceTests
     {
         // Arrange
         var expectedBookingStatus = BookingStatus.Pending;
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
@@ -61,7 +61,7 @@ public class BookingServiceTests
     public async Task CreateBookingAsync_TwiceWithTheSameEventIdAndExistsEvent_ReturnsServiceResponseWithSuccessAndDifferentBookingIds()
     {
         // Arrange
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
@@ -139,7 +139,7 @@ public class BookingServiceTests
     {
         // Arrange
         var expectedExceptionMessage = "Cannot create booking";
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
@@ -171,7 +171,7 @@ public class BookingServiceTests
     {
         // Arrange
         var expectedExceptionMessage = "Database error";
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);

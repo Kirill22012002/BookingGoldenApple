@@ -14,7 +14,7 @@ public class EventTests
     public void TryReserveSeats(int initialTotalSeats, int seatsCountToReserve, int availableAfterReserve, bool expectedResult)
     {
         // Arrange
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
@@ -31,7 +31,7 @@ public class EventTests
     public void ReleaseSeats(int initialTotalSeats, int seatsCountToRelease, int availableAfterRelease)
     {
         // Arrange
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
@@ -60,7 +60,7 @@ public class EventTests
     public void TryReserveSeats_Then_ReleaseSeats(int initialTotalSeats, int seatsCountToReserve, int availableAfterReserve, bool expectedResult, int seatsCountToRelease, int availableAfterRelease)
     {
         // Arrange
-        var @event = new Event(Guid.NewGuid(), "title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
