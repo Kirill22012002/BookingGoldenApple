@@ -8,6 +8,7 @@ namespace BGA.API.Application.Services.Implementations;
 public class BookingService(
     IBookingRepository _bookingRepository,
     IEventRepository _eventRepository,
+    ILogger<BookingService> _logger,
     TimeProvider _timeProvider) : IBookingService
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -66,5 +67,45 @@ public class BookingService(
         {
             return ServiceResponse<Booking>.Failure(ex, ex.Message);
         }
+    }
+
+    public async Task<ServiceResponse> ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var eventExists = await _eventRepository.ExistsAsync(booking.EventId, cancellationToken);
+            if (eventExists)
+            {
+                booking.Confirm();
+            }
+            else
+            {
+                booking.Reject();
+                _logger.LogWarning("Error while processing booking because Event not exist. EventId {EventId}, BookingId {}", booking.EventId, booking.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            booking.Reject();
+            var @event = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
+            if (@event != null)
+            {
+                @event.ReleaseSeats();
+                await _eventRepository.UpdateAsync(@event, cancellationToken);
+            }
+
+            _logger.LogWarning(ex, "Error while processing booking. BookingId {BookingId}", booking.Id);
+            return ServiceResponse.Failure("Error while processing booking", ServiceErrorType.InternalProblem);
+        }
+        finally
+        {
+            await _bookingRepository.UpdateAsync(booking, cancellationToken);
+            _semaphore.Release();
+        }
+
+        return ServiceResponse.Success();
     }
 }

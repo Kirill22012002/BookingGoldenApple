@@ -3,6 +3,7 @@ using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.Infrastructure.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -12,6 +13,7 @@ public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _bookingRepository;
     private readonly Mock<IEventRepository> _eventRepository;
+    private readonly Mock<ILogger<BookingService>> _logger;
     private readonly FakeTimeProvider _timeProvider;
     private readonly BookingService _service;
 
@@ -19,8 +21,9 @@ public class BookingServiceTests
     {
         _bookingRepository = new Mock<IBookingRepository>();
         _eventRepository = new Mock<IEventRepository>();
+        _logger = new Mock<ILogger<BookingService>>();
         _timeProvider = new FakeTimeProvider();
-        _service = new BookingService(_bookingRepository.Object, _eventRepository.Object, _timeProvider);
+        _service = new BookingService(_bookingRepository.Object, _eventRepository.Object, _logger.Object, _timeProvider);
     }
 
     [Fact]
@@ -359,8 +362,7 @@ public class BookingServiceTests
             Id = bookingId,
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = _timeProvider.GetUtcNow(),
-            ProcessedAt = null
+            CreatedAt = _timeProvider.GetUtcNow()
         };
 
         _bookingRepository
@@ -394,8 +396,7 @@ public class BookingServiceTests
             Id = bookingId,
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Confirmed,
-            CreatedAt = _timeProvider.GetUtcNow(),
-            ProcessedAt = null
+            CreatedAt = _timeProvider.GetUtcNow()
         };
 
         _bookingRepository
@@ -425,8 +426,7 @@ public class BookingServiceTests
             Id = bookingId,
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Rejected,
-            CreatedAt = _timeProvider.GetUtcNow(),
-            ProcessedAt = null
+            CreatedAt = _timeProvider.GetUtcNow()
         };
 
         _bookingRepository
