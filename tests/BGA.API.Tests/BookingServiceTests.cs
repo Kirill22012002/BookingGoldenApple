@@ -293,7 +293,7 @@ public class BookingServiceTests
         // Act
         var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
 
-        //Assert
+        // Assert
         Assert.IsType<ServiceResponse<Booking>>(result);
         Assert.False(result.Succeeded);
         Assert.Contains(expectedExceptionMessage, result.Errors);
@@ -307,6 +307,46 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AfterLastAvailableSeat_NoAvailableSeats_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    {
+        // Arrange
+        var expectedExceptionMessage = "No available seats for this event";
+        var expectedServiceErrorType = ServiceErrorType.Conflict;
+        var availableSeats = 1;
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, availableSeats);
+
+        _eventRepository
+            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(@event);
+
+        _bookingRepository
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var firstResponse = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.IsType<ServiceResponse<Booking>>(firstResponse);
+        Assert.True(firstResponse.Succeeded);
+        Assert.NotNull(firstResponse.Data);
+
+        var secondResponse = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.IsType<ServiceResponse<Booking>>(secondResponse);
+        Assert.False(secondResponse.Succeeded);
+        Assert.Null(secondResponse.Data);
+        Assert.Contains(expectedExceptionMessage, secondResponse.Errors);
+        Assert.Equal(expectedServiceErrorType, secondResponse.ErrorType);
+
+        _eventRepository
+            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+
+        _eventRepository
+            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _bookingRepository
+            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
