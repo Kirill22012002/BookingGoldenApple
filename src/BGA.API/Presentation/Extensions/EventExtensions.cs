@@ -11,11 +11,6 @@ public static class EventExtensions
         return new Event(dto.Title, dto.Description, dto.StartAt, dto.EndAt, dto.TotalSeats);
     }
 
-    public static Event MapToEntity(this PutEventDto dto, Guid id)
-    {
-        return new Event(id, dto.Title, dto.Description, dto.StartAt, dto.EndAt, dto.TotalSeats);
-    }
-
     public static EventDto MapToDto(this Event entity)
     {
         return new EventDto

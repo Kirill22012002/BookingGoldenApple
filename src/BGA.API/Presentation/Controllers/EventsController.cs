@@ -50,8 +50,7 @@ public class EventsController(
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] PutEventDto dto, CancellationToken cancellationToken)
     {
-        var @event = dto.MapToEntity(id);
-        var response = await _eventService.UpdateAsync(@event, cancellationToken);
+        var response = await _eventService.UpdateAsync(id, dto.Title, dto.Description, dto.StartAt, dto.EndAt, cancellationToken);
 
         return response.Succeeded
             ? NoContent()

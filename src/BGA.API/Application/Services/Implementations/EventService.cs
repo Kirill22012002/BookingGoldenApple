@@ -76,10 +76,19 @@ public class EventService(IEventRepository _eventRepository) : IEventService
         }
     }
 
-    public async Task<ServiceResponse> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
+    public async Task<ServiceResponse> UpdateAsync(Guid id, string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
     {
         try
         {
+            var @event = await _eventRepository.GetByIdAsync(id, cancellationToken);
+            if (@event == null)
+                return ServiceResponse<Event>.Failure("Event not found", ServiceErrorType.NotFound);
+
+            @event.Title = title;
+            @event.StartAt = startAt;
+            @event.EndAt = endAt;
+            if (description != null) @event.Description = description;
+
             var success = await _eventRepository.UpdateAsync(@event, cancellationToken);
 
             return success
