@@ -89,16 +89,28 @@ public class BookingService(
         }
         catch (Exception ex)
         {
-            booking.Reject();
-            var @event = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
-            if (@event != null)
+            _logger.LogWarning(ex, "Error while processing booking. BookingId {BookingId}", booking.Id);
+            List<string> errors = [ex.Message];
+
+            try
             {
-                @event.ReleaseSeats();
-                await _eventRepository.UpdateAsync(@event, cancellationToken);
+                booking.Reject();
+                var @event = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
+                if (@event != null)
+                {
+                    @event.ReleaseSeats();
+                    await _eventRepository.UpdateAsync(@event, cancellationToken);
+                }
+            }
+            catch (Exception innerException)
+            {
+                errors.Add(innerException.Message);
+                _logger.LogError(innerException,
+                    "Compensation failed for booking BookingId {BookingId} during error handling",
+                    booking.Id);
             }
 
-            _logger.LogWarning(ex, "Error while processing booking. BookingId {BookingId}", booking.Id);
-            return ServiceResponse.Failure("Error while processing booking", ServiceErrorType.InternalProblem);
+            return ServiceResponse.Failure(ex, errors);
         }
         finally
         {

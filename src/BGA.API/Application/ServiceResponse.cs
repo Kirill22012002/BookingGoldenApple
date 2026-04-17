@@ -18,6 +18,9 @@ public class ServiceResponse
     public static ServiceResponse Failure(Exception ex, string error)
         => new() { Succeeded = false, Exception = ex, Errors = [error], Message = "Operation failed" };
 
+    public static ServiceResponse Failure(Exception ex, List<string> errors)
+        => new() { Succeeded = false, Exception = ex, Errors = [.. errors], Message = "Operation failed" };
+
     public static ServiceResponse Failure(Dictionary<string, string> validationErrors)
         => new() { Succeeded = false, ValidationErrors = validationErrors, Message = "Operation failed", ErrorType = ServiceErrorType.Validation };
 }
