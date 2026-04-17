@@ -27,6 +27,7 @@ public class BookingServiceOverbookingTests
     }
 
     [Theory]
+    [InlineData(5, 20, 5, 15, 0)]
     [InlineData(2, 2, 2, 0, 0)]
     [InlineData(1, 2, 1, 1, 0)]
     [InlineData(2, 3, 2, 1, 0)]
