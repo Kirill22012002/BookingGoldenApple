@@ -36,7 +36,7 @@ public class BookingProcessingService(
         }
     }
 
-    private async Task<ServiceResponse> SimulateLatency(Func<Booking, CancellationToken, Task<ServiceResponse>> action, Booking booking, int simulatedLatencySec, CancellationToken stoppingToken = default)
+    private static async Task<ServiceResponse> SimulateLatency(Func<Booking, CancellationToken, Task<ServiceResponse>> action, Booking booking, int simulatedLatencySec, CancellationToken stoppingToken = default)
     {
         await Task.Delay(TimeSpan.FromSeconds(simulatedLatencySec), stoppingToken);
         return await action(booking, stoppingToken);
