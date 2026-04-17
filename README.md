@@ -94,7 +94,6 @@ And in location you can find URL for getting booking
 - createdAt - date of creating booking
 - processedAt - date of processing booking
 
-
 ### Models descriptions:
 
 #### BookingStatus can be different
