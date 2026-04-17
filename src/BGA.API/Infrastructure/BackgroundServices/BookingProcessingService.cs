@@ -1,4 +1,6 @@
+using BGA.API.Application;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Infrastructure.BackgroundServices;
@@ -18,7 +20,7 @@ public class BookingProcessingService(
             try
             {
                 var pendingBookings = await bookingRepository.GetAllInPendingAsync(stoppingToken);
-                var tasks = pendingBookings.Select(booking => bookingService.ProcessBookingAsync(booking, simulatedLatencySec: 2, stoppingToken));
+                var tasks = pendingBookings.Select(booking => SimulateLatency(bookingService.ProcessBookingAsync, booking, simulatedLatencySec: 2, stoppingToken));
                 await Task.WhenAll(tasks);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -32,5 +34,11 @@ public class BookingProcessingService(
 
             await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
         }
+    }
+
+    private async Task<ServiceResponse> SimulateLatency(Func<Booking, CancellationToken, Task<ServiceResponse>> action, Booking booking, int simulatedLatencySec, CancellationToken stoppingToken = default)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(simulatedLatencySec), stoppingToken);
+        return await action(booking, stoppingToken);
     }
 }
