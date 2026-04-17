@@ -9,8 +9,14 @@ using BGA.API.Infrastructure;
 using BGA.API.Infrastructure.BackgroundServices;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
+using BGA.API;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOptions<ApplicationSettingsOptions>()
+    .BindConfiguration(ApplicationSettingsOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.AddProblemDetails();
 
