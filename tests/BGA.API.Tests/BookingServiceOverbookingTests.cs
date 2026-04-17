@@ -33,6 +33,12 @@ public class BookingServiceOverbookingTests
     [InlineData(2, 3, 2, 1, 0)]
     [InlineData(3, 2, 2, 0, 1)]
     [InlineData(0, 2, 0, 2, 0)]
+    [InlineData(100, 50, 50, 0, 50)]
+    [InlineData(1, 100, 1, 99, 0)]
+    [InlineData(10, 0, 0, 0, 10)]
+    [InlineData(5, 1, 1, 0, 4)]
+    [InlineData(7, 7, 7, 0, 0)]
+    [InlineData(0, 0, 0, 0, 0)]
     public async Task CreateBookingAsync_OverbookingTests(int initialSeats, int concurrentRequests, int expectedSuccessBookings, int expectedFailedBookings, int expectedAvailableSeats)
     {
         // Arrange
@@ -52,12 +58,12 @@ public class BookingServiceOverbookingTests
         // Act
         var tasks = Enumerable
             .Range(0, concurrentRequests)
-            .Select(i =>
+            .Select(async i =>
             {
-                var result = _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
+                var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
                 lock (_lock)
                 {
-                    if (result.Result.Succeeded) successBookings++;
+                    if (result.Succeeded) successBookings++;
                     else failedBookings++;
                 }
 
@@ -70,5 +76,45 @@ public class BookingServiceOverbookingTests
         Assert.Equal(expectedSuccessBookings, successBookings);
         Assert.Equal(expectedFailedBookings, failedBookings);
         Assert.Equal(expectedAvailableSeats, @event.AvailableSeats);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AllBookingsCreateWithUniqueId()
+    {
+        // Arrange
+        var concurrentRequests = 10;
+        HashSet<Guid> ids = [];
+        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, concurrentRequests);
+        _eventRepository
+            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+            .ReturnsAsync(@event);
+
+        _bookingRepository
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+            .Callback<Booking, CancellationToken>((booking, cancellationToken) =>
+            {
+                booking.Id = Guid.NewGuid();
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var tasks = Enumerable
+            .Range(0, concurrentRequests)
+            .Select(async i =>
+            {
+                var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
+                lock (_lock)
+                {
+                    if (result.Data != null)
+                        Assert.True(ids.Add(result.Data.Id));
+                }
+
+                return result;
+            });
+
+        await Task.WhenAll(tasks);
+
+        // Assert
+        Assert.Equal(concurrentRequests, ids.Count);
     }
 }
