@@ -69,9 +69,9 @@ public class BookingService(
         }
     }
 
-    public async Task<ServiceResponse> ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default)
+    public async Task<ServiceResponse> ProcessBookingAsync(Booking booking, int simulatedLatencySec = 0, CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(simulatedLatencySec), cancellationToken);
 
         await _semaphore.WaitAsync(cancellationToken);
         try

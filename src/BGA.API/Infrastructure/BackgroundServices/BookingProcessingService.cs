@@ -18,7 +18,7 @@ public class BookingProcessingService(
             try
             {
                 var pendingBookings = await bookingRepository.GetAllInPendingAsync(stoppingToken);
-                var tasks = pendingBookings.Select(booking => bookingService.ProcessBookingAsync(booking, stoppingToken));
+                var tasks = pendingBookings.Select(booking => bookingService.ProcessBookingAsync(booking, simulatedLatencySec: 2, stoppingToken));
                 await Task.WhenAll(tasks);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
