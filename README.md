@@ -52,6 +52,10 @@ dotnet build tests/BGA.API.Tests/BGA.API.Tests.csproj
 dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
 ```
 
+### Description of src/BGA.API/appsettings.json settings
+- AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
+- AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
+
 ## API Documentation
 
 ### Endpoints: 
