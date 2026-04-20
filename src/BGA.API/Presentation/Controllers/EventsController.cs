@@ -19,20 +19,14 @@ public class EventsController(
     {
 
         var response = await _eventService.GetAllAsync(title, from, to, page, pageSize, cancellationToken);
-
-        return response.Succeeded
-            ? Ok(response.Data?.MapToDto())
-            : ProblemResponse(response);
+        return Ok(response.MapToDto());
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var response = await _eventService.GetByIdAsync(id, cancellationToken);
-
-        return response.Succeeded
-            ? Ok(response?.Data?.MapToDto())
-            : ProblemResponse(response);
+        return Ok(response.MapToDto());
     }
 
     [HttpPost]
@@ -40,45 +34,35 @@ public class EventsController(
     {
         var @event = dto.MapToEntity();
         var response = await _eventService.CreateAsync(@event, cancellationToken);
-        var responseDto = response.Data?.MapToDto();
+        var responseDto = response.MapToDto();
 
-        return response.Succeeded
-            ? CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto)
-            : ProblemResponse(response);
+        return CreatedAtAction(nameof(Get), new { id = responseDto?.Id }, responseDto);
     }
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] PutEventDto dto, CancellationToken cancellationToken)
     {
-        var response = await _eventService.UpdateAsync(id, dto.Title, dto.Description, dto.StartAt, dto.EndAt, cancellationToken);
-
-        return response.Succeeded
-            ? NoContent()
-            : ProblemResponse(response);
+        await _eventService.UpdateAsync(id, dto.Title, dto.Description, dto.StartAt, dto.EndAt, cancellationToken);
+        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remove([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var response = await _eventService.RemoveAsync(id, cancellationToken);
-
-        return response.Succeeded
-            ? NoContent()
-            : ProblemResponse(response);
+        await _eventService.RemoveAsync(id, cancellationToken);
+        return NoContent();
     }
 
     [HttpPost("{id:guid}/book")]
     public async Task<IActionResult> Book([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var response = await _bookingService.CreateBookingAsync(id, cancellationToken);
-        var responseDto = response.Data?.MapToDto();
+        var responseDto = response.MapToDto();
 
-        return response.Succeeded
-            ? AcceptedAtAction(
+        return AcceptedAtAction(
                 actionName: nameof(BookingsController.Get),
                 controllerName: ControllerName<BookingsController>(),
                 routeValues: new { id = responseDto?.Id },
-                value: new { id = responseDto?.Id, eventId = responseDto?.EventId, status = responseDto?.Status })
-            : ProblemResponse(response);
+                value: new { id = responseDto?.Id, eventId = responseDto?.EventId, status = responseDto?.Status });
     }
 }

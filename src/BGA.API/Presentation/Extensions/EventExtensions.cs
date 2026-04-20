@@ -1,6 +1,6 @@
 using BGA.API.Presentation.Dtos;
 using BGA.API.Infrastructure.Models;
-using BGA.API.Application;
+using BGA.API.Application.Models;
 
 namespace BGA.API.Presentation.Extensions;
 

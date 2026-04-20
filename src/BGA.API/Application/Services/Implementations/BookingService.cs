@@ -1,3 +1,4 @@
+using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
@@ -13,63 +14,42 @@ public class BookingService(
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    public async Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
+    public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
+        await _semaphore.WaitAsync(cancellationToken);
         try
         {
-            await _semaphore.WaitAsync(cancellationToken);
-            try
+            var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
+
+            var successReservation = @event.TryReserveSeats();
+            if (!successReservation)
+                throw new NoAvailableSeatsException("No available seats for this event");
+
+            await _eventRepository.UpdateAsync(@event, cancellationToken);
+
+            var booking = new Booking
             {
-                var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken);
-                if (@event == null)
-                    return ServiceResponse<Booking>.Failure("Event not found", ServiceErrorType.NotFound);
+                EventId = eventId,
+                Status = BookingStatus.Pending,
+                CreatedAt = _timeProvider.GetUtcNow()
+            };
 
-                var successReservation = @event.TryReserveSeats();
-                if (!successReservation)
-                    return ServiceResponse<Booking>.Failure("No available seats for this event", ServiceErrorType.Conflict);
-
-                await _eventRepository.UpdateAsync(@event, cancellationToken);
-
-                var booking = new Booking
-                {
-                    EventId = eventId,
-                    Status = BookingStatus.Pending,
-                    CreatedAt = _timeProvider.GetUtcNow()
-                };
-
-                var success = await _bookingRepository.CreateAsync(booking, cancellationToken);
-
-                return success
-                    ? ServiceResponse<Booking>.Success(booking)
-                    : ServiceResponse<Booking>.Failure("Cannot create booking", ServiceErrorType.InternalProblem);
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
+            await _bookingRepository.CreateAsync(booking, cancellationToken);
+            return booking;
         }
-        catch (Exception ex)
+        finally
         {
-            return ServiceResponse<Booking>.Failure(ex, ex.Message);
+            _semaphore.Release();
         }
     }
 
-    public async Task<ServiceResponse<Booking>> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
+    public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
-            return booking != null
-                ? ServiceResponse<Booking>.Success(booking)
-                : ServiceResponse<Booking>.Failure("Booking not found", ServiceErrorType.NotFound);
-        }
-        catch (Exception ex)
-        {
-            return ServiceResponse<Booking>.Failure(ex, ex.Message);
-        }
+        var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
+        return booking ?? throw new NotFoundException("Booking not found");
     }
 
-    public async Task<ServiceResponse> ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default)
+    public async Task ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
         try
@@ -108,14 +88,12 @@ public class BookingService(
                     booking.Id);
             }
 
-            return ServiceResponse.Failure(ex, errors);
+            throw;
         }
         finally
         {
             await _bookingRepository.UpdateAsync(booking, cancellationToken);
             _semaphore.Release();
         }
-
-        return ServiceResponse.Success();
     }
 }

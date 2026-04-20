@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Presentation;
-using BGA.API.Presentation.Extensions;
 using BGA.API.Infrastructure;
 using BGA.API.Infrastructure.BackgroundServices;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Repositories.Implementations;
 using BGA.API;
+using BGA.API.Presentation.Extensions;
+using BGA.API.Presentation.ExceptionHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,8 @@ builder.Services.AddOptions<ApplicationSettingsOptions>()
     .ValidateOnStart();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>(); // Fallback
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -56,8 +59,7 @@ builder.Services.AddHostedService<BookingProcessingService>();
 
 var app = builder.Build();
 
-app.UseExceptionHandler(); // fallback
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

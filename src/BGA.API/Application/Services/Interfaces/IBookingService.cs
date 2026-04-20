@@ -4,7 +4,7 @@ namespace BGA.API.Application.Services.Interfaces;
 
 public interface IBookingService
 {
-    Task<ServiceResponse<Booking>> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default);
-    Task<ServiceResponse<Booking>> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default);
-    Task<ServiceResponse> ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default);
+    Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default);
+    Task ProcessBookingAsync(Booking booking, CancellationToken cancellationToken = default);
 }
