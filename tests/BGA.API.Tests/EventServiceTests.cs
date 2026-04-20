@@ -1,4 +1,5 @@
-﻿using BGA.API.Application;
+﻿using BGA.API.Application.Exceptions;
+using BGA.API.Application.Models;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
@@ -18,7 +19,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAllAsync_WithPageAndPageSize_ReturnsServiceResponseWithSuccessAndCorrectCounts()
+    public async Task GetAllAsync_WithPageAndPageSize_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
         var page = 1;
@@ -34,20 +35,19 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: null, from: null, to: null, page: page, pageSize: pageSize, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Equal(totalItems, result.Data.TotalItems);
-        Assert.Equal(page, result.Data.PageNumber);
-        Assert.Equal(pageSize, result.Data.PageSize);
-        Assert.Equal(pageSize, result.Data.Items.Count());
+        Assert.IsType<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.Equal(totalItems, result.TotalItems);
+        Assert.Equal(page, result.PageNumber);
+        Assert.Equal(pageSize, result.PageSize);
+        Assert.Equal(pageSize, result.Items.Count());
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithFilterByTitle_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByTitle_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
         var searchSubstring = "ing";
@@ -64,22 +64,20 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Equal(expectedTitles.Count, result.Data.Items.Count());
-        Assert.All(result.Data.Items, @event => expectedTitles.Contains(@event.Title));
-        Assert.DoesNotContain(notExpectedTitle, result.Data.Items.Select(@event => @event.Title));
+        Assert.IsType<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.Equal(expectedTitles.Count, result.Items.Count());
+        Assert.All(result.Items, @event => expectedTitles.Contains(@event.Title));
+        Assert.DoesNotContain(notExpectedTitle, result.Items.Select(@event => @event.Title));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithFilterByStartAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByStartAt_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
-
         var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
         var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
         var expectedStartAtDates = new List<DateTimeOffset> { new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
@@ -94,19 +92,18 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Equal(expectedStartAtDates.Count, result.Data.Items.Count());
-        Assert.All(result.Data.Items, @event => expectedStartAtDates.Contains(@event.StartAt));
-        Assert.DoesNotContain(notExpectedStartAtDate, result.Data.Items.Select(@event => @event.StartAt));
+        Assert.IsType<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.Equal(expectedStartAtDates.Count, result.Items.Count());
+        Assert.All(result.Items, @event => expectedStartAtDates.Contains(@event.StartAt));
+        Assert.DoesNotContain(notExpectedStartAtDate, result.Items.Select(@event => @event.StartAt));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithFilterByEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterByEndAt_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
         var searchEndAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
@@ -123,19 +120,18 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Single(result.Data.Items);
-        Assert.Contains(expectedEndAtDate, result.Data.Items.Select(@event => @event.EndAt));
-        Assert.DoesNotContain(notExpectedEndDate, result.Data.Items.Select(@event => @event.EndAt));
+        Assert.IsType<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.Single(result.Items);
+        Assert.Contains(expectedEndAtDate, result.Items.Select(@event => @event.EndAt));
+        Assert.DoesNotContain(notExpectedEndDate, result.Items.Select(@event => @event.EndAt));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithFilterBothStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues()
+    public async Task GetAllAsync_WithFilterBothStartAtAndEndAt_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
         //  14, (15,  16, 17) 
@@ -161,12 +157,11 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Single(result.Data.Items, @event => @event.StartAt == expectedStartAtDate && @event.EndAt == expectedEndAtDate);
-        Assert.DoesNotContain(notExpectedStartAtDate, result.Data.Items.Select(@event => @event.StartAt));
-        Assert.DoesNotContain(notExpectedEndAtDate, result.Data.Items.Select(@event => @event.EndAt));
+        Assert.IsType<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.Single(result.Items, @event => @event.StartAt == expectedStartAtDate && @event.EndAt == expectedEndAtDate);
+        Assert.DoesNotContain(notExpectedStartAtDate, result.Items.Select(@event => @event.StartAt));
+        Assert.DoesNotContain(notExpectedEndAtDate, result.Items.Select(@event => @event.EndAt));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -194,7 +189,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(MultipleFilters))]
-    public async Task GetAllAsync_WithFilterAllTitleStartAtAndEndAt_ReturnsServiceResponseWithSuccessAndCorrectValues(string searchTitle, DateTimeOffset searchStartAt, DateTimeOffset searchEndAt, bool isInclude)
+    public async Task GetAllAsync_WithFilterAllTitleStartAtAndEndAt_ReturnsPaginatedResultWithEvents(string searchTitle, DateTimeOffset searchStartAt, DateTimeOffset searchEndAt, bool isInclude)
     {
         // Arrange
         var events = new List<Event>()
@@ -216,10 +211,8 @@ public class EventServiceTests
         var result = await _service.GetAllAsync(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Equal(isInclude, result.Data.Items.Any(@event =>
+        Assert.NotNull(result);
+        Assert.Equal(isInclude, result.Items.Any(@event =>
             @event.Title.Contains(searchTitle, StringComparison.OrdinalIgnoreCase) &&
             @event.StartAt == searchStartAt &&
             @event.EndAt == searchEndAt));
@@ -229,40 +222,38 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task GetAllAsync_WithPageLessThanOne_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithPageLessThanOne_ThrowValidationException()
     {
         // Arrange
         var expectedValidationErrorKey = "page";
         var expectedValidationErrorValue = "page can be more or equal than 1";
 
-        // Act
-        var result = await _service.GetAllAsync(null, null, null, 0, 10, cancellationToken: TestContext.Current.CancellationToken);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            async () => await _service.GetAllAsync(null, null, null, 0, 10, cancellationToken: TestContext.Current.CancellationToken));
 
-        // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.False(result.Succeeded);
-        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
-        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
+        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
+        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithPageSizeLessOrEqualThanZero_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithPageSizeLessOrEqualThanZero_ThrowValidationException()
     {
         // Arrange
         var expectedValidationErrorKey = "pageSize";
         var expectedValidationErrorValue = "pageSize can be more or equal than 0";
 
-        // Act
-        var result = await _service.GetAllAsync(null, null, null, 1, -1, cancellationToken: TestContext.Current.CancellationToken);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            async () => await _service.GetAllAsync(null, null, null, 1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
-        // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.False(result.Succeeded);
-        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
-        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
+        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
+        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -272,93 +263,91 @@ public class EventServiceTests
     {
         return
         [
-            [ null,                                                                        null,                                                                        false ],
-            [ null,                                                                        new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
-            [ new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)),            null,                                                                        false ],
-            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
-            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)),            false ],
-            [ new DateTimeOffset(2026, 03, 30, 10, 0, 0, TimeSpan.FromHours(0)),           new DateTimeOffset(2026, 03, 30, 10, 0, 1, TimeSpan.FromHours(0)),           false ],
-            [ new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)),            true  ]
+            [ null,                                                                        null,                                                             ],
+            [ null,                                                                        new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0))  ],
+            [ new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)),            null,                                                             ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0))  ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0))  ],
+            [ new DateTimeOffset(2026, 03, 30, 10, 0, 0, TimeSpan.FromHours(0)),           new DateTimeOffset(2026, 03, 30, 10, 0, 1, TimeSpan.FromHours(0)) ]
         ];
     }
 
     [Theory]
     [MemberData(nameof(DifferentDates))]
-    public async Task GetAllAsync_WithDifferentWaysForFromAndTo_ReturnsServiceResponseWithNotAnyOrAnyValidationErrors(DateTimeOffset? from, DateTimeOffset? to, bool anyValidationErrors)
+    public async Task GetAllAsync_WithDifferentWaysForFromAndTo_ReturnsPaginatedResultWithEvents(DateTimeOffset? from, DateTimeOffset? to)
     {
         // Arrange & Act
         var result = await _service.GetAllAsync(null, from, to, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.Equal(anyValidationErrors, result.ValidationErrors.Count != 0);
+        Assert.IsType<PaginatedResult<Event>>(result);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithFromMoreThanTo_ReturnsServiceResponseWithNotSuccessAndValidationError()
+    public async Task GetAllAsync_WithFromMoreThanTo_ThrowValidationException()
     {
         // Arrange
         var expectedValidationErrorKey = "to";
         var expectedValidationErrorValue = "to can be more or equal than from";
 
-        // Act
-        var result = await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), 1, 10, cancellationToken: TestContext.Current.CancellationToken);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), 1, 10, cancellationToken: TestContext.Current.CancellationToken));
 
-        // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.False(result.Succeeded);
-        Assert.True(result.ValidationErrors.ContainsKey(expectedValidationErrorKey));
-        Assert.True(result.ValidationErrors.ContainsValue(expectedValidationErrorValue));
+        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
+        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
+        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_Returns_ServiceResponseWithNotSuccessAndThreeValidationErrors()
+    public async Task GetAllAsync_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_ThrowValidationException()
     {
-        // Arrange & Act
-        var result = await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
-        // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Equal(3, result.ValidationErrors.Count);
-        Assert.True(result.ValidationErrors.ContainsKey("page"));
-        Assert.True(result.ValidationErrors.ContainsValue("page can be more or equal than 1"));
-        Assert.True(result.ValidationErrors.ContainsKey("pageSize"));
-        Assert.True(result.ValidationErrors.ContainsValue("pageSize can be more or equal than 0"));
-        Assert.True(result.ValidationErrors.ContainsKey("to"));
-        Assert.True(result.ValidationErrors.ContainsValue("to can be more or equal than from"));
+        Assert.Equal(3, exception.Errors.Count);
+
+        var pageKey = "page";
+        Assert.True(exception.Errors.ContainsKey(pageKey));
+        Assert.NotNull(exception.Errors[pageKey]);
+        Assert.True(exception.Errors[pageKey]?.Any(x => x == "page can be more or equal than 1"));
+
+        var pageSizeKey = "pageSize";
+        Assert.True(exception.Errors.ContainsKey(pageSizeKey));
+        Assert.NotNull(exception.Errors[pageSizeKey]);
+        Assert.True(exception.Errors[pageSizeKey]?.Any(x => x == "pageSize can be more or equal than 0"));
+
+        var toKey = "to";
+        Assert.True(exception.Errors.ContainsKey(toKey));
+        Assert.NotNull(exception.Errors[toKey]);
+        Assert.True(exception.Errors[toKey]?.Any(x => x == "to can be more or equal than from"));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
-    public async Task GetAllAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
+    public async Task GetAllAsync_WithRepositoryThrowsException()
     {
         // Arrange
-        var expectedExceptionMessage = "Database error";
-
         _repository
             .Setup(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new Exception(expectedExceptionMessage));
+            .ThrowsAsync(new Exception());
 
-        // Act
-        var result = await _service.GetAllAsync(null, null, null, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse<PaginatedResult<Event>>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(
+            async () => await _service.GetAllAsync(null, null, null, 1, 10, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithCorrectId_ReturnsServiceResponseWithSuccessAndCorrectValue()
+    public async Task GetByIdAsync_WithCorrectId_ReturnsEvent()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -372,133 +361,85 @@ public class EventServiceTests
         var result = await _service.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.True(result.Succeeded);
-        Assert.Equal(@event, result.Data);
+        Assert.IsType<Event>(result);
+        Assert.Equal(@event, result);
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task GetByIdAsync_WithRepositoryThrowException()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var expectedExceptionMessage = $"Event with Id: {id} not found";
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new KeyNotFoundException(expectedExceptionMessage));
+            .ThrowsAsync(new KeyNotFoundException());
 
-        // Act
-        var result = await _service.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
+        // Act & Assert
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            async () => await _service.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithNotExistsEvent_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task GetByIdAsync_WithNotExistsEvent_ThrowNotFoundException()
     {
         // Arrange
-        var expectedExceptionMessage = "Event not found";
         var eventId = Guid.NewGuid();
         _repository
             .Setup(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act
-        var result = await _service.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithValidEvent_ReturnsServiceResponseWithSuccessAndEvent()
+    public async Task CreateAsync_WithValidEvent_ReturnsEvent()
     {
         // Arrange
         var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
-
-        _repository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(true);
 
         // Act
         var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Data);
-        Assert.Equal(@event.Title, result.Data.Title);
-        Assert.Equal(@event.Description, result.Data.Description);
-        Assert.Equal(@event.StartAt, result.Data.StartAt);
-        Assert.Equal(@event.EndAt, result.Data.EndAt);
+        Assert.IsType<Event>(result);
+        Assert.NotNull(result);
 
         _repository
             .Verify(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task CreateAsync_WithRepositoryThrowsException()
     {
         // Arrange
-        var expectedErrorMessage = "Cannot create event";
-        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
-
-        _repository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(false);
-
-        // Act
-        var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedErrorMessage, result.Errors);
-
-        _repository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-    }
-
-    [Fact]
-    public async Task CreateAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
-    {
-        // Arrange
-        var expectedExceptionMessage = "Database error";
         var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
 
         _repository
             .Setup(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new Exception(expectedExceptionMessage));
+            .ThrowsAsync(new Exception());
 
-        // Act
-        var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse<Event>>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(
+            async () => await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithValidEvent_ReturnsServiceResponseWithSuccess()
+    public async Task UpdateAsync_WithValidEvent()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -507,17 +448,10 @@ public class EventServiceTests
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(CreateEvent());
 
-        _repository
-            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(true);
-
         // Act
-        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
+        await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.True(result.Succeeded);
-
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
@@ -526,24 +460,18 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WithNotExistsEvent_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task UpdateAsync_WithNotExistsEvent_ThrowNotFoundException()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var expectedExceptionMessage = "Event not found";
-        var expectedServiceErrorType = ServiceErrorType.NotFound;
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act
-        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
-        Assert.Equal(expectedServiceErrorType, result.ErrorType);
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -553,11 +481,10 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WithNotExistsId_ReturnsServiceResponseWithNotSuccessAndErrorMessage()
+    public async Task UpdateAsync_WithRepositoryException()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var exceptionMessage = $"Event with Id: {id} not found";
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
@@ -565,15 +492,11 @@ public class EventServiceTests
 
         _repository
             .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new KeyNotFoundException(exceptionMessage));
+            .ThrowsAsync(new KeyNotFoundException());
 
-        // Act
-        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(exceptionMessage, result.Errors);
+        // Act & Assert        
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -583,37 +506,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var expectedErrorMessage = "Cannot update event";
-
-        _repository
-            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(CreateEvent());
-
-        _repository
-            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(false);
-
-        // Act
-        var result = await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedErrorMessage, result.Errors);
-
-        _repository
-            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-
-        _repository
-            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-    }
-
-    [Fact]
-    public async Task RemoveAsync_WithValidId_ReturnsServiceResponseWithSuccess()
+    public async Task RemoveAsync_WithValidId()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -622,17 +515,10 @@ public class EventServiceTests
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(CreateEvent());
 
-        _repository
-            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(true);
-
         // Act
-        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
+        await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.True(result.Succeeded);
-
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
@@ -641,23 +527,18 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task RemoveAsync_WhenEventNotFound_ReturnsServiceResponseWithNotSuccess()
+    public async Task RemoveAsync_WhenEventNotFound_ThrowNotFoundException()
     {
         // Arrange
-        var expectedErrorMessage = "Event not found";
         var id = Guid.NewGuid();
 
         _repository
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act
-        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedErrorMessage, result.Errors);
+        // Act & Assert        
+        await Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -667,10 +548,9 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task RemoveAsync_WithRepositoryReturnsFalse_ReturnsServiceResponseWithNotSuccess()
+    public async Task RemoveAsync_WithRepositoryThrowsException()
     {
         // Arrange
-        var expectedErrorMessage = "Cannot remove event";
         var id = Guid.NewGuid();
 
         _repository
@@ -679,45 +559,11 @@ public class EventServiceTests
 
         _repository
             .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(false);
+            .ThrowsAsync(new Exception());
 
-        // Act
-        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedErrorMessage, result.Errors);
-
-        _repository
-            .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-
-        _repository
-            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-    }
-
-    [Fact]
-    public async Task RemoveAsync_WithRepositoryThrowsException_ReturnsServiceResponseWithNotSuccess()
-    {
-        // Arrange
-        var expectedExceptionMessage = "Database error";
-        var id = Guid.NewGuid();
-
-        _repository
-            .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(CreateEvent());
-
-        _repository
-            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new Exception(expectedExceptionMessage));
-
-        // Act
-        var result = await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.IsType<ServiceResponse>(result);
-        Assert.False(result.Succeeded);
-        Assert.Contains(expectedExceptionMessage, result.Errors);
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(
+            async () => await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken));
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
