@@ -1,4 +1,5 @@
-﻿using BGA.API.Application.Services.Implementations;
+﻿using BGA.API.Application.Exceptions;
+using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -51,23 +52,20 @@ public class BookingServiceOverbookingTests
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
-        _bookingRepository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(true);
-
         // Act
         var tasks = Enumerable
             .Range(0, concurrentRequests)
             .Select(async i =>
             {
-                var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
-                lock (_lock)
+                try
                 {
-                    if (result.Succeeded) successBookings++;
-                    else failedBookings++;
+                    await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
+                    lock (_lock) successBookings++;
                 }
-
-                return result;
+                catch (NoAvailableSeatsException)
+                {
+                    lock (_lock) failedBookings++;
+                }
             });
 
         await Task.WhenAll(tasks);
@@ -94,8 +92,7 @@ public class BookingServiceOverbookingTests
             .Callback<Booking, CancellationToken>((booking, cancellationToken) =>
             {
                 booking.Id = Guid.NewGuid();
-            })
-            .ReturnsAsync(true);
+            });
 
         // Act
         var tasks = Enumerable
@@ -105,8 +102,8 @@ public class BookingServiceOverbookingTests
                 var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
                 lock (_lock)
                 {
-                    if (result.Data != null)
-                        Assert.True(ids.Add(result.Data.Id));
+                    if (result != null)
+                        Assert.True(ids.Add(result.Id));
                 }
 
                 return result;

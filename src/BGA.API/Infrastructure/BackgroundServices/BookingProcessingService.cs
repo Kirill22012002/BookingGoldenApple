@@ -1,4 +1,3 @@
-using BGA.API.Application;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
@@ -40,9 +39,9 @@ public class BookingProcessingService(
         }
     }
 
-    private async Task<ServiceResponse> SimulateLatency(Func<Booking, CancellationToken, Task<ServiceResponse>> action, Booking booking, CancellationToken stoppingToken = default)
+    private async Task SimulateLatency(Func<Booking, CancellationToken, Task> action, Booking booking, CancellationToken stoppingToken = default)
     {
         await Task.Delay(TimeSpan.FromSeconds(_settings.ProcessingDelaySec), stoppingToken);
-        return await action(booking, stoppingToken);
+        await action(booking, stoppingToken);
     }
 }
