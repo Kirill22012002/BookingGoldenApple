@@ -14,7 +14,7 @@ public class Event
 
     private readonly object _lock = new();
 
-    public Event(string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, int totalSeats) // TODO: add unit test for all cases
+    public Event(string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, int totalSeats)
     {
         ValidateStartAtAndEndAt(startAt, endAt);
         ValidateTotalSeats(totalSeats);

@@ -16,7 +16,7 @@ public class BookingTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = TestHelper.Yesterday
+            CreatedAt = TestHelper.Now
         };
 
         // Act
@@ -38,7 +38,7 @@ public class BookingTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = TestHelper.Yesterday
+            CreatedAt = TestHelper.Now
         };
 
         // Act
