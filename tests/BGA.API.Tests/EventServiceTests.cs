@@ -5,6 +5,7 @@ using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Tests.Helpers;
 using Moq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BGA.API.Tests;
 
@@ -225,17 +226,12 @@ public class EventServiceTests
     [Fact]
     public async Task GetAllAsync_WithPageLessThanOne_ThrowValidationException()
     {
-        // Arrange
-        var expectedValidationErrorKey = "page";
-        var expectedValidationErrorValue = "page can be more or equal than 1";
-
-        // Act & Assert
+        // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
             async () => await _service.GetAllAsync(null, null, null, 0, 10, cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
-        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
-        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
+        // Assert
+        exception.HasSingleError("page", "page can be more or equal than 1");
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -244,17 +240,11 @@ public class EventServiceTests
     [Fact]
     public async Task GetAllAsync_WithPageSizeLessOrEqualThanZero_ThrowValidationException()
     {
-        // Arrange
-        var expectedValidationErrorKey = "pageSize";
-        var expectedValidationErrorValue = "pageSize can be more or equal than 0";
-
-        // Act & Assert
+        // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
             async () => await _service.GetAllAsync(null, null, null, 1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
-        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
-        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
+        exception.HasSingleError("pageSize", "pageSize can be more or equal than 0");
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -287,17 +277,12 @@ public class EventServiceTests
     [Fact]
     public async Task GetAllAsync_WithFromMoreThanTo_ThrowValidationException()
     {
-        // Arrange
-        var expectedValidationErrorKey = "to";
-        var expectedValidationErrorValue = "to can be more or equal than from";
-
-        // Act & Assert
+        // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
             async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), 1, 10, cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.True(exception.Errors.ContainsKey(expectedValidationErrorKey));
-        Assert.NotNull(exception.Errors[expectedValidationErrorKey]);
-        Assert.True(exception.Errors[expectedValidationErrorKey]?.Any(x => x == expectedValidationErrorValue));
+        // Assert
+        exception.HasSingleError("to", "to can be more or equal than from");
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -306,16 +291,12 @@ public class EventServiceTests
     [Fact]
     public async Task GetAllAsync_WithPageLessThanOneAndPageSizeLessThanZeroAndToMoreThanFrom_ThrowValidationException()
     {
-        // Act & Assert
+        // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
             async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.Single(exception.Errors);
-
-        var pageKey = "page";
-        Assert.True(exception.Errors.ContainsKey(pageKey));
-        Assert.NotNull(exception.Errors[pageKey]);
-        Assert.True(exception.Errors[pageKey]?.Any(x => x == "page can be more or equal than 1"));
+        // Assert
+        exception.HasSingleError("page", "page can be more or equal than 1");
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -386,9 +367,12 @@ public class EventServiceTests
             .Setup(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(
+        // Act
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
             async () => await _service.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("Event not found", exception.Message);
 
         _repository
             .Verify(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -460,9 +444,12 @@ public class EventServiceTests
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(
+        // Act
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
             async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("Event not found", exception.Message);
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -527,9 +514,12 @@ public class EventServiceTests
             .Setup(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act & Assert        
-        await Assert.ThrowsAsync<NotFoundException>(
+        // Act        
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
             async () => await _service.RemoveAsync(id, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("Event not found", exception.Message);
 
         _repository
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);

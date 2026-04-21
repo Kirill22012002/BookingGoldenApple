@@ -176,9 +176,12 @@ public class BookingServiceTests
             .Setup(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(
+        // Act
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
             async () => await _service.CreateBookingAsync(eventId, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("Event not found", exception.Message);
 
         _eventRepository
             .Verify(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -229,11 +232,14 @@ public class BookingServiceTests
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
-        // Act & Assert
         await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<NoAvailableSeatsException>(
+        // Act
+        var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>(
             async () => await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("No available seats for this event", exception.Message);
 
         _eventRepository
             .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
@@ -343,9 +349,12 @@ public class BookingServiceTests
             .Setup(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Booking)null!);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(
+        // Act
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
             async () => await _service.GetBookingByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Equal("Booking not found", exception.Message);
 
         _bookingRepository
             .Verify(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
