@@ -3,6 +3,7 @@ using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.Infrastructure.Repositories.Interfaces;
+using BGA.API.Tests.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
@@ -31,7 +32,7 @@ public class BookingServiceTests
     {
         // Arrange
         var expectedBookingStatus = BookingStatus.Pending;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
 
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
@@ -61,7 +62,7 @@ public class BookingServiceTests
         // Arrange
         var initialTotalSeats = 5;
         var expectedAvailableSeats = initialTotalSeats - 1;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
 
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
@@ -89,7 +90,7 @@ public class BookingServiceTests
     {
         // Arrange
         var initialTotalSeats = 5;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
         List<Guid> createdBookingIds = [];
 
         _eventRepository
@@ -127,7 +128,7 @@ public class BookingServiceTests
     public async Task CreateBookingAsync_TwiceWithTheSameEventIdAndExistsEvent_ReturnsDifferentBookingIds()
     {
         // Arrange
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
@@ -193,7 +194,7 @@ public class BookingServiceTests
     public async Task CreateBookingAsync_WithRepositoryThrowsException()
     {
         // Arrange
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, int.MaxValue);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
 
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
@@ -218,36 +219,11 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_WithNoAvailableSeats_ThrowNoAvailableSeatsException()
-    {
-        // Arrange
-        var availableSeats = 0;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, availableSeats);
-
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(@event);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<NoAvailableSeatsException>(
-            async () => await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken));
-
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
-
-        _eventRepository
-            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
-
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
-    }
-
-    [Fact]
     public async Task CreateBookingAsync_AfterLastAvailableSeat_NoAvailableSeats_ThrowNoAvailableSeatsException()
     {
         // Arrange
         var availableSeats = 1;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, availableSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, availableSeats);
 
         _eventRepository
             .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
@@ -402,7 +378,7 @@ public class BookingServiceTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         _eventRepository
@@ -440,7 +416,7 @@ public class BookingServiceTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         _eventRepository
@@ -475,13 +451,13 @@ public class BookingServiceTests
         var initialSeats = 2;
         var expectedException = new InvalidOperationException();
         var expectedBookingStatus = BookingStatus.Rejected;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
         var booking = new Booking()
         {
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         _eventRepository
@@ -522,13 +498,13 @@ public class BookingServiceTests
         var expectedMainException = new InvalidOperationException();
         var innerException = new Exception();
         var expectedBookingStatus = BookingStatus.Rejected;
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
         var booking = new Booking()
         {
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         _eventRepository

@@ -10,13 +10,9 @@ public class EventService(IEventRepository _eventRepository) : IEventService
 {
     public async Task<PaginatedResult<Event>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        Dictionary<string, string[]> validationErrors = [];
-
-        if (page < 1) validationErrors.TryAdd(nameof(page), [$"{nameof(page)} can be more or equal than 1"]);
-        if (pageSize < 0) validationErrors.TryAdd(nameof(pageSize), [$"{nameof(pageSize)} can be more or equal than 0"]);
-        if (from.HasValue && to.HasValue && from.Value > to.Value) validationErrors.TryAdd(nameof(to), [$"{nameof(to)} can be more or equal than {nameof(from)}"]);
-
-        if (validationErrors.Count != 0) throw new ValidationException(validationErrors);
+        if (page < 1) throw new ValidationException(nameof(page), $"{nameof(page)} can be more or equal than 1");
+        if (pageSize < 0) throw new ValidationException(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
+        if (from.HasValue && to.HasValue && from.Value > to.Value) throw new ValidationException(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}"); ;
 
         var query = await _eventRepository.GetAllAsync(cancellationToken);
         if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
@@ -57,8 +53,7 @@ public class EventService(IEventRepository _eventRepository) : IEventService
         var @event = await _eventRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
 
         @event.Title = title;
-        @event.StartAt = startAt;
-        @event.EndAt = endAt;
+        @event.Reschedule(startAt, endAt);
         if (description != null) @event.Description = description;
 
         await _eventRepository.UpdateAsync(@event, cancellationToken);

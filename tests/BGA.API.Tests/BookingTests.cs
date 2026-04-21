@@ -1,5 +1,6 @@
 ﻿using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
+using BGA.API.Tests.Helpers;
 
 namespace BGA.API.Tests;
 
@@ -15,7 +16,7 @@ public class BookingTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         // Act
@@ -37,7 +38,7 @@ public class BookingTests
             Id = Guid.NewGuid(),
             EventId = Guid.NewGuid(),
             Status = BookingStatus.Pending,
-            CreatedAt = DateTimeOffset.MinValue
+            CreatedAt = TestHelper.Yesterday
         };
 
         // Act

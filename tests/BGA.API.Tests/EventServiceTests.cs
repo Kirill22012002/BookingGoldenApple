@@ -3,6 +3,7 @@ using BGA.API.Application.Models;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Repositories.Interfaces;
+using BGA.API.Tests.Helpers;
 using Moq;
 
 namespace BGA.API.Tests;
@@ -309,22 +310,12 @@ public class EventServiceTests
         var exception = await Assert.ThrowsAsync<ValidationException>(
             async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.Equal(3, exception.Errors.Count);
+        Assert.Single(exception.Errors);
 
         var pageKey = "page";
         Assert.True(exception.Errors.ContainsKey(pageKey));
         Assert.NotNull(exception.Errors[pageKey]);
         Assert.True(exception.Errors[pageKey]?.Any(x => x == "page can be more or equal than 1"));
-
-        var pageSizeKey = "pageSize";
-        Assert.True(exception.Errors.ContainsKey(pageSizeKey));
-        Assert.NotNull(exception.Errors[pageSizeKey]);
-        Assert.True(exception.Errors[pageSizeKey]?.Any(x => x == "pageSize can be more or equal than 0"));
-
-        var toKey = "to";
-        Assert.True(exception.Errors.ContainsKey(toKey));
-        Assert.NotNull(exception.Errors[toKey]);
-        Assert.True(exception.Errors[toKey]?.Any(x => x == "to can be more or equal than from"));
 
         _repository
             .Verify(repository => repository.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -582,7 +573,15 @@ public class EventServiceTests
         var list = new List<Event>();
         for (int i = 0; i < count; i++)
         {
-            list.Add(new Event(titles != null ? titles[i] : i.ToString(), null, startAtDates != null ? startAtDates[i] : DateTimeOffset.MinValue, endAtDates != null ? endAtDates[i] : DateTimeOffset.MaxValue, int.MaxValue));
+            list.Add(
+                new Event(
+                    title: titles != null ? titles[i] : i.ToString(),
+                    description: null,
+                    startAt: startAtDates != null ? startAtDates[i] : (endAtDates != null ? endAtDates[i].AddDays(-1) : TestHelper.Yesterday),
+                    endAt: endAtDates != null ? endAtDates[i] : (startAtDates != null ? startAtDates[i].AddDays(1) : TestHelper.Tomorrow),
+                    totalSeats: int.MaxValue
+                )
+            );
         }
 
         return list.AsQueryable();

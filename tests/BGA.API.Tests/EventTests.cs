@@ -1,4 +1,5 @@
 using BGA.API.Infrastructure.Models;
+using BGA.API.Tests.Helpers;
 
 namespace BGA.API.Tests;
 
@@ -9,12 +10,11 @@ public class EventTests
     [InlineData(2, 1, 1, true)]
     [InlineData(2, 2, 0, true)]
     [InlineData(5, 0, 5, true)]
-    [InlineData(0, 1, 0, false)]
     [InlineData(1, 2, 1, false)]
     public void TryReserveSeats(int initialTotalSeats, int seatsCountToReserve, int availableAfterReserve, bool expectedResult)
     {
         // Arrange
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
@@ -31,7 +31,7 @@ public class EventTests
     public void ReleaseSeats(int initialTotalSeats, int seatsCountToRelease, int availableAfterRelease)
     {
         // Arrange
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
@@ -53,14 +53,12 @@ public class EventTests
     [InlineData(5, 0, 5, true, 0, 5)]
     [InlineData(5, 3, 2, true, 4, 5)]
     [InlineData(5, 2, 3, true, 3, 5)]
-    [InlineData(0, 0, 0, true, 0, 0)]
     [InlineData(2, 3, 2, false, 1, 2)]
     [InlineData(2, 3, 2, false, 5, 2)]
-    [InlineData(0, 1, 0, false, 1, 0)]
     public void TryReserveSeats_Then_ReleaseSeats(int initialTotalSeats, int seatsCountToReserve, int availableAfterReserve, bool expectedResult, int seatsCountToRelease, int availableAfterRelease)
     {
         // Arrange
-        var @event = new Event("title", "description", DateTimeOffset.MinValue, DateTimeOffset.MaxValue, initialTotalSeats);
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
 
         // Act & Assert
         Assert.Equal(initialTotalSeats, @event.TotalSeats);

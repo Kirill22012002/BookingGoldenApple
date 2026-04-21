@@ -16,31 +16,23 @@ public class BookingService(
 
     public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
+        var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
+
+        var successReservation = @event.TryReserveSeats();
+        if (!successReservation)
+            throw new NoAvailableSeatsException("No available seats for this event");
+
+        await _eventRepository.UpdateAsync(@event, cancellationToken);
+
+        var booking = new Booking
         {
-            var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
+            EventId = eventId,
+            Status = BookingStatus.Pending,
+            CreatedAt = _timeProvider.GetUtcNow()
+        };
 
-            var successReservation = @event.TryReserveSeats();
-            if (!successReservation)
-                throw new NoAvailableSeatsException("No available seats for this event");
-
-            await _eventRepository.UpdateAsync(@event, cancellationToken);
-
-            var booking = new Booking
-            {
-                EventId = eventId,
-                Status = BookingStatus.Pending,
-                CreatedAt = _timeProvider.GetUtcNow()
-            };
-
-            await _bookingRepository.CreateAsync(booking, cancellationToken);
-            return booking;
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
+        await _bookingRepository.CreateAsync(booking, cancellationToken);
+        return booking;
     }
 
     public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
