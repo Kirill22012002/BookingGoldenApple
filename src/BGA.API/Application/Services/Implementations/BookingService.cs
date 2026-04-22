@@ -60,7 +60,6 @@ public class BookingService(
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error while processing booking. BookingId {BookingId}", booking.Id);
-            List<string> errors = [ex.Message];
 
             try
             {
@@ -74,7 +73,6 @@ public class BookingService(
             }
             catch (Exception innerException)
             {
-                errors.Add(innerException.Message);
                 _logger.LogError(innerException,
                     "Compensation failed for booking BookingId {BookingId} during error handling",
                     booking.Id);
