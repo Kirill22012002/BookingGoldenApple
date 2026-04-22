@@ -526,12 +526,13 @@ public class BookingServiceTests
 
         // Act
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _service.ProcessBookingAsync(booking, cancellationToken: TestContext.Current.CancellationToken));
 
         // Arrange
         Assert.Equal(expectedBookingStatus, booking.Status);
         Assert.Equal(initialSeats, @event.AvailableSeats);
+        Assert.IsType<InvalidOperationException>(exception);
         Assert.NotNull(booking.ProcessedAt);
         Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
 
