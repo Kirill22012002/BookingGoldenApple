@@ -12,9 +12,6 @@ public class BookingsController(IBookingService _bookingService) : BaseControlle
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var response = await _bookingService.GetBookingByIdAsync(id, cancellationToken);
-
-        return response.Succeeded
-            ? Ok(response?.Data?.MapToDto())
-            : ProblemResponse(response);
+        return Ok(response.MapToDto());
     }
 }

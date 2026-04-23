@@ -19,17 +19,15 @@ public class BookingRepository(ApplicationDbContext _dbContext) : IBookingReposi
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> CreateAsync(Booking booking, CancellationToken cancellationToken = default)
+    public async Task CreateAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _dbContext.Bookings.AddAsync(booking, cancellationToken);
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
-        return result >= 1;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> UpdateAsync(Booking booking, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         _dbContext.Bookings.Update(booking);
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
-        return result >= 1;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

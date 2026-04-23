@@ -4,13 +4,12 @@ namespace BGA.API.Presentation.Extensions;
 
 public static class DictionaryExtensions
 {
-    public static ModelStateDictionary ToModelStateDictionary(this Dictionary<string, string> sourceErrors)
+    public static ModelStateDictionary ToModelStateDictionary(this IDictionary<string, string[]> sourceErrors)
     {
         var modelStateDictionary = new ModelStateDictionary();
         foreach (var item in sourceErrors)
-        {
-            modelStateDictionary.AddModelError(item.Key, item.Value);
-        }
+            foreach (var value in item.Value)
+                modelStateDictionary.AddModelError(item.Key, value);
 
         return modelStateDictionary;
     }

@@ -23,24 +23,21 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
         return @event != null;
     }
 
-    public async Task<bool> CreateAsync(Event @event, CancellationToken cancellationToken = default)
+    public async Task CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         await _dbContext.Events.AddAsync(@event, cancellationToken);
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
-        return result >= 1;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         _dbContext.Events.Update(@event);
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
-        return result >= 1;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> RemoveAsync(Event @event, CancellationToken cancellationToken = default)
+    public async Task RemoveAsync(Event @event, CancellationToken cancellationToken = default)
     {
         _dbContext.Remove(@event);
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
-        return result >= 1;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }
