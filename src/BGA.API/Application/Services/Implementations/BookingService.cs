@@ -1,8 +1,8 @@
 using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 
 namespace BGA.API.Application.Services.Implementations;
 
@@ -24,12 +24,7 @@ public class BookingService(
 
         await _eventRepository.UpdateAsync(@event, cancellationToken);
 
-        var booking = new Booking
-        {
-            EventId = eventId,
-            Status = BookingStatus.Pending,
-            CreatedAt = _timeProvider.GetUtcNow()
-        };
+        var booking = new Booking(eventId, BookingStatus.Pending, _timeProvider.GetUtcNow());
 
         await _bookingRepository.CreateAsync(booking, cancellationToken);
         return booking;

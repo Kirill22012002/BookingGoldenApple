@@ -1,9 +1,9 @@
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BGA.API.Infrastructure.Repositories.Implementations;
+namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class BookingRepository(ApplicationDbContext _dbContext) : IBookingRepository
 {

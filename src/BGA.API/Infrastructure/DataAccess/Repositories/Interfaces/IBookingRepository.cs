@@ -1,6 +1,6 @@
 using BGA.API.Infrastructure.Models;
 
-namespace BGA.API.Infrastructure.Repositories.Interfaces;
+namespace BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
 public interface IBookingRepository
 {

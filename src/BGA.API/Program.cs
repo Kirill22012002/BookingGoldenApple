@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Presentation;
-using BGA.API.Infrastructure;
 using BGA.API.Infrastructure.BackgroundServices;
-using BGA.API.Infrastructure.Repositories.Interfaces;
-using BGA.API.Infrastructure.Repositories.Implementations;
 using BGA.API;
 using BGA.API.Presentation.Extensions;
 using BGA.API.Presentation.ExceptionHandlers;
 using Microsoft.EntityFrameworkCore;
+using BGA.API.Infrastructure.DataAccess;
+using BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +61,12 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<BookingProcessingService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
 
 app.UseExceptionHandler();
 

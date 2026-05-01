@@ -1,6 +1,6 @@
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace BGA.API.Infrastructure.BackgroundServices;

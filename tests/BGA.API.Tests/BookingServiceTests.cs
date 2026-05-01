@@ -1,8 +1,8 @@
 using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Implementations;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Tests.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;

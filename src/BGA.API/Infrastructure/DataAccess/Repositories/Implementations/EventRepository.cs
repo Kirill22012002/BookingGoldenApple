@@ -1,8 +1,8 @@
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
-namespace BGA.API.Infrastructure.Repositories.Implementations;
+namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 {

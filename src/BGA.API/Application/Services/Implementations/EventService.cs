@@ -1,8 +1,8 @@
 using BGA.API.Application.Services.Interfaces;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Application.Models;
 using BGA.API.Application.Exceptions;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
 namespace BGA.API.Application.Services.Implementations;
 

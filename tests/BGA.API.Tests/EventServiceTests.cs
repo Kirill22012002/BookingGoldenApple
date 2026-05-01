@@ -1,8 +1,8 @@
 ﻿using BGA.API.Application.Exceptions;
 using BGA.API.Application.Models;
 using BGA.API.Application.Services.Implementations;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Tests.Helpers;
 using Moq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
