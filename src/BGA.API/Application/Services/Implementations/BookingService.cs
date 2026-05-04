@@ -1,5 +1,6 @@
 using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Interfaces;
+using BGA.API.Infrastructure.DataAccess;
 using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
@@ -9,6 +10,7 @@ namespace BGA.API.Application.Services.Implementations;
 public class BookingService(
     IBookingRepository _bookingRepository,
     IEventRepository _eventRepository,
+    IUnitOfWork _unitOfWork,
     ILogger<BookingService> _logger,
     TimeProvider _timeProvider) : IBookingService
 {
@@ -22,11 +24,12 @@ public class BookingService(
         if (!successReservation)
             throw new NoAvailableSeatsException("No available seats for this event");
 
-        await _eventRepository.UpdateAsync(@event, cancellationToken);
+        _eventRepository.Update(@event);
 
         var booking = new Booking(eventId, BookingStatus.Pending, _timeProvider.GetUtcNow());
 
         await _bookingRepository.CreateAsync(booking, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return booking;
     }
 
@@ -63,7 +66,7 @@ public class BookingService(
                 if (@event != null)
                 {
                     @event.ReleaseSeats();
-                    await _eventRepository.UpdateAsync(@event, cancellationToken);
+                    _eventRepository.Update(@event);
                 }
             }
             catch (Exception innerException)
@@ -77,7 +80,8 @@ public class BookingService(
         }
         finally
         {
-            await _bookingRepository.UpdateAsync(booking, cancellationToken);
+            _bookingRepository.Update(booking);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _semaphore.Release();
         }
     }

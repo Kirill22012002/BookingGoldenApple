@@ -53,6 +53,7 @@ builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 

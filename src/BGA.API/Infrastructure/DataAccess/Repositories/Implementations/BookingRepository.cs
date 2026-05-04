@@ -22,12 +22,10 @@ public class BookingRepository(ApplicationDbContext _dbContext) : IBookingReposi
     public async Task CreateAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _dbContext.Bookings.AddAsync(booking, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Booking booking, CancellationToken cancellationToken = default)
+    public void Update(Booking booking)
     {
         _dbContext.Bookings.Update(booking);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

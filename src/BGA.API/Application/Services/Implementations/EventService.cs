@@ -3,10 +3,13 @@ using BGA.API.Infrastructure.Models;
 using BGA.API.Application.Models;
 using BGA.API.Application.Exceptions;
 using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
+using BGA.API.Infrastructure.DataAccess;
 
 namespace BGA.API.Application.Services.Implementations;
 
-public class EventService(IEventRepository _eventRepository) : IEventService
+public class EventService(
+    IEventRepository _eventRepository,
+    IUnitOfWork _unitOfWork) : IEventService
 {
     public async Task<PaginatedResult<Event>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -45,6 +48,7 @@ public class EventService(IEventRepository _eventRepository) : IEventService
     public async Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         await _eventRepository.CreateAsync(@event, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return @event;
     }
 
@@ -56,12 +60,14 @@ public class EventService(IEventRepository _eventRepository) : IEventService
         @event.Reschedule(startAt, endAt);
         if (description != null) @event.Description = description;
 
-        await _eventRepository.UpdateAsync(@event, cancellationToken);
+        _eventRepository.Update(@event);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var @event = await _eventRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
-        await _eventRepository.RemoveAsync(@event, cancellationToken);
+        _eventRepository.Remove(@event);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

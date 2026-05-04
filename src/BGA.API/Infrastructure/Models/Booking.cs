@@ -5,10 +5,10 @@ namespace BGA.API.Infrastructure.Models;
 public class Booking
 {
     public Guid Id { get; private set; }
-    public BookingStatus Status { get; private set; } = default!;
-    public DateTimeOffset CreatedAt { get; private set; } = default!;
+    public BookingStatus Status { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? ProcessedAt { get; private set; }
-    public Guid EventId { get; private set; } = default!;
+    public Guid EventId { get; private set; }
     public Event Event { get; private set; } = null!;
 
     private Booking() { }
