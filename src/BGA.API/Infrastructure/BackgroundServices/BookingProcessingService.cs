@@ -16,14 +16,17 @@ public class BookingProcessingService(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            using var scope = _serviceScopeFactory.CreateAsyncScope();
-            var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            IEnumerable<Booking> pendingBookings;
+            await using (var readScope = _serviceScopeFactory.CreateAsyncScope())
+            {
+                var bookingRepository = readScope.ServiceProvider.GetRequiredService<IBookingRepository>();
+                pendingBookings = await bookingRepository.GetAllInPendingAsync(stoppingToken);
+            }
+
+            var tasks = pendingBookings.Select(booking => ProcessBookingSafelyAsync(booking, stoppingToken));
 
             try
             {
-                var pendingBookings = await bookingRepository.GetAllInPendingAsync(stoppingToken);
-                var tasks = pendingBookings.Select(booking => SimulateLatency(bookingService.ProcessBookingAsync, booking, stoppingToken));
                 await Task.WhenAll(tasks);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -36,6 +39,21 @@ public class BookingProcessingService(
             }
 
             await Task.Delay(TimeSpan.FromSeconds(_settings.PoolingIntervalSec), stoppingToken);
+        }
+    }
+
+    private async Task ProcessBookingSafelyAsync(Booking booking, CancellationToken stoppingToken)
+    {
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        try
+        {
+            await SimulateLatency(bookingService.ProcessBookingAsync, booking, stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process booking {BookingId}", booking.Id);
         }
     }
 
