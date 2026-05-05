@@ -4,21 +4,25 @@ namespace BGA.API.Infrastructure.Models;
 
 public class Event
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; }
+    public Guid Id { get; private set; }
+    public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public DateTimeOffset StartAt { get; private set; }
     public DateTimeOffset EndAt { get; private set; }
     public int TotalSeats { get; private set; }
     public int AvailableSeats { get; private set; }
+    public List<Booking> Bookings { get; private set; } = null!;
 
     private readonly object _lock = new();
+
+    private Event() { }
 
     public Event(string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, int totalSeats)
     {
         ValidateStartAtAndEndAt(startAt, endAt);
         ValidateTotalSeats(totalSeats);
 
+        Id = Guid.NewGuid();
         Title = title;
         Description = description;
         StartAt = startAt;

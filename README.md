@@ -4,12 +4,37 @@
 
 This version of BookingGoldenApple is based on .NET 10.
 
+### Prerequisites
+- PostgreSQL (required to run the application). Start from the repository root: `docker compose up -d` (uses `docker-compose.yml`). Stop: `docker compose down`.
+
+### Configure connection string
+Update the PostgreSQL connection string in `src/BGA.API/appsettings.json` under `ConnectionStrings:Default`.
+Defaults match `docker-compose.yml` (`postgres`/`postgres`, DB: `bgaapi`, Port: `5432`).
+
+Connection string format (Npgsql):
+`Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=<password>`
+
+Parameters:
+| Key | Description | Example |
+| --- | --- | --- |
+| `Host` | PostgreSQL server address | `localhost` |
+| `Port` | PostgreSQL server port | `5432` |
+| `Database` | Database name | `bgaapi` |
+| `Username` | DB user | `postgres` |
+| `Password` | DB user password | `postgres` |
+
+### Description of src/BGA.API/appsettings.json settings
+- AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
+- AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
+
 ### Building the solution
 ```powershell
 dotnet build src/BGA.API/BGA.API.csproj
 ```
 
 ### Running the solution
+Make sure PostgreSQL is running before starting the API.
+The DB schema is created automatically on startup via EF Core `EnsureCreated()`.
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj
 ```
@@ -51,10 +76,6 @@ dotnet build tests/BGA.API.Tests/BGA.API.Tests.csproj
 ```powershell
 dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
 ```
-
-### Description of src/BGA.API/appsettings.json settings
-- AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
-- AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
 
 ## API Documentation
 
@@ -104,7 +125,6 @@ And in location you can find URL for getting booking
 ### User flows: 
 
 #### Create event => Create booking => Get booking status
-
 - create event using `POST` /events
 - create booking using `POST` /events/{id}/book
 - check status of booking using `GET` /bookings/{id}

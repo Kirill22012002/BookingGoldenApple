@@ -1,9 +1,9 @@
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BGA.API.Infrastructure.Repositories.Implementations;
+namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class BookingRepository(ApplicationDbContext _dbContext) : IBookingRepository
 {
@@ -22,12 +22,10 @@ public class BookingRepository(ApplicationDbContext _dbContext) : IBookingReposi
     public async Task CreateAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _dbContext.Bookings.AddAsync(booking, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Booking booking, CancellationToken cancellationToken = default)
+    public void Update(Booking booking)
     {
         _dbContext.Bookings.Update(booking);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

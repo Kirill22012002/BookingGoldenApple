@@ -1,16 +1,16 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Application.Services.Implementations;
 using BGA.API.Presentation;
-using BGA.API.Infrastructure;
 using BGA.API.Infrastructure.BackgroundServices;
-using BGA.API.Infrastructure.Repositories.Interfaces;
-using BGA.API.Infrastructure.Repositories.Implementations;
 using BGA.API;
 using BGA.API.Presentation.Extensions;
 using BGA.API.Presentation.ExceptionHandlers;
+using Microsoft.EntityFrameworkCore;
+using BGA.API.Infrastructure.DataAccess;
+using BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,13 +43,17 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("InMemoryDatabase"));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
@@ -58,6 +62,12 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<BookingProcessingService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
 
 app.UseExceptionHandler();
 

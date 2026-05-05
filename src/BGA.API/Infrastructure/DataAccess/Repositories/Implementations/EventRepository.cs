@@ -1,8 +1,8 @@
-using BGA.API.Infrastructure.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
-namespace BGA.API.Infrastructure.Repositories.Implementations;
+namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 {
@@ -26,18 +26,15 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
     public async Task CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         await _dbContext.Events.AddAsync(@event, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Event @event, CancellationToken cancellationToken = default)
+    public void Update(Event @event)
     {
         _dbContext.Events.Update(@event);
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RemoveAsync(Event @event, CancellationToken cancellationToken = default)
+    public void Remove(Event @event)
     {
-        _dbContext.Remove(@event);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _dbContext.Events.Remove(@event);
     }
 }
