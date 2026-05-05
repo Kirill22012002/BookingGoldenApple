@@ -395,6 +395,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.CreateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -413,6 +416,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -434,6 +440,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -458,6 +467,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -483,6 +495,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -504,6 +519,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -528,6 +546,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Never);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -553,6 +574,9 @@ public class EventServiceTests
 
         _repository
             .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     private static Event CreateEvent()
