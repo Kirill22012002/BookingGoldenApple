@@ -62,6 +62,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -91,6 +94,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -126,6 +132,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
     }
 
     [Fact]
@@ -168,6 +177,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(capturedEntities[1], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
     }
 
     [Fact]
@@ -194,6 +206,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -222,6 +237,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
     }
 
     [Fact]
@@ -252,6 +270,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -389,6 +410,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -421,6 +445,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -461,6 +488,9 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -505,5 +535,8 @@ public class BookingServiceTests
 
         _bookingRepository
             .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 }
