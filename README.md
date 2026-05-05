@@ -30,6 +30,7 @@ dotnet build src/BGA.API/BGA.API.csproj
 
 ### Running the solution
 Make sure PostgreSQL is running before starting the API.
+The DB schema is created automatically on startup via EF Core `EnsureCreated()`.
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj
 ```
@@ -124,7 +125,6 @@ And in location you can find URL for getting booking
 ### User flows: 
 
 #### Create event => Create booking => Get booking status
-
 - create event using `POST` /events
 - create booking using `POST` /events/{id}/book
 - check status of booking using `GET` /bookings/{id}
