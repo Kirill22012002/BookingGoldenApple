@@ -1,5 +1,6 @@
 ﻿using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Implementations;
+using BGA.API.Infrastructure.DataAccess;
 using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Tests.Helpers;
@@ -13,6 +14,7 @@ public class BookingServiceOverbookingTests
 {
     private readonly Mock<IBookingRepository> _bookingRepository;
     private readonly Mock<IEventRepository> _eventRepository;
+    private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<ILogger<BookingService>> _logger;
     private readonly FakeTimeProvider _timeProvider;
     private readonly BookingService _service;
@@ -23,9 +25,15 @@ public class BookingServiceOverbookingTests
     {
         _bookingRepository = new Mock<IBookingRepository>();
         _eventRepository = new Mock<IEventRepository>();
+        _unitOfWork = new Mock<IUnitOfWork>();
         _logger = new Mock<ILogger<BookingService>>();
         _timeProvider = new FakeTimeProvider();
-        _service = new BookingService(_bookingRepository.Object, _eventRepository.Object, _logger.Object, _timeProvider);
+        _service = new BookingService(
+            _bookingRepository.Object,
+            _eventRepository.Object,
+            _unitOfWork.Object,
+            _logger.Object,
+            _timeProvider);
     }
 
     [Theory]
@@ -87,11 +95,7 @@ public class BookingServiceOverbookingTests
             .ReturnsAsync(@event);
 
         _bookingRepository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
-            .Callback<Booking, CancellationToken>((booking, cancellationToken) =>
-            {
-                booking.Id = Guid.NewGuid();
-            });
+            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
 
         // Act
         var tasks = Enumerable

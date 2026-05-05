@@ -11,13 +11,7 @@ public class BookingTests
     {
         // Arrange
         var expectedStatus = BookingStatus.Confirmed;
-        var booking = new Booking
-        {
-            Id = Guid.NewGuid(),
-            EventId = Guid.NewGuid(),
-            Status = BookingStatus.Pending,
-            CreatedAt = TestHelper.Now
-        };
+        var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
 
         // Act
         booking.Confirm();
@@ -33,13 +27,7 @@ public class BookingTests
     {
         // Arrange
         var expectedStatus = BookingStatus.Rejected;
-        var booking = new Booking
-        {
-            Id = Guid.NewGuid(),
-            EventId = Guid.NewGuid(),
-            Status = BookingStatus.Pending,
-            CreatedAt = TestHelper.Now
-        };
+        var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
 
         // Act
         booking.Reject();

@@ -1,23 +1,25 @@
 ﻿using BGA.API.Application.Exceptions;
 using BGA.API.Application.Models;
 using BGA.API.Application.Services.Implementations;
+using BGA.API.Infrastructure.DataAccess;
 using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Tests.Helpers;
 using Moq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BGA.API.Tests;
 
 public class EventServiceTests
 {
     private readonly Mock<IEventRepository> _repository;
+    private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly EventService _service;
 
     public EventServiceTests()
     {
         _repository = new Mock<IEventRepository>();
-        _service = new EventService(_repository.Object);
+        _unitOfWork = new Mock<IUnitOfWork>();
+        _service = new EventService(_repository.Object, _unitOfWork.Object);
     }
 
     [Fact]
@@ -431,7 +433,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
@@ -455,7 +457,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
     }
 
     [Fact]
@@ -469,8 +471,8 @@ public class EventServiceTests
             .ReturnsAsync(CreateEvent());
 
         _repository
-            .Setup(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new KeyNotFoundException());
+            .Setup(repository => repository.Update(It.IsAny<Event>()))
+            .Throws(new KeyNotFoundException());
 
         // Act & Assert        
         await Assert.ThrowsAsync<KeyNotFoundException>(
@@ -480,7 +482,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.UpdateAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
@@ -501,7 +503,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
@@ -525,7 +527,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Never);
     }
 
     [Fact]
@@ -539,8 +541,8 @@ public class EventServiceTests
             .ReturnsAsync(CreateEvent());
 
         _repository
-            .Setup(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new Exception());
+            .Setup(repository => repository.Remove(It.IsAny<Event>()))
+            .Throws(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(
@@ -550,7 +552,7 @@ public class EventServiceTests
             .Verify(repository => repository.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _repository
-            .Verify(repository => repository.RemoveAsync(It.IsAny<Event>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(repository => repository.Remove(It.IsAny<Event>()), Times.Once);
     }
 
     private static Event CreateEvent()
