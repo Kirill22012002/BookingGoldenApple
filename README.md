@@ -9,6 +9,19 @@ This version of BookingGoldenApple is based on .NET 10.
 
 ### Configure connection string
 Update the PostgreSQL connection string in `src/BGA.API/appsettings.json` under `ConnectionStrings:Default`.
+Defaults match `docker-compose.yml` (`postgres`/`postgres`, DB: `bgaapi`, Port: `5432`).
+
+Connection string format (Npgsql):
+`Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=<password>`
+
+Parameters:
+| Key | Description | Example |
+| --- | --- | --- |
+| `Host` | PostgreSQL server address | `localhost` |
+| `Port` | PostgreSQL server port | `5432` |
+| `Database` | Database name | `bgaapi` |
+| `Username` | DB user | `postgres` |
+| `Password` | DB user password | `postgres` |
 
 ### Building the solution
 ```powershell
