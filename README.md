@@ -4,12 +4,16 @@
 
 This version of BookingGoldenApple is based on .NET 10.
 
+### Prerequisites
+- PostgreSQL (required to run the application). You can start it via `docker compose up -d` using `docker-compose.yml` from the repository root.
+
 ### Building the solution
 ```powershell
 dotnet build src/BGA.API/BGA.API.csproj
 ```
 
 ### Running the solution
+Make sure PostgreSQL is running before starting the API.
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj
 ```
