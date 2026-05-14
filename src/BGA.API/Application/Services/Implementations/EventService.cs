@@ -2,13 +2,11 @@ using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Application.Models;
 using BGA.API.Application.Exceptions;
-using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.DataAccess;
 
 namespace BGA.API.Application.Services.Implementations;
 
 public class EventService(
-    IEventRepository _eventRepository,
     IUnitOfWork _unitOfWork) : IEventService
 {
     public async Task<PaginatedResult<Event>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
@@ -17,7 +15,7 @@ public class EventService(
         if (pageSize < 0) throw new ValidationException(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
         if (from.HasValue && to.HasValue && from.Value > to.Value) throw new ValidationException(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}"); ;
 
-        var query = await _eventRepository.GetAllAsync(cancellationToken);
+        var query = await _unitOfWork.Events.GetAllAsync(cancellationToken);
         if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
         if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
         if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
@@ -41,33 +39,33 @@ public class EventService(
 
     public async Task<Event> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var @event = await _eventRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        var @event = await _unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
         return @event;
     }
 
     public async Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        await _eventRepository.CreateAsync(@event, cancellationToken);
+        await _unitOfWork.Events.CreateAsync(@event, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return @event;
     }
 
     public async Task UpdateAsync(Guid id, string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
     {
-        var @event = await _eventRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        var @event = await _unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
 
         @event.Title = title;
         @event.Reschedule(startAt, endAt);
         if (description != null) @event.Description = description;
 
-        _eventRepository.Update(@event);
+        _unitOfWork.Events.Update(@event);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var @event = await _eventRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
-        _eventRepository.Remove(@event);
+        var @event = await _unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        _unitOfWork.Events.Remove(@event);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

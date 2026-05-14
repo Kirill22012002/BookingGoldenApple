@@ -12,8 +12,8 @@ namespace BGA.API.Tests;
 
 public class BookingServiceOverbookingTests
 {
-    private readonly Mock<IBookingRepository> _bookingRepository;
-    private readonly Mock<IEventRepository> _eventRepository;
+    private readonly Mock<IEventRepository> _eventRepositoryMock;
+    private readonly Mock<IBookingRepository> _bookingRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<ILogger<BookingService>> _logger;
     private readonly FakeTimeProvider _timeProvider;
@@ -23,14 +23,14 @@ public class BookingServiceOverbookingTests
 
     public BookingServiceOverbookingTests()
     {
-        _bookingRepository = new Mock<IBookingRepository>();
-        _eventRepository = new Mock<IEventRepository>();
+        _eventRepositoryMock = new Mock<IEventRepository>();
+        _bookingRepositoryMock = new Mock<IBookingRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
+        _unitOfWork.Setup(u => u.Events).Returns(_eventRepositoryMock.Object);
+        _unitOfWork.Setup(u => u.Bookings).Returns(_bookingRepositoryMock.Object);
         _logger = new Mock<ILogger<BookingService>>();
         _timeProvider = new FakeTimeProvider();
         _service = new BookingService(
-            _bookingRepository.Object,
-            _eventRepository.Object,
             _unitOfWork.Object,
             _logger.Object,
             _timeProvider);
@@ -55,8 +55,8 @@ public class BookingServiceOverbookingTests
 
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         // Act
@@ -90,12 +90,12 @@ public class BookingServiceOverbookingTests
         var concurrentRequests = 10;
         HashSet<Guid> ids = [];
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, concurrentRequests);
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
-        _bookingRepository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
 
         // Act
         var tasks = Enumerable

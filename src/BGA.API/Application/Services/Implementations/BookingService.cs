@@ -1,15 +1,12 @@
 using BGA.API.Application.Exceptions;
 using BGA.API.Application.Services.Interfaces;
 using BGA.API.Infrastructure.DataAccess;
-using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
 
 namespace BGA.API.Application.Services.Implementations;
 
 public class BookingService(
-    IBookingRepository _bookingRepository,
-    IEventRepository _eventRepository,
     IUnitOfWork _unitOfWork,
     ILogger<BookingService> _logger,
     TimeProvider _timeProvider) : IBookingService
@@ -18,24 +15,24 @@ public class BookingService(
 
     public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
-        var @event = await _eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
+        var @event = await _unitOfWork.Events.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
 
         var successReservation = @event.TryReserveSeats();
         if (!successReservation)
             throw new NoAvailableSeatsException("No available seats for this event");
 
-        _eventRepository.Update(@event);
+        _unitOfWork.Events.Update(@event);
 
         var booking = new Booking(eventId, BookingStatus.Pending, _timeProvider.GetUtcNow());
 
-        await _bookingRepository.CreateAsync(booking, cancellationToken);
+        await _unitOfWork.Bookings.CreateAsync(booking, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return booking;
     }
 
     public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
     {
-        var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
+        var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId, cancellationToken);
         return booking ?? throw new NotFoundException("Booking not found");
     }
 
@@ -44,7 +41,7 @@ public class BookingService(
         await _semaphore.WaitAsync(cancellationToken);
         try
         {
-            var eventExists = await _eventRepository.ExistsAsync(booking.EventId, cancellationToken);
+            var eventExists = await _unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken);
             if (eventExists)
             {
                 booking.Confirm();
@@ -62,11 +59,11 @@ public class BookingService(
             try
             {
                 booking.Reject();
-                var @event = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
+                var @event = await _unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken);
                 if (@event != null)
                 {
                     @event.ReleaseSeats();
-                    _eventRepository.Update(@event);
+                    _unitOfWork.Events.Update(@event);
                 }
             }
             catch (Exception innerException)
@@ -80,7 +77,7 @@ public class BookingService(
         }
         finally
         {
-            _bookingRepository.Update(booking);
+            _unitOfWork.Bookings.Update(booking);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _semaphore.Release();
         }
