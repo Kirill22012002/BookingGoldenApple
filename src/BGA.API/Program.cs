@@ -53,9 +53,9 @@ builder.Services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -66,7 +66,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 app.UseExceptionHandler();
