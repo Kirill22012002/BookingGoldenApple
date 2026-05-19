@@ -14,15 +14,87 @@ public class EventRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public async Task GetByIdAsync_()
+    public async Task GetByIdAsync_WhenEventExists_ReturnsSingleEvent()
     {
+        await ResetDatabaseAsync();
 
+        // Arrange
+        await using var context = CreateContext();
+        var startAt = new DateTimeOffset(2026, 06, 10, 18, 0, 0, TimeSpan.Zero);
+        var endAt = new DateTimeOffset(2026, 06, 10, 20, 0, 0, TimeSpan.Zero);
+        var @event = new Event("Summer party", "Open air event", startAt, endAt, 40);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+
+        // Act
+        var result = await repository.GetByIdAsync(@event.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Summer party", result.Title);
+        Assert.Equal("Open air event", result.Description);
+        Assert.Equal(startAt, result.StartAt);
+        Assert.Equal(endAt, result.EndAt);
+        Assert.Equal(40, result.TotalSeats);
+        Assert.Equal(40, result.AvailableSeats);
     }
 
     [Fact]
-    public async Task ExistsAsync_()
+    public async Task GetByIdAsync_WhenEventNotExists_ReturnsNull()
     {
+        await ResetDatabaseAsync();
 
+        // Arrange
+        await using var context = CreateContext();
+        var repository = new EventRepository(CreateContext());
+        var notExistsId = Guid.NewGuid();
+
+        // Act
+        var result = await repository.GetByIdAsync(notExistsId, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ExistsAsync_WhenEventExists_ReturnsTrue()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var startAt = new DateTimeOffset(2026, 06, 10, 18, 0, 0, TimeSpan.Zero);
+        var endAt = new DateTimeOffset(2026, 06, 10, 20, 0, 0, TimeSpan.Zero);
+        var @event = new Event("Summer party", "Open air event", startAt, endAt, 40);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+
+        // Act
+        var result = await repository.ExistsAsync(@event.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task ExistsAsync_WhenEventNotExists_ReturnsFalse()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var repository = new EventRepository(CreateContext());
+        var notExistsId = Guid.NewGuid();
+
+        // Act
+        var result = await repository.ExistsAsync(notExistsId, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(result);
     }
 
     [Fact]
