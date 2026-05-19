@@ -20,7 +20,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
         await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var createdAt = new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.FromHours(0));
+        var createdAt = new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.Zero);
         var booking = new Booking(@event.Id, BookingStatus.Pending, createdAt);
         await context.AddAsync(booking, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -66,11 +66,11 @@ public class BookingRepositoryTests : PostgresInfrastructure
         await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var booking1 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.FromHours(0)));
-        var booking2 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)));
-        var booking3 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 05, 17, 14, 12, 12, TimeSpan.FromHours(0)));
-        var booking4 = new Booking(@event.Id, BookingStatus.Rejected, new DateTimeOffset(2026, 08, 14, 12, 0, 0, TimeSpan.FromHours(0)));
-        var booking5 = new Booking(@event.Id, BookingStatus.Confirmed, new DateTimeOffset(2026, 09, 14, 12, 0, 0, TimeSpan.FromHours(0)));
+        var booking1 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.Zero));
+        var booking2 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.Zero));
+        var booking3 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 05, 17, 14, 12, 12, TimeSpan.Zero));
+        var booking4 = new Booking(@event.Id, BookingStatus.Rejected, new DateTimeOffset(2026, 08, 14, 12, 0, 0, TimeSpan.Zero));
+        var booking5 = new Booking(@event.Id, BookingStatus.Confirmed, new DateTimeOffset(2026, 09, 14, 12, 0, 0, TimeSpan.Zero));
         await context.AddRangeAsync([booking1, booking2, booking3, booking4, booking5], TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -83,8 +83,8 @@ public class BookingRepositoryTests : PostgresInfrastructure
         Assert.NotNull(result);
         Assert.Equal(3, result.Count());
         Assert.Contains(BookingStatus.Pending, result.Select(b => b.Status));
-        Assert.Equal(new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)), result.First().CreatedAt);
-        Assert.Equal(new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.FromHours(0)), result.Last().CreatedAt);
+        Assert.Equal(new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.Zero), result.First().CreatedAt);
+        Assert.Equal(new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.Zero), result.Last().CreatedAt);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new BookingRepository(context);
-        var createdAt = new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0));
+        var createdAt = new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.Zero);
         var booking = new Booking(@event.Id, BookingStatus.Pending, createdAt);
 
         // Act
@@ -130,7 +130,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new BookingRepository(context);
-        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)));
+        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.Zero));
         await context.AddAsync(booking, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -162,7 +162,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new BookingRepository(context);
-        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)));
+        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.Zero));
         await context.AddAsync(booking, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 

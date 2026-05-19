@@ -86,10 +86,10 @@ public class EventServiceTests
     public async Task GetAllAsync_WithFilterByStartAt_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
-        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
-        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
-        var expectedStartAtDates = new List<DateTimeOffset> { new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)) };
-        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
+        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 16, 0, 0, 0, TimeSpan.Zero) };
+        var expectedStartAtDates = new List<DateTimeOffset> { new(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 16, 0, 0, 0, TimeSpan.Zero) };
+        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero);
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates);
 
         _unitOfWork
@@ -114,10 +114,10 @@ public class EventServiceTests
     public async Task GetAllAsync_WithFilterByEndAt_ReturnsPaginatedResultWithEvents()
     {
         // Arrange
-        var searchEndAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
-        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 17, 0, 0, 0, TimeSpan.FromHours(0)) };
-        var expectedEndAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
-        var notExpectedEndDate = new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0));
+        var searchEndAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 17, 0, 0, 0, TimeSpan.Zero) };
+        var expectedEndAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero);
+        var notExpectedEndDate = new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero);
         var events = CreateEvents(count: endAtDates.Count, endAtDates: endAtDates);
 
         _unitOfWork
@@ -146,14 +146,14 @@ public class EventServiceTests
         //       ||
         // (24,  25), 26, 27
         // Only item with StartAt: 15 and EndAt: 25 will be in result
-        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
-        var searchEndAt = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0));
-        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 16, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 17, 0, 0, 0, TimeSpan.FromHours(0)) };
-        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 24, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)) };
-        var expectedStartAtDate = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.FromHours(0));
-        var expectedEndAtDate = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0));
-        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.FromHours(0));
-        var notExpectedEndAtDate = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0));
+        var searchStartAt = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+        var searchEndAt = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero);
+        var startAtDates = new List<DateTimeOffset> { new(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 17, 0, 0, 0, TimeSpan.Zero) };
+        var endAtDates = new List<DateTimeOffset> { new(2026, 03, 24, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 25, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new(2026, 03, 27, 0, 0, 0, TimeSpan.Zero) };
+        var expectedStartAtDate = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+        var expectedEndAtDate = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero);
+        var notExpectedStartAtDate = new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero);
+        var notExpectedEndAtDate = new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero);
 
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates, endAtDates: endAtDates);
 
@@ -202,13 +202,13 @@ public class EventServiceTests
         // Arrange
         var events = new List<Event>()
         {
-            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("Morning jog", null, new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("JOGGING", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("Yoga", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue),
-            new("Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue)
+            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("Morning jog", null, new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("JOGGING", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("Yoga", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), int.MaxValue),
+            new("Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), int.MaxValue)
         };
 
         _unitOfWork
@@ -261,11 +261,11 @@ public class EventServiceTests
         return
         [
             [ null,                                                                        null,                                                             ],
-            [ null,                                                                        new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.FromHours(0))  ],
-            [ new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.FromHours(0)),            null,                                                             ],
-            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0))  ],
-            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0))  ],
-            [ new DateTimeOffset(2026, 03, 30, 10, 0, 0, TimeSpan.FromHours(0)),           new DateTimeOffset(2026, 03, 30, 10, 0, 1, TimeSpan.FromHours(0)) ]
+            [ null,                                                                        new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero)  ],
+            [ new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero),            null,                                                             ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero),            new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero)  ],
+            [ new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero),            new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero)  ],
+            [ new DateTimeOffset(2026, 03, 30, 10, 0, 0, TimeSpan.Zero),           new DateTimeOffset(2026, 03, 30, 10, 0, 1, TimeSpan.Zero) ]
         ];
     }
 
@@ -285,7 +285,7 @@ public class EventServiceTests
     {
         // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
-            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), 1, 10, cancellationToken: TestContext.Current.CancellationToken));
+            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.Zero), 1, 10, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         exception.HasSingleError("to", "to can be more or equal than from");
@@ -299,7 +299,7 @@ public class EventServiceTests
     {
         // Arrange & Act
         var exception = await Assert.ThrowsAsync<ValidationException>(
-            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.FromHours(0)), -1, -1, cancellationToken: TestContext.Current.CancellationToken));
+            async () => await _service.GetAllAsync(null, new DateTimeOffset(2026, 01, 30, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 01, 29, 0, 0, 0, TimeSpan.Zero), -1, -1, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         exception.HasSingleError("page", "page can be more or equal than 1");
@@ -329,7 +329,7 @@ public class EventServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var @event = new Event("Jumping", "Jumping with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Jumping", "Jumping with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), int.MaxValue);
 
         _unitOfWork
             .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken))
@@ -388,7 +388,7 @@ public class EventServiceTests
     public async Task CreateAsync_WithValidEvent_ReturnsEvent()
     {
         // Arrange
-        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.Zero), int.MaxValue);
 
         // Act
         var result = await _service.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken);
@@ -408,7 +408,7 @@ public class EventServiceTests
     public async Task CreateAsync_WithRepositoryThrowsException()
     {
         // Arrange
-        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.FromHours(0)), int.MaxValue);
+        var @event = new Event("Cycling", "Cycling with other crazy people", new DateTimeOffset(2026, 05, 25, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 05, 29, 0, 0, 0, TimeSpan.Zero), int.MaxValue);
 
         _unitOfWork
             .Setup(unitOfWork => unitOfWork.Events.CreateAsync(@event, cancellationToken: TestContext.Current.CancellationToken))
@@ -436,7 +436,7 @@ public class EventServiceTests
             .ReturnsAsync(CreateEvent());
 
         // Act
-        await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken);
+        await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _unitOfWork
@@ -461,7 +461,7 @@ public class EventServiceTests
 
         // Act
         var exception = await Assert.ThrowsAsync<NotFoundException>(
-            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken));
+            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal("Event not found", exception.Message);
@@ -492,7 +492,7 @@ public class EventServiceTests
 
         // Act & Assert        
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.FromHours(0)), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.FromHours(0)), cancellationToken: TestContext.Current.CancellationToken));
+            async () => await _service.UpdateAsync(id, "Jumping Girls", "Jumping girls with other beautiful women", new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), cancellationToken: TestContext.Current.CancellationToken));
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
