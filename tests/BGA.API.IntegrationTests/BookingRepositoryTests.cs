@@ -2,7 +2,6 @@
 using BGA.API.Infrastructure.Models;
 using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.IntegrationTests.Infrastructure;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace BGA.API.IntegrationTests;
@@ -10,8 +9,49 @@ namespace BGA.API.IntegrationTests;
 public class BookingRepositoryTests : PostgresInfrastructure
 {
     [Fact]
-    public async Task GetByIdAsync_()
+    public async Task GetByIdAsync_WhenBookingExists_ReturnsSingleBooking()
     {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+
+        var @event = new Event("title", "description", DateTimeOffset.UtcNow.AddDays(-2), DateTimeOffset.UtcNow.AddDays(2), 4);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var createdAt = new DateTimeOffset(2026, 09, 10, 12, 0, 0, TimeSpan.FromHours(0));
+        var booking = new Booking(@event.Id, BookingStatus.Pending, createdAt);
+        await context.AddAsync(booking, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new BookingRepository(CreateContext());
+
+        // Act
+        var result = await repository.GetByIdAsync(booking.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(createdAt, result.CreatedAt);
+        Assert.Equal(BookingStatus.Pending, result.Status);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenBookingNotExists_ReturnsNull()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+
+        var repository = new BookingRepository(CreateContext());
+        var notExistsId = Guid.NewGuid();
+
+        // Act
+        var result = await repository.GetByIdAsync(notExistsId, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Null(result);
     }
 
     [Fact]
@@ -31,7 +71,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
         var booking3 = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 05, 17, 14, 12, 12, TimeSpan.FromHours(0)));
         var booking4 = new Booking(@event.Id, BookingStatus.Rejected, new DateTimeOffset(2026, 08, 14, 12, 0, 0, TimeSpan.FromHours(0)));
         var booking5 = new Booking(@event.Id, BookingStatus.Confirmed, new DateTimeOffset(2026, 09, 14, 12, 0, 0, TimeSpan.FromHours(0)));
-        await context.AddRangeAsync(booking1, booking2, booking3, booking4, booking5);
+        await context.AddRangeAsync([booking1, booking2, booking3, booking4, booking5], TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new BookingRepository(CreateContext());
@@ -78,8 +118,66 @@ public class BookingRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public void Update_()
+    public async Task Update_UpdateStatusToConfirm_UpdatesBookingToDatabase()
     {
+        await ResetDatabaseAsync();
 
+        // Arrange
+        await using var context = CreateContext();
+
+        var @event = new Event("title", "description", DateTimeOffset.UtcNow.AddDays(-2), DateTimeOffset.UtcNow.AddDays(2), 2);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new BookingRepository(context);
+        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)));
+        await context.AddAsync(booking, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        booking.Confirm();
+
+        // Act
+        repository.Update(booking);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Bookings
+            .FirstOrDefaultAsync(b => b.Id == booking.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(saved);
+        Assert.Equal(BookingStatus.Confirmed, saved.Status);
+    }
+
+    [Fact]
+    public async Task Update_UpdateStatusToReject_UpdatesBookingToDatabase()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+
+        var @event = new Event("title", "description", DateTimeOffset.UtcNow.AddDays(-2), DateTimeOffset.UtcNow.AddDays(2), 2);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new BookingRepository(context);
+        var booking = new Booking(@event.Id, BookingStatus.Pending, new DateTimeOffset(2026, 03, 14, 12, 0, 0, TimeSpan.FromHours(0)));
+        await context.AddAsync(booking, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        booking.Reject();
+
+        // Act
+        repository.Update(booking);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Bookings
+            .FirstOrDefaultAsync(b => b.Id == booking.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(saved);
+        Assert.Equal(BookingStatus.Rejected, saved.Status);
     }
 }
