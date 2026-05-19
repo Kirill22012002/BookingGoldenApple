@@ -9,7 +9,7 @@ public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
     public async Task<IQueryable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return _dbContext.Events.AsNoTracking().AsQueryable();
+        return _dbContext.Events.AsNoTracking();
     }
 
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

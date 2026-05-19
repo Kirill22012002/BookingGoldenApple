@@ -8,9 +8,82 @@ namespace BGA.API.IntegrationTests;
 public class EventRepositoryTests : PostgresInfrastructure
 {
     [Fact]
-    public async Task GetAllAsync_()
+    public async Task GetAllAsync_ReturnsAllEvents()
     {
+        await ResetDatabaseAsync();
 
+        // Arrange
+        await using var context = CreateContext();
+        var event1 = new Event(
+            "Morning yoga",
+            "City park session",
+            new DateTimeOffset(2026, 06, 01, 8, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 06, 01, 9, 0, 0, TimeSpan.Zero),
+            15);
+        var event2 = new Event(
+            "Tech meetup",
+            "Evening networking",
+            new DateTimeOffset(2026, 06, 02, 18, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 06, 02, 20, 0, 0, TimeSpan.Zero),
+            50);
+        var event3 = new Event(
+            "Board games night",
+            "Community center event",
+            new DateTimeOffset(2026, 06, 03, 19, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 06, 03, 22, 0, 0, TimeSpan.Zero),
+            20);
+        await context.Events.AddRangeAsync([event1, event2, event3], TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+
+        // Act
+        var result = await repository.GetAllAsync(TestContext.Current.CancellationToken);
+        var events = await result
+            .OrderBy(e => e.StartAt)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(events);
+        Assert.Equal(3, events.Count);
+        Assert.Equal("Morning yoga", events[0].Title);
+        Assert.Equal("Tech meetup", events[1].Title);
+        Assert.Equal("Board games night", events[2].Title);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsEntitiesWithoutTrackingChanges()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var seedContext = CreateContext();
+        var @event = new Event(
+            "Original title",
+            "No tracking check",
+            new DateTimeOffset(2026, 06, 10, 12, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 06, 10, 14, 0, 0, TimeSpan.Zero),
+            30);
+        await seedContext.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await using var context = CreateContext();
+        var repository = new EventRepository(context);
+
+        // Act
+        var result = await repository.GetAllAsync(TestContext.Current.CancellationToken);
+        var loadedEvent = await result.SingleAsync(TestContext.Current.CancellationToken);
+        loadedEvent.Title = "Changed title";
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Empty(context.ChangeTracker.Entries());
+
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Events
+            .SingleAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Original title", saved.Title);
     }
 
     [Fact]
