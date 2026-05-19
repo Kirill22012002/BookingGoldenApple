@@ -39,7 +39,7 @@ public class EventRepositoryTests : PostgresInfrastructure
         var repository = new EventRepository(CreateContext());
 
         // Act
-        var result = repository.GetAll();
+        var result = repository.GetAll(null, null, null);
         var events = await result
             .OrderBy(e => e.StartAt)
             .ToListAsync(TestContext.Current.CancellationToken);
@@ -72,7 +72,7 @@ public class EventRepositoryTests : PostgresInfrastructure
         var repository = new EventRepository(context);
 
         // Act
-        var result = repository.GetAll();
+        var result = repository.GetAll(null, null, null);
         var loadedEvent = await result.SingleAsync(TestContext.Current.CancellationToken);
         loadedEvent.Title = "Changed title";
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -85,6 +85,179 @@ public class EventRepositoryTests : PostgresInfrastructure
             .SingleAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
 
         Assert.Equal("Original title", saved.Title);
+    }
+
+    [Fact]
+    public async Task GetAll_WhenFilterByTitle_ReturnsOnlyMatchingEvents()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var events = new[]
+        {
+            new Event("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("JUMPING", null, new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 29, 0, 0, 0, TimeSpan.Zero), 10)
+        };
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+
+        // Act
+        var result = await repository.GetAll("ing", null, null)
+            .OrderBy(e => e.Title)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.Equal(["JUMPING", "Jogging", "Running"], result.Select(e => e.Title).ToArray());
+    }
+
+    [Fact]
+    public async Task GetAll_WhenFilterByFrom_ReturnsOnlyEventsWithStartAtGreaterOrEqual()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var events = new[]
+        {
+            new Event("Event 1", null, new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 2", null, new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 3", null, new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 17, 0, 0, 0, TimeSpan.Zero), 10)
+        };
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+        var from = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var result = await repository.GetAll(null, from, null)
+            .OrderBy(e => e.StartAt)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.All(result, @event => Assert.True(@event.StartAt >= from));
+        Assert.Equal([events[1].Id, events[2].Id], result.Select(e => e.Id).ToArray());
+    }
+
+    [Fact]
+    public async Task GetAll_WhenFilterByTo_ReturnsOnlyEventsWithEndAtLessOrEqual()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var events = new[]
+        {
+            new Event("Event 1", null, new DateTimeOffset(2026, 03, 13, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 2", null, new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 3", null, new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 17, 0, 0, 0, TimeSpan.Zero), 10)
+        };
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+        var to = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var result = await repository.GetAll(null, null, to)
+            .OrderBy(e => e.EndAt)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.All(result, @event => Assert.True(@event.EndAt <= to));
+        Assert.Equal(events[0].Id, result[0].Id);
+    }
+
+    [Fact]
+    public async Task GetAll_WhenFilterByFromAndTo_ReturnsOnlyEventsInRange()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var events = new[]
+        {
+            new Event("Event 1", null, new DateTimeOffset(2026, 03, 14, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 24, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 2", null, new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 3", null, new DateTimeOffset(2026, 03, 16, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Event 4", null, new DateTimeOffset(2026, 03, 17, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), 10)
+        };
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+        var from = new DateTimeOffset(2026, 03, 15, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var result = await repository.GetAll(null, from, to)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal(events[1].Id, result[0].Id);
+    }
+
+    public static IEnumerable<object[]> AllFilters()
+    {
+        return
+        [
+            ["ing", "2026-03-26T00:00:00+00:00", "2026-03-27T00:00:00+00:00", true],
+            ["ing", "2026-03-26T00:00:00+00:00", "2026-03-28T00:00:00+00:00", true],
+            ["ing", "2026-03-25T00:00:00+00:00", "2026-03-26T00:00:00+00:00", true],
+            ["ing", "2026-03-26T00:00:00+00:00", "2026-03-26T00:00:00+00:00", false],
+            ["jogging", "2026-03-26T00:00:00+00:00", "2026-03-27T00:00:00+00:00", true],
+            ["JOGGING", "2026-03-26T00:00:00+00:00", "2026-03-27T00:00:00+00:00", true],
+            ["yo", "2026-03-26T00:00:00+00:00", "2026-03-27T00:00:00+00:00", true],
+            ["running", "2026-03-27T00:00:00+00:00", "2026-03-28T00:00:00+00:00", true],
+            ["run", "2026-03-27T00:00:00+00:00", "2026-03-28T00:00:00+00:00", true],
+            ["ing", "2026-03-27T00:00:00+00:00", "2026-03-28T00:00:00+00:00", true],
+            ["theatre", "2026-03-26T00:00:00+00:00", "2026-03-28T00:00:00+00:00", true],
+            ["ing", "2026-03-28T00:00:00+00:00", "2026-03-29T00:00:00+00:00", false],
+            ["jog", "2026-03-26T00:00:00+00:00", "2026-03-27T00:00:00+00:00", true]
+        ];
+    }
+
+    [Theory]
+    [MemberData(nameof(AllFilters))]
+    public async Task GetAll_WhenFilterByTitleFromAndTo_ReturnsExpectedResult(string title, DateTimeOffset from, DateTimeOffset to, bool shouldExist)
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var events = new[]
+        {
+            new Event("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Theatre", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Morning jog", null, new DateTimeOffset(2026, 03, 25, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("JOGGING", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Jogging", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Yoga", null, new DateTimeOffset(2026, 03, 26, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), 10),
+            new Event("Running", null, new DateTimeOffset(2026, 03, 27, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 03, 28, 0, 0, 0, TimeSpan.Zero), 10)
+        };
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+
+        // Act
+        var result = await repository.GetAll(title, from, to)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(shouldExist, result.Any(@event =>
+            @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase) &&
+            @event.StartAt == from &&
+            @event.EndAt == to));
     }
 
     [Fact]
