@@ -118,6 +118,41 @@ public class BookingRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
+    public async Task Query_WhenIncludingEventForBooking_LoadsRelatedEvent()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var @event = new Event(
+            "Architecture meetup",
+            "DDD and clean architecture",
+            new DateTimeOffset(2026, 10, 20, 18, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 10, 20, 20, 0, 0, TimeSpan.Zero),
+            25);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var booking = new Booking(
+            @event.Id,
+            BookingStatus.Pending,
+            new DateTimeOffset(2026, 10, 01, 12, 0, 0, TimeSpan.Zero));
+        await context.Bookings.AddAsync(booking, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        await using var verifyContext = CreateContext();
+        var loadedBooking = await verifyContext.Bookings
+            .Include(b => b.Event)
+            .SingleAsync(b => b.Id == booking.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(loadedBooking.Event);
+        Assert.Equal(loadedBooking.EventId, loadedBooking.Event.Id);
+        Assert.Equal("Architecture meetup", loadedBooking.Event.Title);
+    }
+
+    [Fact]
     public async Task Update_WhenUpdateStatusToConfirm_UpdatesBookingInDatabase()
     {
         await ResetDatabaseAsync();

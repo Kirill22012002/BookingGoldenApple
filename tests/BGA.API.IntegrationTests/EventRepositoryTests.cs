@@ -1,5 +1,6 @@
 using BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 using BGA.API.Infrastructure.Models;
+using BGA.API.Infrastructure.Models.Enums;
 using BGA.API.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -198,6 +199,47 @@ public class EventRepositoryTests : PostgresInfrastructure
         Assert.Equal(endAt, saved.EndAt);
         Assert.Equal(25, saved.TotalSeats);
         Assert.Equal(25, saved.AvailableSeats);
+    }
+
+    [Fact]
+    public async Task Query_WhenIncludingBookingsForEvent_LoadsRelatedBookings()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var @event = new Event(
+            "Backend conference",
+            "Distributed systems",
+            new DateTimeOffset(2026, 11, 15, 9, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 11, 15, 18, 0, 0, TimeSpan.Zero),
+            100);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var booking1 = new Booking(
+            @event.Id,
+            BookingStatus.Pending,
+            new DateTimeOffset(2026, 11, 01, 10, 0, 0, TimeSpan.Zero));
+        var booking2 = new Booking(
+            @event.Id,
+            BookingStatus.Confirmed,
+            new DateTimeOffset(2026, 11, 02, 11, 0, 0, TimeSpan.Zero));
+        await context.Bookings.AddRangeAsync([booking1, booking2], TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        await using var verifyContext = CreateContext();
+        var loadedEvent = await verifyContext.Events
+            .Include(e => e.Bookings)
+            .SingleAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(loadedEvent.Bookings);
+        Assert.Equal(2, loadedEvent.Bookings.Count);
+        Assert.All(loadedEvent.Bookings, booking => Assert.Equal(loadedEvent.Id, booking.EventId));
+        Assert.Contains(loadedEvent.Bookings, booking => booking.Id == booking1.Id);
+        Assert.Contains(loadedEvent.Bookings, booking => booking.Id == booking2.Id);
     }
 
     [Fact]
