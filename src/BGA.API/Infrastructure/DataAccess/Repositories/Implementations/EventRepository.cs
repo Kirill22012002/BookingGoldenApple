@@ -1,14 +1,25 @@
+using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 using BGA.API.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
-using BGA.API.Infrastructure.DataAccess.Repositories.Interfaces;
 
 namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 {
-    public IQueryable<Event> GetAll()
+    public IQueryable<Event> GetAll(string? title, DateTimeOffset? from, DateTimeOffset? to)
     {
-        return _dbContext.Events.AsNoTracking();
+        var query = _dbContext.Events.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(title))
+            query = query.Where(@event => EF.Functions.ILike(@event.Title, $"%{title}%"));
+        if (from.HasValue)
+            query = query.Where(@event => @event.StartAt >= from);
+        if (to.HasValue)
+            query = query.Where(@event => @event.EndAt <= to);
+
+        query = query.OrderBy(@event => @event.Id);
+
+        return query;
     }
 
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

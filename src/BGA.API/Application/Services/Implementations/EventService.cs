@@ -18,16 +18,7 @@ public class EventService(
         if (from.HasValue && to.HasValue && from.Value > to.Value)
             throw new ValidationException(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}"); ;
 
-        var query = _unitOfWork.Events.GetAll();
-
-        if (!string.IsNullOrEmpty(title))
-            query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-        if (from.HasValue)
-            query = query.Where(@event => @event.StartAt >= from);
-        if (to.HasValue)
-            query = query.Where(@event => @event.EndAt <= to);
-
-        query = query.OrderBy(@event => @event.Id);
+        var query = _unitOfWork.Events.GetAll(title, from, to);
 
         var totalItems = query.Count();
 
