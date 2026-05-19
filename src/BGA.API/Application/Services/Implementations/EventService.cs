@@ -11,27 +11,37 @@ public class EventService(
 {
     public async Task<PaginatedResult<Event>> GetAllAsync(string? title, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        if (page < 1) throw new ValidationException(nameof(page), $"{nameof(page)} can be more or equal than 1");
-        if (pageSize < 0) throw new ValidationException(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
-        if (from.HasValue && to.HasValue && from.Value > to.Value) throw new ValidationException(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}"); ;
+        if (page < 1)
+            throw new ValidationException(nameof(page), $"{nameof(page)} can be more or equal than 1");
+        if (pageSize < 0)
+            throw new ValidationException(nameof(pageSize), $"{nameof(pageSize)} can be more or equal than 0");
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+            throw new ValidationException(nameof(to), $"{nameof(to)} can be more or equal than {nameof(from)}"); ;
 
-        var query = await _unitOfWork.Events.GetAllAsync(cancellationToken);
-        if (!string.IsNullOrEmpty(title)) query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-        if (from.HasValue) query = query.Where(@event => @event.StartAt >= from);
-        if (to.HasValue) query = query.Where(@event => @event.EndAt <= to);
+        var query = _unitOfWork.Events.GetAll();
 
-        var filteredCount = query.Count();
+        if (!string.IsNullOrEmpty(title))
+            query = query.Where(@event => @event.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+        if (from.HasValue)
+            query = query.Where(@event => @event.StartAt >= from);
+        if (to.HasValue)
+            query = query.Where(@event => @event.EndAt <= to);
+
+        query = query.OrderBy(@event => @event.Id);
+
+        var totalItems = query.Count();
 
         var items = query
             .Skip((page - 1) * pageSize)
-            .Take(pageSize);
+            .Take(pageSize)
+            .ToList();
 
         var paginatedResult = new PaginatedResult<Event>()
         {
-            Items = items.AsEnumerable(),
-            TotalItems = filteredCount,
+            Items = items,
+            TotalItems = totalItems,
             PageNumber = page,
-            PageSize = items.Count()
+            PageSize = items.Count
         };
 
         return paginatedResult;

@@ -6,9 +6,8 @@ namespace BGA.API.Infrastructure.DataAccess.Repositories.Implementations;
 
 public class EventRepository(ApplicationDbContext _dbContext) : IEventRepository
 {
-    public async Task<IQueryable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
+    public IQueryable<Event> GetAll()
     {
-        cancellationToken.ThrowIfCancellationRequested();
         return _dbContext.Events.AsNoTracking();
     }
 

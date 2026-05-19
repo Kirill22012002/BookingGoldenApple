@@ -9,7 +9,7 @@ namespace BGA.API.IntegrationTests;
 public class EventRepositoryTests : PostgresInfrastructure
 {
     [Fact]
-    public async Task GetAllAsync_ReturnsAllEvents()
+    public async Task GetAll_ReturnsAllEvents()
     {
         await ResetDatabaseAsync();
 
@@ -39,7 +39,7 @@ public class EventRepositoryTests : PostgresInfrastructure
         var repository = new EventRepository(CreateContext());
 
         // Act
-        var result = await repository.GetAllAsync(TestContext.Current.CancellationToken);
+        var result = repository.GetAll();
         var events = await result
             .OrderBy(e => e.StartAt)
             .ToListAsync(TestContext.Current.CancellationToken);
@@ -53,7 +53,7 @@ public class EventRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public async Task GetAllAsync_ReturnsEntitiesWithoutTrackingChanges()
+    public async Task GetAll_ReturnsEntitiesWithoutTrackingChanges()
     {
         await ResetDatabaseAsync();
 
@@ -72,7 +72,7 @@ public class EventRepositoryTests : PostgresInfrastructure
         var repository = new EventRepository(context);
 
         // Act
-        var result = await repository.GetAllAsync(TestContext.Current.CancellationToken);
+        var result = repository.GetAll();
         var loadedEvent = await result.SingleAsync(TestContext.Current.CancellationToken);
         loadedEvent.Title = "Changed title";
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);

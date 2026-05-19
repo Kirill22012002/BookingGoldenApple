@@ -36,8 +36,8 @@ public class EventServiceTests
         var events = CreateEvents(count: totalItems);
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events);
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events);
 
         // Act
         var result = await _service.GetAllAsync(title: null, from: null, to: null, page: page, pageSize: pageSize, cancellationToken: TestContext.Current.CancellationToken);
@@ -51,7 +51,7 @@ public class EventServiceTests
         Assert.Equal(pageSize, result.Items.Count());
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class EventServiceTests
         var events = CreateEvents(count: titles.Count, titles: titles);
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events);
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events);
 
         // Act
         var result = await _service.GetAllAsync(title: searchSubstring, from: null, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -79,7 +79,7 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedTitle, result.Items.Select(@event => @event.Title));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public class EventServiceTests
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates);
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events);
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events);
 
         // Act
         var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: null, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -107,7 +107,7 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedStartAtDate, result.Items.Select(@event => @event.StartAt));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
@@ -121,8 +121,8 @@ public class EventServiceTests
         var events = CreateEvents(count: endAtDates.Count, endAtDates: endAtDates);
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events);
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events);
 
         // Act
         var result = await _service.GetAllAsync(title: null, from: null, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -135,7 +135,7 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedEndDate, result.Items.Select(@event => @event.EndAt));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
@@ -158,8 +158,8 @@ public class EventServiceTests
         var events = CreateEvents(count: startAtDates.Count, startAtDates: startAtDates, endAtDates: endAtDates);
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events);
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events);
 
         // Act
         var result = await _service.GetAllAsync(title: null, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -172,7 +172,7 @@ public class EventServiceTests
         Assert.DoesNotContain(notExpectedEndAtDate, result.Items.Select(@event => @event.EndAt));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     public static IEnumerable<object[]> MultipleFilters()
@@ -212,8 +212,8 @@ public class EventServiceTests
         };
 
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(events.AsQueryable());
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Returns(events.AsQueryable());
 
         // Act
         var result = await _service.GetAllAsync(title: searchTitle, from: searchStartAt, to: searchEndAt, page: 1, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
@@ -226,7 +226,7 @@ public class EventServiceTests
             @event.EndAt == searchEndAt));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
@@ -240,7 +240,7 @@ public class EventServiceTests
         exception.HasSingleError("page", "page can be more or equal than 1");
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Never);
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public class EventServiceTests
         exception.HasSingleError("pageSize", "pageSize can be more or equal than 0");
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Never);
     }
 
     public static IEnumerable<object?[]> DifferentDates()
@@ -291,7 +291,7 @@ public class EventServiceTests
         exception.HasSingleError("to", "to can be more or equal than from");
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Never);
     }
 
     [Fact]
@@ -305,7 +305,7 @@ public class EventServiceTests
         exception.HasSingleError("page", "page can be more or equal than 1");
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Never);
     }
 
     [Fact]
@@ -313,15 +313,15 @@ public class EventServiceTests
     {
         // Arrange
         _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken))
-            .ThrowsAsync(new Exception());
+            .Setup(unitOfWork => unitOfWork.Events.GetAll())
+            .Throws(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(
             async () => await _service.GetAllAsync(null, null, null, 1, 10, cancellationToken: TestContext.Current.CancellationToken));
 
         _unitOfWork
-            .Verify(unitOfWork => unitOfWork.Events.GetAllAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+            .Verify(unitOfWork => unitOfWork.Events.GetAll(), Times.Once);
     }
 
     [Fact]
