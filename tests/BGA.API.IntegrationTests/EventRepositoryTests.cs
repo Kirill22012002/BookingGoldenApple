@@ -128,9 +128,111 @@ public class EventRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public void Update()
+    public async Task Update_WhenReschedule_UpdatesEventInDatabase()
     {
+        await ResetDatabaseAsync();
 
+        // Arrange
+        await using var context = CreateContext();
+        var @event = new Event(
+            "Conference",
+            "Will be rescheduled",
+            new DateTimeOffset(2026, 07, 10, 9, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 07, 10, 11, 0, 0, TimeSpan.Zero),
+            100);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(context);
+        var newStartAt = new DateTimeOffset(2026, 07, 11, 10, 0, 0, TimeSpan.Zero);
+        var newEndAt = new DateTimeOffset(2026, 07, 11, 13, 0, 0, TimeSpan.Zero);
+
+        @event.Reschedule(newStartAt, newEndAt);
+
+        // Act
+        repository.Update(@event);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Events
+            .FirstOrDefaultAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(saved);
+        Assert.Equal(newStartAt, saved.StartAt);
+        Assert.Equal(newEndAt, saved.EndAt);
+    }
+
+    [Fact]
+    public async Task Update_WhenReserveSeats_UpdatesEventInDatabase()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var @event = new Event(
+            "Workshop",
+            "Seats will be reserved",
+            new DateTimeOffset(2026, 08, 05, 14, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 08, 05, 16, 0, 0, TimeSpan.Zero),
+            10);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(context);
+        var reserved = @event.TryReserveSeats(3);
+
+        // Act
+        repository.Update(@event);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Events
+            .FirstOrDefaultAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
+
+        Assert.True(reserved);
+        Assert.NotNull(saved);
+        Assert.Equal(10, saved.TotalSeats);
+        Assert.Equal(7, saved.AvailableSeats);
+    }
+
+    [Fact]
+    public async Task Update_WhenReleaseSeats_UpdatesEventInDatabase()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+        var @event = new Event(
+            "Lecture",
+            "Seats will be released",
+            new DateTimeOffset(2026, 09, 01, 10, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 09, 01, 12, 0, 0, TimeSpan.Zero),
+            12);
+        await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(context);
+        var reserved = @event.TryReserveSeats(5);
+        repository.Update(@event);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        @event.ReleaseSeats(2);
+
+        // Act
+        repository.Update(@event);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Events
+            .FirstOrDefaultAsync(e => e.Id == @event.Id, TestContext.Current.CancellationToken);
+
+        Assert.True(reserved);
+        Assert.NotNull(saved);
+        Assert.Equal(12, saved.TotalSeats);
+        Assert.Equal(9, saved.AvailableSeats);
     }
 
     [Fact]

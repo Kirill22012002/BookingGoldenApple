@@ -118,7 +118,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public async Task Update_UpdateStatusToConfirm_UpdatesBookingToDatabase()
+    public async Task Update_WhenUpdateStatusToConfirm_UpdatesBookingInDatabase()
     {
         await ResetDatabaseAsync();
 
@@ -150,7 +150,7 @@ public class BookingRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
-    public async Task Update_UpdateStatusToReject_UpdatesBookingToDatabase()
+    public async Task Update_WhenUpdateStatusToReject_UpdatesBookingInDatabase()
     {
         await ResetDatabaseAsync();
 
