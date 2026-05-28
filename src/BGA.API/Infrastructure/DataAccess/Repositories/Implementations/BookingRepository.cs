@@ -16,6 +16,7 @@ public class BookingRepository(ApplicationDbContext _dbContext) : IBookingReposi
     {
         return await _dbContext.Bookings
             .Where(booking => booking.Status == BookingStatus.Pending)
+            .OrderBy(booking => booking.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 

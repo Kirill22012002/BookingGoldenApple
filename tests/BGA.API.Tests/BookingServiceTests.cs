@@ -13,8 +13,8 @@ namespace BGA.API.Tests;
 
 public class BookingServiceTests
 {
-    private readonly Mock<IBookingRepository> _bookingRepository;
-    private readonly Mock<IEventRepository> _eventRepository;
+    private readonly Mock<IEventRepository> _eventRepositoryMock;
+    private readonly Mock<IBookingRepository> _bookingRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<ILogger<BookingService>> _logger;
     private readonly FakeTimeProvider _timeProvider;
@@ -22,14 +22,14 @@ public class BookingServiceTests
 
     public BookingServiceTests()
     {
-        _bookingRepository = new Mock<IBookingRepository>();
-        _eventRepository = new Mock<IEventRepository>();
+        _eventRepositoryMock = new Mock<IEventRepository>();
+        _bookingRepositoryMock = new Mock<IBookingRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
+        _unitOfWork.Setup(u => u.Events).Returns(_eventRepositoryMock.Object);
+        _unitOfWork.Setup(u => u.Bookings).Returns(_bookingRepositoryMock.Object);
         _logger = new Mock<ILogger<BookingService>>();
         _timeProvider = new FakeTimeProvider();
         _service = new BookingService(
-            _bookingRepository.Object,
-            _eventRepository.Object,
             _unitOfWork.Object,
             _logger.Object,
             _timeProvider);
@@ -42,8 +42,8 @@ public class BookingServiceTests
         var expectedBookingStatus = BookingStatus.Pending;
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         // Act
@@ -54,14 +54,14 @@ public class BookingServiceTests
         Assert.Equal(expectedBookingStatus, result.Status);
         Assert.Equal(_timeProvider.GetUtcNow(), result.CreatedAt);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -75,8 +75,8 @@ public class BookingServiceTests
         var expectedAvailableSeats = initialTotalSeats - 1;
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         // Act
@@ -86,14 +86,14 @@ public class BookingServiceTests
         Assert.NotNull(result);
         Assert.Equal(expectedAvailableSeats, @event.AvailableSeats);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -107,15 +107,15 @@ public class BookingServiceTests
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialTotalSeats);
         List<Guid> createdBookingIds = [];
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         // Act & Assert
         for (var i = 0; i < initialTotalSeats; i++)
         {
-            _bookingRepository
-                .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
+            _unitOfWork
+                .Setup(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
 
             var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
             Assert.NotNull(result);
@@ -124,14 +124,14 @@ public class BookingServiceTests
             createdBookingIds.Add(result.Id);
         }
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Exactly(initialTotalSeats));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Exactly(initialTotalSeats));
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(initialTotalSeats));
@@ -142,14 +142,14 @@ public class BookingServiceTests
     {
         // Arrange
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         var capturedEntities = new List<Booking>();
 
-        _bookingRepository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
             .Callback<Booking, CancellationToken>((booking, cancellationToken) =>
             {
                 capturedEntities.Add(booking);
@@ -166,17 +166,17 @@ public class BookingServiceTests
         Assert.NotEqual(firstBookingResult.Id, secondBookingResult.Id);
         Assert.NotSame(capturedEntities[0], capturedEntities[1]);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Exactly(2));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Exactly(2));
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(capturedEntities[0], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(capturedEntities[0], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(capturedEntities[1], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(capturedEntities[1], cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
@@ -187,8 +187,8 @@ public class BookingServiceTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Event)null!);
 
         // Act
@@ -198,14 +198,14 @@ public class BookingServiceTests
         // Assert
         Assert.Equal("Event not found", exception.Message);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(eventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Never);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Never);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -217,26 +217,26 @@ public class BookingServiceTests
         // Arrange
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
-        _bookingRepository
-            .Setup(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(
             async () => await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken));
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Never);
@@ -249,8 +249,8 @@ public class BookingServiceTests
         var availableSeats = 1;
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, availableSeats);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
@@ -262,14 +262,14 @@ public class BookingServiceTests
         // Assert
         Assert.Equal("No available seats for this event", exception.Message);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Exactly(2));
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -281,8 +281,8 @@ public class BookingServiceTests
         // Arrange
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, _timeProvider.GetUtcNow());
 
-        _bookingRepository
-            .Setup(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(booking);
 
         // Act
@@ -296,8 +296,8 @@ public class BookingServiceTests
         Assert.Equal(booking.CreatedAt, result.CreatedAt);
         Assert.Equal(booking.ProcessedAt, result.ProcessedAt);
 
-        _bookingRepository
-            .Verify(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -306,8 +306,8 @@ public class BookingServiceTests
         // Arrange
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Confirmed, _timeProvider.GetUtcNow());
 
-        _bookingRepository
-            .Setup(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(booking);
 
         // Act
@@ -317,8 +317,8 @@ public class BookingServiceTests
         Assert.NotNull(result);
         Assert.Equal(booking.Status, result.Status);
 
-        _bookingRepository
-            .Verify(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -327,8 +327,8 @@ public class BookingServiceTests
         // Arrange
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Rejected, _timeProvider.GetUtcNow());
 
-        _bookingRepository
-            .Setup(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(booking);
 
         // Act
@@ -338,8 +338,8 @@ public class BookingServiceTests
         Assert.NotNull(result);
         Assert.Equal(booking.Status, result.Status);
 
-        _bookingRepository
-            .Verify(repository => repository.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.GetByIdAsync(booking.Id, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -348,8 +348,8 @@ public class BookingServiceTests
         // Arrange
         var bookingId = Guid.NewGuid();
 
-        _bookingRepository
-            .Setup(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync((Booking)null!);
 
         // Act
@@ -359,8 +359,8 @@ public class BookingServiceTests
         // Assert
         Assert.Equal("Booking not found", exception.Message);
 
-        _bookingRepository
-            .Verify(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -368,16 +368,16 @@ public class BookingServiceTests
     {
         // Arrange
         var bookingId = Guid.NewGuid();
-        _bookingRepository
-            .Setup(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Bookings.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(
             async () => await _service.GetBookingByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken));
 
-        _bookingRepository
-            .Verify(repository => repository.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.GetByIdAsync(bookingId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
     }
 
     [Fact]
@@ -387,8 +387,8 @@ public class BookingServiceTests
         var expectedBookingStatus = BookingStatus.Confirmed;
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Yesterday);
 
-        _eventRepository
-            .Setup(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(true);
 
         // Act
@@ -399,17 +399,17 @@ public class BookingServiceTests
         Assert.NotNull(booking.ProcessedAt);
         Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
 
-        _eventRepository
-            .Verify(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Never);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Never);
 
-        _bookingRepository
-            .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.Update(It.IsAny<Booking>()), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -422,8 +422,8 @@ public class BookingServiceTests
         var expectedBookingStatus = BookingStatus.Rejected;
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Yesterday);
 
-        _eventRepository
-            .Setup(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(false);
 
         // Act
@@ -434,17 +434,17 @@ public class BookingServiceTests
         Assert.NotNull(booking.ProcessedAt);
         Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
 
-        _eventRepository
-            .Verify(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Never);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Never);
 
-        _bookingRepository
-            .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.Update(It.IsAny<Booking>()), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -460,12 +460,12 @@ public class BookingServiceTests
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Yesterday);
 
-        _eventRepository
-            .Setup(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .Throws(expectedException);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
 
         // Act & Assert
@@ -477,17 +477,17 @@ public class BookingServiceTests
         Assert.NotNull(booking.ProcessedAt);
         Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
 
-        _eventRepository
-            .Verify(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
 
-        _bookingRepository
-            .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.Update(It.IsAny<Booking>()), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);
@@ -504,12 +504,12 @@ public class BookingServiceTests
         var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
         var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Yesterday);
 
-        _eventRepository
-            .Setup(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .Throws(expectedMainException);
 
-        _eventRepository
-            .Setup(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken))
             .Throws(innerException);
 
         // Act
@@ -524,17 +524,17 @@ public class BookingServiceTests
         Assert.NotNull(booking.ProcessedAt);
         Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
 
-        _eventRepository
-            .Verify(repository => repository.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.ExistsAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken: TestContext.Current.CancellationToken), Times.Once);
 
-        _eventRepository
-            .Verify(repository => repository.Update(It.IsAny<Event>()), Times.Never);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Never);
 
-        _bookingRepository
-            .Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Once);
+        _unitOfWork
+            .Verify(unitOfWork => unitOfWork.Bookings.Update(It.IsAny<Booking>()), Times.Once);
 
         _unitOfWork
             .Verify(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken), Times.Once);

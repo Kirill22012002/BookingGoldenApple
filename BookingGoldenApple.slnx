@@ -3,6 +3,7 @@
     <Project Path="src/BGA.API/BGA.API.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BGA.API.IntegrationTests/BGA.API.IntegrationTests.csproj" Id="eb1da7e8-162f-46be-b9bc-c27f9e12cf63" />
     <Project Path="tests/BGA.API.Tests/BGA.API.Tests.csproj" Id="4a728714-7dd6-47a3-baa6-556421ed6376" />
   </Folder>
 </Solution>

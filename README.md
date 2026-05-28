@@ -34,9 +34,20 @@ dotnet build src/BGA.API/BGA.API.csproj
 
 ### Running the solution
 Make sure PostgreSQL is running before starting the API.
-The DB schema is created automatically on startup via EF Core `EnsureCreated()`.
+The database schema is managed by EF Core migrations. On application startup the API applies pending migrations automatically via `Database.Migrate()`.
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj
+```
+
+### EF Core migrations
+Create a new migration:
+```powershell
+dotnet ef migrations add <MigrationName> --project src/BGA.API/BGA.API.csproj
+```
+
+Apply migrations to the configured database:
+```powershell
+dotnet ef database update --project src/BGA.API/BGA.API.csproj
 ```
 
 ### Opening Swagger in browser
@@ -68,13 +79,21 @@ or
 http://localhost:5068/swagger/index.html
 `
 
-### Building and Running the tests
+### Building and Running unit tests
 ```powershell
 dotnet build tests/BGA.API.Tests/BGA.API.Tests.csproj
 ```
 
 ```powershell
 dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
+```
+
+### Running integration tests
+Integration tests are located in `tests/BGA.API.IntegrationTests` and use Testcontainers to start PostgreSQL in Docker.
+Docker must be installed and running before starting these tests.
+
+```powershell
+dotnet test tests/BGA.API.IntegrationTests/BGA.API.IntegrationTests.csproj
 ```
 
 ## API Documentation
