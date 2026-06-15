@@ -1,0 +1,35 @@
+using BGA.Domain.Models.Enums;
+
+namespace BGA.Domain.Models;
+
+public class Booking
+{
+    public Guid Id { get; private set; }
+    public BookingStatus Status { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? ProcessedAt { get; private set; }
+    public Guid EventId { get; private set; }
+    public Event Event { get; private set; } = null!;
+
+    private Booking() { }
+
+    public Booking(Guid eventId, BookingStatus status, DateTimeOffset createdAt)
+    {
+        Id = Guid.NewGuid();
+        EventId = eventId;
+        Status = status;
+        CreatedAt = createdAt;
+    }
+
+    public void Confirm()
+    {
+        Status = BookingStatus.Confirmed;
+        ProcessedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void Reject()
+    {
+        Status = BookingStatus.Rejected;
+        ProcessedAt = DateTimeOffset.UtcNow;
+    }
+}

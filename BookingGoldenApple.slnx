@@ -1,9 +1,13 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/BGA.API/BGA.API.csproj" />
+    <Project Path="src/BGA.Application/BGA.Application.csproj" Id="6aa3a2d2-8a00-47d7-87fa-af1d7184e185" />
+    <Project Path="src/BGA.Domain/BGA.Domain.csproj" Id="0069efad-2c56-4572-be36-61152e049c4b" />
+    <Project Path="src/BGA.Infrastructure/BGA.Infrastructure.csproj" Id="fbc21517-4f24-4f22-9568-708d16785558" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/BGA.API.IntegrationTests/BGA.API.IntegrationTests.csproj" Id="eb1da7e8-162f-46be-b9bc-c27f9e12cf63" />
-    <Project Path="tests/BGA.API.Tests/BGA.API.Tests.csproj" Id="4a728714-7dd6-47a3-baa6-556421ed6376" />
+    <Project Path="tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj" Id="76cbfdce-a9ce-4f1f-9e0b-9bd04fc3fcd8" />
+    <Project Path="tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj" />
+    <Project Path="tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj" />
   </Folder>
 </Solution>
