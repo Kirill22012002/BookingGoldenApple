@@ -171,7 +171,7 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
     }
 
     [Fact]
-    public async Task GET_WithoutFiltersShouldReturnsEvents()
+    public async Task GET_WithoutFiltersShouldReturnEvents()
     {
         await _factory.ResetDatabaseAsync();
 
