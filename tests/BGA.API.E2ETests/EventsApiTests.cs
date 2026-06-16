@@ -127,4 +127,45 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
         Assert.Empty(responseBody);
         Assert.False(exists);
     }
+
+    [Fact]
+    public async Task GET_ShouldReturnEventById()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        // Arrange
+        var existingEvent = new Event(
+            title: "Event by id",
+            description: "Description for event by id",
+            startAt: new DateTimeOffset(2026, 1, 13, 10, 0, 0, TimeSpan.Zero),
+            endAt: new DateTimeOffset(2026, 1, 13, 12, 0, 0, TimeSpan.Zero),
+            totalSeats: 6);
+
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddAsync(existingEvent, TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Act
+        var httpResponse = await _client.GetAsync($"/events/{existingEvent.Id}", TestContext.Current.CancellationToken);
+        var responseBody = await httpResponse.Content.ReadFromJsonAsync<EventDto>(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+        Assert.NotNull(responseBody);
+
+        await using var verifyContext = _factory.CreateContext();
+        var saved = await verifyContext.Events
+            .AsNoTracking()
+            .SingleAsync(e => e.Id == existingEvent.Id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(saved.Id, responseBody.Id);
+        Assert.Equal(saved.Title, responseBody.Title);
+        Assert.Equal(saved.Description, responseBody.Description);
+        Assert.Equal(saved.StartAt, responseBody.StartAt);
+        Assert.Equal(saved.EndAt, responseBody.EndAt);
+        Assert.Equal(saved.TotalSeats, responseBody.TotalSeats);
+        Assert.Equal(saved.AvailableSeats, responseBody.AvailableSeats);
+    }
 }
