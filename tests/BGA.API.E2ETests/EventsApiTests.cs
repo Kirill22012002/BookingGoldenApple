@@ -2,6 +2,7 @@
 using BGA.API.E2ETests.Infrastructure;
 using BGA.API.E2ETests.Models;
 using BGA.Domain.Models;
+using BGA.Domain.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Http.Json;
@@ -236,5 +237,53 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
             Assert.Equal(savedEvents[i].TotalSeats, responseItems[i].TotalSeats);
             Assert.Equal(savedEvents[i].AvailableSeats, responseItems[i].AvailableSeats);
         }
+    }
+
+    [Fact]
+    public async Task POST_Book_ShouldCreateBooking()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        // Arrange
+        var existingEvent = new Event(
+            title: "Bookable event",
+            description: "Description for bookable event",
+            startAt: new DateTimeOffset(2026, 1, 17, 10, 0, 0, TimeSpan.Zero),
+            endAt: new DateTimeOffset(2026, 1, 17, 12, 0, 0, TimeSpan.Zero),
+            totalSeats: 3);
+
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddAsync(existingEvent, TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Act
+        var httpResponse = await _client.PostAsync($"/events/{existingEvent.Id}/book", null, TestContext.Current.CancellationToken);
+        var responseBody = await httpResponse.Content.ReadFromJsonAsync<BookingResponse>(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Accepted, httpResponse.StatusCode);
+        Assert.NotNull(responseBody);
+        Assert.NotEqual(Guid.Empty, responseBody.Id);
+        Assert.Equal(existingEvent.Id, responseBody.EventId);
+        Assert.Equal("pending", responseBody.Status);
+        Assert.NotNull(httpResponse.Headers.Location);
+        Assert.EndsWith($"/Bookings/{responseBody.Id}", httpResponse.Headers.Location.ToString());
+
+        await using var verifyContext = _factory.CreateContext();
+        var savedBooking = await verifyContext.Bookings
+            .AsNoTracking()
+            .SingleAsync(b => b.Id == responseBody.Id, TestContext.Current.CancellationToken);
+        var savedEvent = await verifyContext.Events
+            .AsNoTracking()
+            .SingleAsync(e => e.Id == existingEvent.Id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(responseBody.EventId, savedBooking.EventId);
+        Assert.Equal(BookingStatus.Pending, savedBooking.Status);
+        Assert.Equal(3, savedEvent.TotalSeats);
+        Assert.Equal(2, savedEvent.AvailableSeats);
+        Assert.True(savedBooking.CreatedAt > DateTimeOffset.MinValue);
+        Assert.Null(savedBooking.ProcessedAt);
     }
 }
