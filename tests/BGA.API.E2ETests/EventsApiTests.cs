@@ -93,4 +93,38 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
         Assert.Equal(10, saved.TotalSeats);
         Assert.Equal(10, saved.AvailableSeats);
     }
+
+    [Fact]
+    public async Task DELETE_ShouldDeleteEvent()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        // Arrange
+        var existingEvent = new Event(
+            title: "Event to delete",
+            description: "Description for event to delete",
+            startAt: new DateTimeOffset(2026, 1, 12, 10, 0, 0, TimeSpan.Zero),
+            endAt: new DateTimeOffset(2026, 1, 12, 12, 0, 0, TimeSpan.Zero),
+            totalSeats: 8);
+
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddAsync(existingEvent, TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Act
+        var httpResponse = await _client.DeleteAsync($"/events/{existingEvent.Id}", TestContext.Current.CancellationToken);
+        var responseBody = await httpResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        await using var verifyContext = _factory.CreateContext();
+        var exists = await verifyContext.Events
+            .AsNoTracking()
+            .AnyAsync(e => e.Id == existingEvent.Id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
+        Assert.Empty(responseBody);
+        Assert.False(exists);
+    }
 }
