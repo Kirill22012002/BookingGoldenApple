@@ -6,6 +6,7 @@
     <Project Path="src/BGA.Infrastructure/BGA.Infrastructure.csproj" Id="fbc21517-4f24-4f22-9568-708d16785558" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BGA.API.E2ETests/BGA.API.E2ETests.csproj" />
     <Project Path="tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj" Id="76cbfdce-a9ce-4f1f-9e0b-9bd04fc3fcd8" />
     <Project Path="tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj" />
     <Project Path="tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj" />
