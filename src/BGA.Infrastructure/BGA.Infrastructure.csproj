@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BGA.Application\BGA.Application.csproj" />
-    <ProjectReference Include="..\BGA.Domain\BGA.Domain.csproj" />
   </ItemGroup>
 
 </Project>
