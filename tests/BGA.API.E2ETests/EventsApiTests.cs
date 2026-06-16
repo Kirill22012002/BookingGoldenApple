@@ -168,4 +168,73 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
         Assert.Equal(saved.TotalSeats, responseBody.TotalSeats);
         Assert.Equal(saved.AvailableSeats, responseBody.AvailableSeats);
     }
+
+    [Fact]
+    public async Task GET_WithoutFiltersShouldReturnsEvents()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        // Arrange
+        var events = new[]
+        {
+            new Event(
+                title: "First event",
+                description: "Description for first event",
+                startAt: new DateTimeOffset(2026, 1, 14, 10, 0, 0, TimeSpan.Zero),
+                endAt: new DateTimeOffset(2026, 1, 14, 12, 0, 0, TimeSpan.Zero),
+                totalSeats: 5),
+            new Event(
+                title: "Second event",
+                description: "Description for second event",
+                startAt: new DateTimeOffset(2026, 1, 15, 10, 0, 0, TimeSpan.Zero),
+                endAt: new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero),
+                totalSeats: 6),
+            new Event(
+                title: "Third event",
+                description: null,
+                startAt: new DateTimeOffset(2026, 1, 16, 10, 0, 0, TimeSpan.Zero),
+                endAt: new DateTimeOffset(2026, 1, 16, 12, 0, 0, TimeSpan.Zero),
+                totalSeats: 7)
+        };
+
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Act
+        var httpResponse = await _client.GetAsync("/events", TestContext.Current.CancellationToken);
+        var responseBody = await httpResponse.Content.ReadFromJsonAsync<PaginatedResult<EventDto>>(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+        Assert.NotNull(responseBody);
+
+        await using var verifyContext = _factory.CreateContext();
+        var savedEvents = await verifyContext.Events
+            .AsNoTracking()
+            .OrderBy(e => e.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        var responseItems = responseBody.Items
+            .OrderBy(e => e.Id)
+            .ToList();
+
+        Assert.Equal(savedEvents.Count, responseBody.TotalItems);
+        Assert.Equal(1, responseBody.PageNumber);
+        Assert.Equal(savedEvents.Count, responseBody.PageSize);
+        Assert.Equal(savedEvents.Count, responseItems.Count);
+
+        for (var i = 0; i < savedEvents.Count; i++)
+        {
+            Assert.Equal(savedEvents[i].Id, responseItems[i].Id);
+            Assert.Equal(savedEvents[i].Title, responseItems[i].Title);
+            Assert.Equal(savedEvents[i].Description, responseItems[i].Description);
+            Assert.Equal(savedEvents[i].StartAt, responseItems[i].StartAt);
+            Assert.Equal(savedEvents[i].EndAt, responseItems[i].EndAt);
+            Assert.Equal(savedEvents[i].TotalSeats, responseItems[i].TotalSeats);
+            Assert.Equal(savedEvents[i].AvailableSeats, responseItems[i].AvailableSeats);
+        }
+    }
 }
