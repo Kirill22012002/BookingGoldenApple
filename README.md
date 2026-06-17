@@ -4,8 +4,59 @@
 
 This version of BookingGoldenApple is based on .NET 10.
 
+### Project structure
+The solution is split into four layers under `src`.
+
+| Project                                            | Layer                                | Responsibility                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/BGA.API/BGA.API.csproj`                       | Presentation and startup application | ASP.NET Core entry point, controllers, DTOs, request validation attributes, exception handling, Swagger and composition of all layers.       |
+| `src/BGA.Application/BGA.Application.csproj`       | Application                          | Use cases, application services, repository interfaces, unit of work interface, background processing and application settings.              |
+| `src/BGA.Domain/BGA.Domain.csproj`                 | Domain                               | Core business models, enums and domain exceptions. This layer does not reference any other project.                                          |
+| `src/BGA.Infrastructure/BGA.Infrastructure.csproj` | Infrastructure                       | EF Core `DbContext`, entity configurations, migrations, repository implementations, unit of work implementation and PostgreSQL registration. |
+
+Project references must follow this dependency direction:
+
+```text
+BGA.API (Presentation/startup)
+    -> BGA.Application
+    -> BGA.Infrastructure
+
+BGA.Infrastructure -> BGA.Application
+BGA.Infrastructure -> BGA.Domain
+
+BGA.Application    -> BGA.Domain
+
+BGA.Domain         -> no project references
+```
+
+The same structure can be read as a layer diagram:
+
+```text
+                 Presentation / BGA.API
+                   |             |
+                   v             v
+Application / BGA.Application <- Infrastructure / BGA.Infrastructure
+                   |             |
+                   v             v
+                 Domain / BGA.Domain
+```
+
+Keep business rules in `BGA.Domain` or `BGA.Application`. `BGA.API` should translate HTTP requests and responses, while `BGA.Infrastructure` should contain persistence and external implementation details.
+
+### Test structure
+Tests are split by the project they verify. A test project should reference only its target project.
+
+```text
+tests/BGA.API.UnitTests                 -> src/BGA.API
+tests/BGA.Application.UnitTests         -> src/BGA.Application
+tests/BGA.Infrastructure.IntegrationTests -> src/BGA.Infrastructure
+```
+
+`BGA.Infrastructure.IntegrationTests` uses Testcontainers to start PostgreSQL in Docker, so Docker must be installed and running before starting these tests.
+
 ### Prerequisites
-- PostgreSQL (required to run the application). Start from the repository root: `docker compose up -d` (uses `docker-compose.yml`). Stop: `docker compose down`.
+- PostgreSQL is required to run the application. Start it from the repository root with `docker compose up -d` (uses `docker-compose.yml`). Stop it with `docker compose down`.
+- Docker is required for infrastructure integration tests.
 
 ### Configure connection string
 Update the PostgreSQL connection string in `src/BGA.API/appsettings.json` under `ConnectionStrings:Default`.
@@ -29,71 +80,86 @@ Parameters:
 
 ### Building the solution
 ```powershell
+dotnet build BookingGoldenApple.slnx
+```
+
+You can also build only the startup application:
+
+```powershell
 dotnet build src/BGA.API/BGA.API.csproj
 ```
 
 ### Running the solution
 Make sure PostgreSQL is running before starting the API.
 The database schema is managed by EF Core migrations. On application startup the API applies pending migrations automatically via `Database.Migrate()`.
+
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj
 ```
 
 ### EF Core migrations
+Migrations belong to the Infrastructure layer because `ApplicationDbContext` and persistence mappings live in `src/BGA.Infrastructure`.
+Run EF Core commands from the repository root and use:
+
+- `--project src/BGA.Infrastructure/BGA.Infrastructure.csproj` for the project where migration files are created.
+- `--startup-project src/BGA.API/BGA.API.csproj` for the executable project that provides configuration and dependency injection.
+
 Create a new migration:
+
 ```powershell
-dotnet ef migrations add <MigrationName> --project src/BGA.API/BGA.API.csproj
+dotnet ef migrations add <MigrationName> --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext --output-dir Migrations
 ```
 
 Apply migrations to the configured database:
+
 ```powershell
-dotnet ef database update --project src/BGA.API/BGA.API.csproj
+dotnet ef database update --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext
 ```
 
 ### Opening Swagger in browser
 
 #### Using PowerShell
-1. Run the following command
+1. Run the following command:
+
 ```powershell
 dotnet run --project src/BGA.API/BGA.API.csproj --launch-profile https
 ```
 
-2. Open the specified url in browser
-`
+2. Open one of these URLs in a browser:
+
+```text
 https://localhost:7116/swagger/index.html
-`
-or
-`
 http://localhost:5068/swagger/index.html
-`
+```
 
 #### Using VisualStudio/Rider
-1. Open BookingGoldenApple.slnx in VisualStudio or Rider
-2. Run https profile or click F5
-3. Open the specified url in browser (if it doesn't open on its own) 
-`
-https://localhost:7116/swagger/index.html
-`
-or
-`
-http://localhost:5068/swagger/index.html
-`
+1. Open `BookingGoldenApple.slnx` in VisualStudio or Rider.
+2. Run the `https` profile or click F5.
+3. Open one of the Swagger URLs above if it does not open automatically.
 
-### Building and Running unit tests
+### Running tests
+Run all tests:
+
 ```powershell
-dotnet build tests/BGA.API.Tests/BGA.API.Tests.csproj
+dotnet test BookingGoldenApple.slnx
 ```
 
+Run API unit tests:
+
 ```powershell
-dotnet test tests/BGA.API.Tests/BGA.API.Tests.csproj
+dotnet test tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj
 ```
 
-### Running integration tests
-Integration tests are located in `tests/BGA.API.IntegrationTests` and use Testcontainers to start PostgreSQL in Docker.
-Docker must be installed and running before starting these tests.
+Run Application unit tests:
 
 ```powershell
-dotnet test tests/BGA.API.IntegrationTests/BGA.API.IntegrationTests.csproj
+dotnet test tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj
+```
+
+Run Infrastructure integration tests:
+
+```powershell
+dotnet test tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj
 ```
 
 ## API Documentation
