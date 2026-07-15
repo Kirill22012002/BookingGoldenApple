@@ -145,7 +145,7 @@ http://localhost:5068/swagger/index.html
 1. Register a user with `POST /auth/register`.
 2. Call `POST /auth/login` with the same credentials and copy the returned token.
 3. Click `Authorize` in Swagger.
-4. Paste the token as `Bearer <your-token>` and confirm.
+4. Paste only the raw JWT token and confirm. Swagger UI will add the `Bearer` prefix automatically.
 5. Call protected endpoints with the authorized session.
 
 ### Running tests

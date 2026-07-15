@@ -84,7 +84,7 @@ public static class DependencyInjection
                 Type = SecuritySchemeType.Http,
                 Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
                 BearerFormat = "JWT",
-                Description = "Enter 'Bearer {token}'."
+                Description = "Paste only the JWT token. Swagger UI adds the Bearer prefix automatically."
             });
             options.OperationFilter<AuthorizeOperationFilter>();
         });

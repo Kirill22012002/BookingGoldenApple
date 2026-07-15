@@ -7,6 +7,25 @@ namespace BGA.API.Swagger;
 
 public sealed class AuthorizeOperationFilter : IOperationFilter
 {
+    private static readonly OpenApiDocument SecurityDocument = new()
+    {
+        Components = new OpenApiComponents
+        {
+            SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+            {
+                [JwtBearerDefaults.AuthenticationScheme] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
+                    BearerFormat = "JWT"
+                }
+            }
+        }
+    };
+
+    private static readonly OpenApiSecuritySchemeReference BearerSecurityScheme =
+        new(JwtBearerDefaults.AuthenticationScheme, SecurityDocument);
+
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         if (HasAllowAnonymous(context))
@@ -23,7 +42,7 @@ public sealed class AuthorizeOperationFilter : IOperationFilter
         operation.Security.Add(new OpenApiSecurityRequirement
         {
             {
-                new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, null!, null),
+                BearerSecurityScheme,
                 new List<string>()
             }
         });
