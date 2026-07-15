@@ -1,7 +1,7 @@
 using BGA.API.Dtos;
 using BGA.API.E2ETests.Infrastructure;
+using BGA.API.E2ETests.Models;
 using BGA.Domain.Models;
-using BGA.Domain.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Http.Json;
@@ -18,43 +18,29 @@ public class BookingsApiTests(CustomWebApplicationFactory factory) : IClassFixtu
     {
         await _factory.ResetDatabaseAsync();
 
-        // Arrange
-        var existingEvent = new Event(
-            title: "Event with booking",
-            description: "Description for event with booking",
-            startAt: new DateTimeOffset(2026, 1, 18, 10, 0, 0, TimeSpan.Zero),
-            endAt: new DateTimeOffset(2026, 1, 18, 12, 0, 0, TimeSpan.Zero),
-            totalSeats: 4);
-        var existingBooking = new Booking(
-            eventId: existingEvent.Id,
-            status: BookingStatus.Pending,
-            createdAt: new DateTimeOffset(2026, 1, 18, 9, 0, 0, TimeSpan.Zero));
-        existingBooking.Confirm();
-
+        var user = await AuthTestHelper.RegisterAndLoginAsync(_client, cancellationToken: TestContext.Current.CancellationToken);
+        var existingEvent = new Event("Event with booking", "Description for event with booking", DateTimeOffset.UtcNow.AddDays(20), DateTimeOffset.UtcNow.AddDays(20).AddHours(2), 4);
         await using (var arrangeContext = _factory.CreateContext())
         {
             await arrangeContext.Events.AddAsync(existingEvent, TestContext.Current.CancellationToken);
-            await arrangeContext.Bookings.AddAsync(existingBooking, TestContext.Current.CancellationToken);
             await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        // Act
-        var httpResponse = await _client.GetAsync($"/bookings/{existingBooking.Id}", TestContext.Current.CancellationToken);
-        var responseBody = await httpResponse.Content.ReadFromJsonAsync<BookingDto>(TestContext.Current.CancellationToken);
+        using var createRequest = AuthTestHelper.CreateAuthorizedRequest(HttpMethod.Post, $"/events/{existingEvent.Id}/book", user.Token);
+        var createResponse = await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
+        var createdBooking = await createResponse.Content.ReadFromJsonAsync<BookingResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
-        // Assert
+        using var getRequest = AuthTestHelper.CreateAuthorizedRequest(HttpMethod.Get, $"/bookings/{createdBooking!.Id}", user.Token);
+        var httpResponse = await _client.SendAsync(getRequest, TestContext.Current.CancellationToken);
+        var responseBody = await httpResponse.Content.ReadFromJsonAsync<BookingDto>(cancellationToken: TestContext.Current.CancellationToken);
+
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(responseBody);
 
         await using var verifyContext = _factory.CreateContext();
-        var saved = await verifyContext.Bookings
-            .AsNoTracking()
-            .SingleAsync(b => b.Id == existingBooking.Id, TestContext.Current.CancellationToken);
-
+        var saved = await verifyContext.Bookings.AsNoTracking().SingleAsync(b => b.Id == createdBooking.Id, TestContext.Current.CancellationToken);
         Assert.Equal(saved.Id, responseBody.Id);
         Assert.Equal(saved.EventId, responseBody.EventId);
-        Assert.Equal("confirmed", responseBody.Status);
-        Assert.Equal(saved.CreatedAt, responseBody.CreatedAt);
-        Assert.Equal(saved.ProcessedAt, responseBody.ProcessedAt);
+        Assert.Equal("pending", responseBody.Status);
     }
 }

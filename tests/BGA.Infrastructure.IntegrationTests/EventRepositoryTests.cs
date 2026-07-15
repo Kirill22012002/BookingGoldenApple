@@ -387,15 +387,19 @@ public class EventRepositoryTests : PostgresInfrastructure
             new DateTimeOffset(2026, 11, 15, 9, 0, 0, TimeSpan.Zero),
             new DateTimeOffset(2026, 11, 15, 18, 0, 0, TimeSpan.Zero),
             100);
+        var user = CreateUser();
         await context.Events.AddAsync(@event, TestContext.Current.CancellationToken);
+        await context.Users.AddAsync(user, TestContext.Current.CancellationToken);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var booking1 = new Booking(
             @event.Id,
+            user.Id,
             BookingStatus.Pending,
             new DateTimeOffset(2026, 11, 01, 10, 0, 0, TimeSpan.Zero));
         var booking2 = new Booking(
             @event.Id,
+            user.Id,
             BookingStatus.Confirmed,
             new DateTimeOffset(2026, 11, 02, 11, 0, 0, TimeSpan.Zero));
         await context.Bookings.AddRangeAsync([booking1, booking2], TestContext.Current.CancellationToken);
@@ -552,4 +556,7 @@ public class EventRepositoryTests : PostgresInfrastructure
 
         Assert.Null(deleted);
     }
+
+    private static User CreateUser()
+        => new($"user-{Guid.NewGuid():N}", new string('A', 64), UserRole.User);
 }

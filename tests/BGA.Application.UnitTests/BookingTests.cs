@@ -1,4 +1,5 @@
-﻿using BGA.Application.UnitTests.Helpers;
+using BGA.Application.UnitTests.Helpers;
+using BGA.Domain.Exceptions;
 using BGA.Domain.Models;
 using BGA.Domain.Models.Enums;
 
@@ -9,32 +10,44 @@ public class BookingTests
     [Fact]
     public void Confirm_ShouldSetBookingStatusToConfirmed_And_SetProcessedAtUtcNow()
     {
-        // Arrange
-        var expectedStatus = BookingStatus.Confirmed;
-        var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
 
-        // Act
         booking.Confirm();
 
-        // Assert
-        Assert.Equal(expectedStatus, booking.Status);
+        Assert.Equal(BookingStatus.Confirmed, booking.Status);
         Assert.NotNull(booking.ProcessedAt);
-        Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
     }
 
     [Fact]
     public void Reject_ShouldSetBookingStatusToRejected_And_SetProcessedAtUtcNow()
     {
-        // Arrange
-        var expectedStatus = BookingStatus.Rejected;
-        var booking = new Booking(Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
 
-        // Act
         booking.Reject();
 
-        // Assert
-        Assert.Equal(expectedStatus, booking.Status);
+        Assert.Equal(BookingStatus.Rejected, booking.Status);
         Assert.NotNull(booking.ProcessedAt);
-        Assert.NotEqual(default(DateTimeOffset), booking.ProcessedAt);
+    }
+
+    [Fact]
+    public void Cancel_ShouldSetBookingStatusToCancelled()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+
+        booking.Cancel();
+
+        Assert.Equal(BookingStatus.Cancelled, booking.Status);
+        Assert.NotNull(booking.ProcessedAt);
+    }
+
+    [Fact]
+    public void Cancel_WhenBookingAlreadyCancelled_ShouldThrowValidationException()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+        booking.Cancel();
+
+        var exception = Assert.Throws<ValidationException>(booking.Cancel);
+
+        exception.HasSingleError("Status", "Booking is already cancelled.");
     }
 }

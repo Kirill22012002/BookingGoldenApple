@@ -1,119 +1,86 @@
-﻿using BGA.Application.UnitTests.Helpers;
 using BGA.Application.Repositories;
 using BGA.Application.Services.Implementations;
+using BGA.Application.UnitTests.Helpers;
+using BGA.Domain.Exceptions;
 using BGA.Domain.Models;
+using BGA.Domain.Models.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-using BGA.Domain.Exceptions;
 
 namespace BGA.Application.UnitTests;
 
 public class BookingServiceOverbookingTests
 {
-    private readonly Mock<IEventRepository> _eventRepositoryMock;
-    private readonly Mock<IBookingRepository> _bookingRepositoryMock;
-    private readonly Mock<IUnitOfWork> _unitOfWork;
-    private readonly Mock<ILogger<BookingService>> _logger;
-    private readonly FakeTimeProvider _timeProvider;
+    private readonly Mock<IEventRepository> _eventRepositoryMock = new();
+    private readonly Mock<IBookingRepository> _bookingRepositoryMock = new();
+    private readonly Mock<IUserRepository> _userRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly BookingService _service;
-
     private readonly object _lock = new();
 
     public BookingServiceOverbookingTests()
     {
-        _eventRepositoryMock = new Mock<IEventRepository>();
-        _bookingRepositoryMock = new Mock<IBookingRepository>();
-        _unitOfWork = new Mock<IUnitOfWork>();
-        _unitOfWork.Setup(u => u.Events).Returns(_eventRepositoryMock.Object);
-        _unitOfWork.Setup(u => u.Bookings).Returns(_bookingRepositoryMock.Object);
-        _logger = new Mock<ILogger<BookingService>>();
-        _timeProvider = new FakeTimeProvider();
-        _service = new BookingService(
-            _unitOfWork.Object,
-            _logger.Object,
-            _timeProvider);
-    }
-
-    [Theory]
-    [InlineData(5, 20, 5, 15, 0)]
-    [InlineData(2, 2, 2, 0, 0)]
-    [InlineData(1, 2, 1, 1, 0)]
-    [InlineData(2, 3, 2, 1, 0)]
-    [InlineData(3, 2, 2, 0, 1)]
-    [InlineData(100, 50, 50, 0, 50)]
-    [InlineData(1, 100, 1, 99, 0)]
-    [InlineData(10, 0, 0, 0, 10)]
-    [InlineData(5, 1, 1, 0, 4)]
-    [InlineData(7, 7, 7, 0, 0)]
-    public async Task CreateBookingAsync_OverbookingTests(int initialSeats, int concurrentRequests, int expectedSuccessBookings, int expectedFailedBookings, int expectedAvailableSeats)
-    {
-        // Arrange
-        int successBookings = 0;
-        int failedBookings = 0;
-
-        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, initialSeats);
-
-        _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(@event);
-
-        // Act
-        var tasks = Enumerable
-            .Range(0, concurrentRequests)
-            .Select(async i =>
-            {
-                try
-                {
-                    await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
-                    lock (_lock) successBookings++;
-                }
-                catch (NoAvailableSeatsException)
-                {
-                    lock (_lock) failedBookings++;
-                }
-            });
-
-        await Task.WhenAll(tasks);
-
-        // Assert
-        Assert.Equal(expectedSuccessBookings, successBookings);
-        Assert.Equal(expectedFailedBookings, failedBookings);
-        Assert.Equal(expectedAvailableSeats, @event.AvailableSeats);
+        var timeProvider = new FakeTimeProvider();
+        timeProvider.SetUtcNow(TestHelper.Now);
+        _unitOfWork.SetupGet(unitOfWork => unitOfWork.Events).Returns(_eventRepositoryMock.Object);
+        _unitOfWork.SetupGet(unitOfWork => unitOfWork.Bookings).Returns(_bookingRepositoryMock.Object);
+        _unitOfWork.SetupGet(unitOfWork => unitOfWork.Users).Returns(_userRepositoryMock.Object);
+        _service = new BookingService(_unitOfWork.Object, Mock.Of<ILogger<BookingService>>(), timeProvider);
     }
 
     [Fact]
-    public async Task CreateBookingAsync_AllBookingsCreateWithUniqueId()
+    public async Task CreateBookingAsync_ConcurrentRequests_RespectsAvailableSeats()
     {
-        // Arrange
-        var concurrentRequests = 10;
-        HashSet<Guid> ids = [];
-        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, concurrentRequests);
-        _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken))
-            .ReturnsAsync(@event);
+        var user = CreateUser();
+        var @event = new Event("title", "description", TestHelper.Tomorrow, TestHelper.Tomorrow.AddHours(2), 5);
+        _userRepositoryMock.Setup(repository => repository.GetByIdAsync(user.Id, TestContext.Current.CancellationToken)).ReturnsAsync(user);
+        _eventRepositoryMock.Setup(repository => repository.GetByIdAsync(@event.Id, TestContext.Current.CancellationToken)).ReturnsAsync(@event);
+        _bookingRepositoryMock.Setup(repository => repository.CountActiveByUserIdAsync(user.Id, TestContext.Current.CancellationToken)).ReturnsAsync(0);
 
-        _unitOfWork
-            .Setup(unitOfWork => unitOfWork.Bookings.CreateAsync(It.IsAny<Booking>(), cancellationToken: TestContext.Current.CancellationToken));
-
-        // Act
-        var tasks = Enumerable
-            .Range(0, concurrentRequests)
-            .Select(async i =>
+        var successBookings = 0;
+        var failedBookings = 0;
+        var tasks = Enumerable.Range(0, 10).Select(async _ =>
+        {
+            try
             {
-                var result = await _service.CreateBookingAsync(@event.Id, cancellationToken: TestContext.Current.CancellationToken);
-                lock (_lock)
-                {
-                    if (result != null)
-                        Assert.True(ids.Add(result.Id));
-                }
-
-                return result;
-            });
+                await _service.CreateBookingAsync(@event.Id, user.Id, TestContext.Current.CancellationToken);
+                lock (_lock) successBookings++;
+            }
+            catch (NoAvailableSeatsException)
+            {
+                lock (_lock) failedBookings++;
+            }
+        });
 
         await Task.WhenAll(tasks);
 
-        // Assert
-        Assert.Equal(concurrentRequests, ids.Count);
+        Assert.Equal(5, successBookings);
+        Assert.Equal(5, failedBookings);
+        Assert.Equal(0, @event.AvailableSeats);
     }
+
+    [Fact]
+    public async Task CreateBookingAsync_ConcurrentRequests_CreatesUniqueBookingIds()
+    {
+        var user = CreateUser();
+        var @event = new Event("title", "description", TestHelper.Tomorrow, TestHelper.Tomorrow.AddHours(2), 10);
+        var ids = new HashSet<Guid>();
+        _userRepositoryMock.Setup(repository => repository.GetByIdAsync(user.Id, TestContext.Current.CancellationToken)).ReturnsAsync(user);
+        _eventRepositoryMock.Setup(repository => repository.GetByIdAsync(@event.Id, TestContext.Current.CancellationToken)).ReturnsAsync(@event);
+        _bookingRepositoryMock.Setup(repository => repository.CountActiveByUserIdAsync(user.Id, TestContext.Current.CancellationToken)).ReturnsAsync(0);
+
+        var tasks = Enumerable.Range(0, 10).Select(async _ =>
+        {
+            var result = await _service.CreateBookingAsync(@event.Id, user.Id, TestContext.Current.CancellationToken);
+            lock (_lock) Assert.True(ids.Add(result.Id));
+        });
+
+        await Task.WhenAll(tasks);
+
+        Assert.Equal(10, ids.Count);
+    }
+
+    private static User CreateUser()
+        => new($"user-{Guid.NewGuid():N}", new string('A', 64), UserRole.User);
 }

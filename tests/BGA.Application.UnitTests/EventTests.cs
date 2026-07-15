@@ -100,37 +100,31 @@ public class EventTests
     [Fact]
     public void Reschedule_WithValidStartAtAndEndAt_ShouldUpdateStartAtAndEndAt()
     {
-        // Arrange
         var initialStartAt = TestHelper.Yesterday;
         var initialEndAt = TestHelper.Tomorrow;
         var @event = new Event("title", "description", initialStartAt, initialEndAt, 1);
+        var newStartAt = TestHelper.Tomorrow;
+        var newEndAt = TestHelper.Tomorrow.AddDays(1);
 
-        // Act
-        // Arrange & Act
-        var exception = Assert.Throws<ValidationException>(
-            () => @event.Reschedule(TestHelper.Tomorrow, TestHelper.Yesterday));
+        @event.Reschedule(newStartAt, newEndAt);
 
-        // Assert
-        exception.HasSingleError("endAt", "endAt must be greater than the startAt");
-        Assert.Equal(initialStartAt, @event.StartAt);
-        Assert.Equal(initialEndAt, @event.EndAt);
+        Assert.Equal(newStartAt, @event.StartAt);
+        Assert.Equal(newEndAt, @event.EndAt);
     }
 
     [Fact]
     public void Reschedule_WithNotValidStartAtAndEndAt_ThrowValidationException()
     {
-        // Arrange
         var initialStartAt = TestHelper.Yesterday;
         var initialEndAt = TestHelper.Tomorrow;
         var @event = new Event("title", "description", initialStartAt, initialEndAt, 1);
 
-        // Act
-        @event.Reschedule(TestHelper.Yesterday, TestHelper.Tomorrow);
+        var exception = Assert.Throws<ValidationException>(
+            () => @event.Reschedule(TestHelper.Tomorrow, TestHelper.Yesterday));
 
-        // Assert
-        Assert.NotEqual(initialStartAt, @event.StartAt);
-        Assert.NotEqual(initialEndAt, @event.EndAt);
-
+        exception.HasSingleError("endAt", "endAt must be greater than the startAt");
+        Assert.Equal(initialStartAt, @event.StartAt);
+        Assert.Equal(initialEndAt, @event.EndAt);
     }
 
     [Theory]
