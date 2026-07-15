@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BGA.Application;
+namespace BGA.Application.Settings;
 
-public class ApplicationSettingsOptions
+public sealed class ApplicationSettingsOptions
 {
     public const string SectionName = "AppSettings";
 

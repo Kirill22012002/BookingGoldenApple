@@ -1,6 +1,6 @@
 ﻿using BGA.API.ExceptionHandlers;
 using BGA.API.Extensions;
-using BGA.Application;
+using BGA.Application.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
@@ -12,6 +12,11 @@ public static class DependencyInjection
     {
         services.AddOptions<ApplicationSettingsOptions>()
             .BindConfiguration(ApplicationSettingsOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<JwtOptions>()
+            .BindConfiguration(JwtOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
 

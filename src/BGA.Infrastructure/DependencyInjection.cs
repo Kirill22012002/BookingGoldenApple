@@ -1,6 +1,8 @@
-﻿using BGA.Application.Repositories;
+using BGA.Application.Repositories;
+using BGA.Application.Security;
 using BGA.Infrastructure.DataAccess;
 using BGA.Infrastructure.DataAccess.Repositories;
+using BGA.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IPasswordHasher, Sha256PasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }
