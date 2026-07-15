@@ -1,11 +1,11 @@
-using System.Security.Claims;
-using System.Text;
 using BGA.Application.Security;
 using BGA.Application.Settings;
 using BGA.Domain.Models;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using System.Text;
 
 namespace BGA.Infrastructure.Security;
 
@@ -26,6 +26,8 @@ public sealed class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider
             Audience = _jwtOptions.Audience,
             Claims = new Dictionary<string, object>
             {
+                [ClaimTypes.NameIdentifier] = user.Id.ToString(),
+                [ClaimTypes.Name] = user.Login,
                 [JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
                 [JwtRegisteredClaimNames.UniqueName] = user.Login,
                 [ClaimTypes.Role] = user.Role.ToString(),
