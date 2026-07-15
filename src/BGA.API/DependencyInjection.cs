@@ -1,11 +1,13 @@
 using BGA.API.ExceptionHandlers;
 using BGA.API.Extensions;
+using BGA.API.Swagger;
 using BGA.Application.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Security.Claims;
 using System.Text;
 
@@ -73,7 +75,19 @@ public static class DependencyInjection
             });
 
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddSwaggerGen(options =>
+        {
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
+                BearerFormat = "JWT",
+                Description = "Enter 'Bearer {token}'."
+            });
+            options.OperationFilter<AuthorizeOperationFilter>();
+        });
 
         services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 
