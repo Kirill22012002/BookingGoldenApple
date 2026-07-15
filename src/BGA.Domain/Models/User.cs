@@ -9,6 +9,7 @@ public class User
     public string Login { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
     public UserRole Role { get; private set; }
+    public List<Booking> Bookings { get; private set; } = [];
 
     private User() { }
 
