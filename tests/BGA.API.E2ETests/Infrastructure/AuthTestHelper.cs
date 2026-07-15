@@ -4,31 +4,48 @@ using System.Net.Http.Json;
 
 namespace BGA.API.E2ETests.Infrastructure;
 
+public sealed record AuthCredentials(string Login, string Password, string Role);
 public sealed record AuthSession(string Login, string Token);
 
 public static class AuthTestHelper
 {
-    public static async Task<AuthSession> RegisterAndLoginAsync(HttpClient client, string role = "User", CancellationToken cancellationToken = default)
+    public static AuthCredentials CreateCredentials(string role = "User")
     {
         var login = $"{role.ToLowerInvariant()}-{Guid.NewGuid():N}";
         const string password = "Password123!";
-        var registerResponse = await client.PostAsJsonAsync("/auth/register", new RegisterUserDto
+        return new AuthCredentials(login, password, role);
+    }
+
+    public static Task<HttpResponseMessage> RegisterAsync(HttpClient client, AuthCredentials credentials, CancellationToken cancellationToken = default)
+    {
+        return client.PostAsJsonAsync("/auth/register", new RegisterUserDto
         {
-            Login = login,
-            Password = password,
-            Role = role
+            Login = credentials.Login,
+            Password = credentials.Password,
+            Role = credentials.Role
         }, cancellationToken);
+    }
+
+    public static Task<HttpResponseMessage> LoginAsync(HttpClient client, AuthCredentials credentials, CancellationToken cancellationToken = default)
+    {
+        return client.PostAsJsonAsync("/auth/login", new LoginUserDto
+        {
+            Login = credentials.Login,
+            Password = credentials.Password
+        }, cancellationToken);
+    }
+
+    public static async Task<AuthSession> RegisterAndLoginAsync(HttpClient client, string role = "User", CancellationToken cancellationToken = default)
+    {
+        var credentials = CreateCredentials(role);
+        var registerResponse = await RegisterAsync(client, credentials, cancellationToken);
         registerResponse.EnsureSuccessStatusCode();
 
-        var loginResponse = await client.PostAsJsonAsync("/auth/login", new LoginUserDto
-        {
-            Login = login,
-            Password = password
-        }, cancellationToken);
+        var loginResponse = await LoginAsync(client, credentials, cancellationToken);
         loginResponse.EnsureSuccessStatusCode();
 
         var token = await loginResponse.Content.ReadFromJsonAsync<LoginResponseDto>(cancellationToken: cancellationToken);
-        return new AuthSession(login, token!.Token);
+        return new AuthSession(credentials.Login, token!.Token);
     }
 
     public static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string uri, string token)

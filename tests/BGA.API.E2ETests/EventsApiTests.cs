@@ -42,6 +42,46 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
     }
 
     [Fact]
+    public async Task POST_WithoutToken_ShouldReturnUnauthorized()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        var request = new AddEventDto
+        {
+            Title = "Protected event",
+            Description = "Should require admin token",
+            StartAt = DateTimeOffset.UtcNow.AddDays(10),
+            EndAt = DateTimeOffset.UtcNow.AddDays(10).AddHours(2),
+            TotalSeats = 10
+        };
+
+        var response = await _client.PostAsJsonAsync("/events", request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task POST_WithUserToken_ShouldReturnForbidden()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        var user = await AuthTestHelper.RegisterAndLoginAsync(_client, cancellationToken: TestContext.Current.CancellationToken);
+        var request = new AddEventDto
+        {
+            Title = "Admin only event",
+            Description = "Should reject regular users",
+            StartAt = DateTimeOffset.UtcNow.AddDays(10),
+            EndAt = DateTimeOffset.UtcNow.AddDays(10).AddHours(2),
+            TotalSeats = 10
+        };
+
+        using var httpRequest = AuthTestHelper.CreateAuthorizedRequest(HttpMethod.Post, "/events", user.Token, request);
+        var response = await _client.SendAsync(httpRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PUT_ShouldUpdateEvent()
     {
         await _factory.ResetDatabaseAsync();
@@ -163,5 +203,22 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
         var savedEvent = await verifyContext.Events.AsNoTracking().SingleAsync(e => e.Id == existingEvent.Id, TestContext.Current.CancellationToken);
         Assert.Equal(BookingStatus.Pending, savedBooking.Status);
         Assert.Equal(2, savedEvent.AvailableSeats);
+    }
+
+    [Fact]
+    public async Task POST_Book_WithoutToken_ShouldReturnUnauthorized()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        var existingEvent = new Event("Protected booking event", "Should require token", DateTimeOffset.UtcNow.AddDays(30), DateTimeOffset.UtcNow.AddDays(30).AddHours(2), 3);
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddAsync(existingEvent, TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var response = await _client.PostAsync($"/events/{existingEvent.Id}/book", content: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
