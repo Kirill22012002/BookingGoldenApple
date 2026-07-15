@@ -14,7 +14,7 @@ public class BookingService(
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken cancellationToken = default)
+    public async Task<Booking> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default)
     {
         var @event = await _unitOfWork.Events.GetByIdAsync(eventId, cancellationToken) ?? throw new NotFoundException("Event not found");
 
@@ -24,7 +24,7 @@ public class BookingService(
 
         _unitOfWork.Events.Update(@event);
 
-        var booking = new Booking(eventId, BookingStatus.Pending, _timeProvider.GetUtcNow());
+        var booking = new Booking(eventId, userId, BookingStatus.Pending, _timeProvider.GetUtcNow());
 
         await _unitOfWork.Bookings.CreateAsync(booking, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

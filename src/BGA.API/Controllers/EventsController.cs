@@ -54,9 +54,9 @@ public class EventsController(
     }
 
     [HttpPost("{id:guid}/book")]
-    public async Task<IActionResult> Book([FromRoute] Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Book([FromRoute] Guid id, [FromQuery] Guid userId, CancellationToken cancellationToken)
     {
-        var response = await _bookingService.CreateBookingAsync(id, cancellationToken);
+        var response = await _bookingService.CreateBookingAsync(id, userId, cancellationToken);
         var responseDto = response.MapToDto();
 
         return AcceptedAtAction(
