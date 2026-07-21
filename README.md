@@ -6,7 +6,7 @@
 - `BGA.Events` - event catalog and event management
 - `BGA.Bookings` - booking creation, booking status and cancellation
 
-Each service owns its own database. For local development all three logical databases live inside one PostgreSQL container.
+Each service owns its own database. In Docker Compose the system runs as a full stack with three PostgreSQL containers, Kafka, Zookeeper and three APIs.
 
 ## Architecture
 
@@ -75,81 +75,101 @@ tests/
 - `.NET 10 SDK`
 - `Docker` / `Docker Desktop`
 
-## PostgreSQL for local development
+## Docker Compose
 
-Local setup uses one PostgreSQL container with three logical databases:
+The root [`docker-compose.yml`](docker-compose.yml) supports two launch modes.
 
-- `bga_users`
-- `bga_events`
-- `bga_bookings`
+### Run the full application
 
-Start PostgreSQL from the repository root:
+This is the main scenario for sprint 9: one command starts Kafka, Zookeeper, three PostgreSQL containers and three APIs.
 
 ```powershell
-docker compose up -d
+docker compose up -d --build
 ```
 
-Stop it:
+Useful follow-up commands:
 
 ```powershell
+docker compose ps
+docker compose logs -f
 docker compose down
-```
-
-If you previously used the old single-database setup and want a clean local state:
-
-```powershell
 docker compose down -v
-docker compose up -d
 ```
 
-Connection strings are already configured in:
+After startup the services are available at:
 
-- `src/BGA.Users/BGA.Users.API/appsettings.json`
-- `src/BGA.Events/BGA.Events.API/appsettings.json`
-- `src/BGA.Bookings/BGA.Bookings.API/appsettings.json`
+| Service | URL |
+| --- | --- |
+| `BGA.Users.API` | `http://localhost:56514/swagger` |
+| `BGA.Events.API` | `http://localhost:56515/swagger` |
+| `BGA.Bookings.API` | `http://localhost:56516/swagger` |
+| `Kafka` | `localhost:9092` |
 
-Each API calls `Database.Migrate()` on startup, so pending migrations are applied automatically.
+Notes:
 
-## Running the system
+- each API calls `Database.Migrate()` on startup, so migrations are applied automatically;
+- in full Docker mode connection strings and Kafka host are passed through environment variables from Compose;
+- the APIs inside Docker use the internal Kafka address `kafka:29092`.
 
-### Run everything through Aspire
+### Run only infrastructure containers
 
-This is now the fastest way to start all three APIs together.
-
-1. Start PostgreSQL:
+Use this mode if you want Kafka and PostgreSQL in Docker, but prefer running the APIs locally from the SDK.
 
 ```powershell
-docker compose up -d
+docker compose up -d zookeeper kafka users-db events-db bookings-db
 ```
 
-2. Start Aspire AppHost:
+This starts:
+
+- `zookeeper`
+- `kafka`
+- `users-db`
+- `events-db`
+- `bookings-db`
+
+Published infrastructure ports:
+
+| Container | Host port |
+| --- | --- |
+| `users-db` | `5433` |
+| `events-db` | `5434` |
+| `bookings-db` | `5435` |
+| `kafka` | `9092` |
+
+Stop only infrastructure:
 
 ```powershell
-dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
+docker compose stop zookeeper kafka users-db events-db bookings-db
 ```
 
-What happens next:
+### Run APIs locally against infrastructure containers
 
-- Aspire starts `BGA.Users.API`, `BGA.Events.API` and `BGA.Bookings.API`
-- the Aspire dashboard opens automatically in the browser
-- from the dashboard you can open each service and inspect logs/endpoints
+If you use `infra-only`, override the connection string for each service because local `appsettings.json` still points to `localhost:5432`.
 
-Important:
-
-- right now `Aspire AppHost` orchestrates the three APIs
-- PostgreSQL is still started separately via `docker compose`
-
-### Run services individually
-
-PostgreSQL must already be running.
+`BGA.Users.API`
 
 ```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5433;Database=bga_users;Username=postgres;Password=postgres"
 dotnet run --project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj
+```
+
+`BGA.Events.API`
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres"
+$env:Kafka__BootstrapServers = "localhost:9092"
 dotnet run --project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj
+```
+
+`BGA.Bookings.API`
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres"
+$env:Kafka__BootstrapServers = "localhost:9092"
 dotnet run --project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj
 ```
 
-Swagger opens automatically for each API because `launchSettings.json` uses `launchUrl: swagger`.
+Swagger opens automatically for local runs because `launchSettings.json` uses `launchUrl: swagger`.
 
 Default local URLs:
 
@@ -158,6 +178,24 @@ Default local URLs:
 | `BGA.Users.API` | `https://localhost:56511/swagger` | `http://localhost:56514/swagger` |
 | `BGA.Events.API` | `https://localhost:56513/swagger` | `http://localhost:56515/swagger` |
 | `BGA.Bookings.API` | `https://localhost:56512/swagger` | `http://localhost:56516/swagger` |
+
+### Run AppHost against infrastructure containers
+
+If you want Aspire to start all three APIs while Docker runs only Kafka and PostgreSQL, use:
+
+```powershell
+docker compose up -d zookeeper kafka users-db events-db bookings-db
+dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
+```
+
+`BGA.AppHost` now passes these values to child services automatically:
+
+- `UsersDb` -> `Host=localhost;Port=5433;Database=bga_users;Username=postgres;Password=postgres`
+- `EventsDb` -> `Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres`
+- `BookingsDb` -> `Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres`
+- `Kafka` -> `localhost:9092`
+
+If needed, you can override them through `src/BGA.AppHost/appsettings.json` or user secrets/environment variables for `BGA.AppHost`.
 
 ## Building
 
