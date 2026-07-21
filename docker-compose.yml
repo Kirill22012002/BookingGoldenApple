@@ -1,26 +1,28 @@
-# PostgreSQL for BGA.API — matches ConnectionStrings:DefaultConnection in appsettings.json
+# One PostgreSQL container with three logical databases:
+# - bga_users
+# - bga_events
+# - bga_bookings
 # Start from the repository root: docker compose up -d
-# Stop: docker compose down
-# Data is stored in the named volume bgaapi_pgdata
+# If you used the old single-db setup before, recreate the volume with: docker compose down -v
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: bgaapi-postgres
+    container_name: bga-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bgaapi
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
-      - bgaapi_pgdata:/var/lib/postgresql/data
+      - bga_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bgaapi"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  bgaapi_pgdata:
+  bga_pgdata:

@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/BGA.AppHost/BGA.AppHost.csproj" Id="ba15ab2a-be8e-4a13-95f7-c29fa4632d57" />
     <Project Path="src/BGA.Contracts/BGA.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/BGA.Bookings/">

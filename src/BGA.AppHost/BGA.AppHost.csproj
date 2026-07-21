@@ -1,0 +1,17 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.2.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>f269d850-12c1-4f33-8ff2-5f63e22f1253</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BGA.Bookings\BGA.Bookings.API\BGA.Bookings.API.csproj" />
+    <ProjectReference Include="..\BGA.Events\BGA.Events.API\BGA.Events.API.csproj" />
+    <ProjectReference Include="..\BGA.Users\BGA.Users.API\BGA.Users.API.csproj" />
+  </ItemGroup>
+
+</Project>
