@@ -28,6 +28,19 @@ Each service owns its own database. In Docker Compose the system runs as a full 
 | `BGA.Events` | events and seats metadata | `bga_events` |
 | `BGA.Bookings` | bookings and booking processing | `bga_bookings` |
 
+### Runtime ports
+
+| Component | Container | Host port | Purpose |
+| --- | --- | --- | --- |
+| `BGA.Users.API` | `users-api` | `56514` | registration, login, JWT issuing |
+| `BGA.Events.API` | `events-api` | `56515` | event CRUD and seat availability |
+| `BGA.Bookings.API` | `bookings-api` | `56516` | booking creation and cancellation |
+| `PostgreSQL Users` | `users-db` | `5433` | `bga_users` database |
+| `PostgreSQL Events` | `events-db` | `5434` | `bga_events` database |
+| `PostgreSQL Bookings` | `bookings-db` | `5435` | `bga_bookings` database |
+| `Kafka` | `kafka` | `9092` | inter-service messaging |
+| `Zookeeper` | `zookeeper` | not published | Kafka coordination |
+
 ### Source structure
 
 ```text
@@ -272,14 +285,44 @@ Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
 - `GET /bookings/{id}`
 - `DELETE /bookings/{id}`
 
+## Authentication and authorization
+
+- `BGA.Users` is the only service that issues JWT tokens through `POST /auth/login`.
+- `BGA.Events` and `BGA.Bookings` validate the same `Jwt:Key`, `Jwt:Issuer` and `Jwt:Audience`.
+- `POST /events`, `PUT /events/{id}` and `DELETE /events/{id}` require the `Admin` role.
+- All bookings endpoints require authentication.
+
+## BookingConfirmed Kafka flow
+
+The services do not call each other over HTTP. Seat updates happen only through Kafka:
+
+1. `POST /events/{eventId}/book` creates a booking in `BGA.Bookings` with status `pending`.
+2. `BookingProcessingService` confirms pending bookings in the bookings database.
+3. After `SaveChangesAsync`, `KafkaBookingConfirmedPublisher` publishes `BookingConfirmed` to topic `booking-confirmed`.
+4. The Kafka message key is `EventId`, so confirmations for the same event stay ordered within one partition.
+5. `BGA.Events` creates the topic at startup if it does not exist yet.
+6. `BookingConfirmedConsumerHostedService` consumes the event in consumer group `bga-events-booking-confirmed`.
+7. `BGA.Events` decreases available seats for the matching event and logs invalid, missing or over-capacity messages without crashing the subscriber.
+
 ## Booking lifecycle
 
 Booking creation is asynchronous:
 
 1. `POST /events/{eventId}/book` creates a booking with status `pending`
 2. `BGA.Bookings` background processing service handles pending bookings
-3. booking status can later become:
-   - `pending`
-   - `confirmed`
-   - `rejected`
-   - `cancelled`
+3. in the current sprint-9 flow the background processor moves the booking to `confirmed`
+4. `DELETE /bookings/{id}` changes the booking status to `cancelled`
+5. the domain model also contains `rejected`, but the current Kafka-based flow does not set it automatically
+
+## Manual end-to-end verification
+
+1. Start the full stack with `docker compose up -d --build`.
+2. Register a regular user through `http://localhost:56514/swagger`.
+3. Login through `POST /auth/login` and copy the JWT token.
+4. Register a second user through `POST /auth/register` with `role = "Admin"`, login as that user, then authorize in `http://localhost:56515/swagger`.
+5. Create an event and note its `availableSeats`.
+6. Authorize with the regular user token in `http://localhost:56516/swagger`.
+7. Call `POST /events/{eventId}/book` and copy the returned booking id.
+8. Wait a few seconds for the background processor and Kafka consumer.
+9. Check `GET /bookings/{id}` in `BGA.Bookings` and `GET /events/{id}` in `BGA.Events`.
+10. The booking should be `confirmed`, and the event should have fewer available seats than before.
