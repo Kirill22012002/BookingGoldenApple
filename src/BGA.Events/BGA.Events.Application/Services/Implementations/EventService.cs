@@ -58,6 +58,24 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
         return @event;
     }
 
+    public async Task<bool> TryReserveSeatsAsync(Guid id, int seatsCount, CancellationToken cancellationToken = default)
+    {
+        if (seatsCount <= 0)
+        {
+            throw new ValidationException(nameof(seatsCount), $"{nameof(seatsCount)} can be more than 0");
+        }
+
+        var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        if (!@event.TryReserveSeats(seatsCount))
+        {
+            return false;
+        }
+
+        unitOfWork.Events.Update(@event);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task UpdateAsync(Guid id, string title, string? description, DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
     {
         var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");

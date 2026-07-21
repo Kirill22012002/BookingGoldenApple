@@ -131,6 +131,38 @@ public class EventServiceTests
     }
 
     [Fact]
+    public async Task TryReserveSeatsAsync_WhenSeatsAvailable_ReservesSeats()
+    {
+        var id = Guid.NewGuid();
+        var @event = new Event("Cycling", null, TestHelper.Yesterday, TestHelper.Tomorrow, 5);
+        _unitOfWork.Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(id, TestContext.Current.CancellationToken)).ReturnsAsync(@event);
+
+        var result = await _service.TryReserveSeatsAsync(id, 2, TestContext.Current.CancellationToken);
+
+        Assert.True(result);
+        Assert.Equal(3, @event.AvailableSeats);
+        _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Update(@event), Times.Once);
+    }
+
+    [Fact]
+    public async Task TryReserveSeatsAsync_WhenEventMissing_ThrowsNotFoundException()
+    {
+        var id = Guid.NewGuid();
+        _unitOfWork.Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(id, TestContext.Current.CancellationToken)).ReturnsAsync((Event)null!);
+        await Assert.ThrowsAsync<NotFoundException>(() => _service.TryReserveSeatsAsync(id, 1, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task TryReserveSeatsAsync_WhenSeatsUnavailable_ReturnsFalse()
+    {
+        var id = Guid.NewGuid();
+        var @event = new Event("Cycling", null, TestHelper.Yesterday, TestHelper.Tomorrow, 1);
+        _unitOfWork.Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(id, TestContext.Current.CancellationToken)).ReturnsAsync(@event);
+        var result = await _service.TryReserveSeatsAsync(id, 2, TestContext.Current.CancellationToken);
+        Assert.False(result);
+    }
+
+    [Fact]
     public async Task UpdateAsync_WithValidEvent()
     {
         var id = Guid.NewGuid();

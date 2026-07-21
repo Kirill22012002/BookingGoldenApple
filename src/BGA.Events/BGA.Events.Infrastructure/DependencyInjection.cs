@@ -1,6 +1,7 @@
 using BGA.Events.Application.Repositories;
 using BGA.Events.Infrastructure.DataAccess;
 using BGA.Events.Infrastructure.DataAccess.Repositories;
+using BGA.Events.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddDbContext<EventsDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddHostedService<KafkaTopicInitializerHostedService>();
+        services.AddHostedService<BookingConfirmedConsumerHostedService>();
 
         return services;
     }
