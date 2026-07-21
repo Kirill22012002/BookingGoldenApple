@@ -21,10 +21,21 @@
     <Project Path="src/BGA.Users/BGA.Users.Domain/BGA.Users.Domain.csproj" Id="e4e22fd7-6442-4173-97ec-b8b243c8d8ba" />
     <Project Path="src/BGA.Users/BGA.Users.Infrastructure/BGA.Users.Infrastructure.csproj" Id="a14190c0-e8ec-44a0-9889-9d6a979506bb" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/BGA.API.E2ETests/BGA.API.E2ETests.csproj" />
-    <Project Path="tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj" Id="76cbfdce-a9ce-4f1f-9e0b-9bd04fc3fcd8" />
-    <Project Path="tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj" />
-    <Project Path="tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj" />
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/BGA.Bookings/">
+    <Project Path="tests/BGA.Bookings/BGA.Bookings.API.E2ETests/BGA.Bookings.API.E2ETests.csproj" />
+    <Project Path="tests/BGA.Bookings/BGA.Bookings.API.UnitTests/BGA.Bookings.API.UnitTests.csproj" />
+    <Project Path="tests/BGA.Bookings/BGA.Bookings.Application.UnitTests/BGA.Bookings.Application.UnitTests.csproj" />
+    <Project Path="tests/BGA.Bookings/BGA.Bookings.Infrastructure.IntegrationTests/BGA.Bookings.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/BGA.Events/">
+    <Project Path="tests/BGA.Events/BGA.Events.API.E2ETests/BGA.Events.API.E2ETests.csproj" />
+    <Project Path="tests/BGA.Events/BGA.Events.Application.UnitTests/BGA.Events.Application.UnitTests.csproj" />
+    <Project Path="tests/BGA.Events/BGA.Events.Infrastructure.IntegrationTests/BGA.Events.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/BGA.Users/">
+    <Project Path="tests/BGA.Users/BGA.Users.API.E2ETests/BGA.Users.API.E2ETests.csproj" />
+    <Project Path="tests/BGA.Users/BGA.Users.API.UnitTests/BGA.Users.API.UnitTests.csproj" />
+    <Project Path="tests/BGA.Users/BGA.Users.Infrastructure.IntegrationTests/BGA.Users.Infrastructure.IntegrationTests.csproj" />
   </Folder>
 </Solution>
