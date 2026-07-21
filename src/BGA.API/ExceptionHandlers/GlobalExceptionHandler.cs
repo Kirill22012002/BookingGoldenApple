@@ -43,23 +43,25 @@ public sealed class GlobalExceptionHandler(
 
     private static (int StatusCode, string Title) MapException(Exception exception) => exception switch
     {
+        EventAlreadyStartedException eventAlreadyStartedException => ((int)eventAlreadyStartedException.StatusCode, eventAlreadyStartedException.Message),
+        BookingLimitExceededException bookingLimitExceededException => ((int)bookingLimitExceededException.StatusCode, bookingLimitExceededException.Message),
+        OperationForbiddenException operationForbiddenException => ((int)operationForbiddenException.StatusCode, operationForbiddenException.Message),
         AppException appEx => ((int)appEx.StatusCode, appEx.Message),
         KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found."),
         ArgumentException => (StatusCodes.Status400BadRequest, "Invalid argument provided."),
+        UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized."),
         OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "Request cancelled by client."),
         _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
     };
 
     private static string? GetSafeErrorMessage(Exception exception, HttpContext context)
     {
-        // Only expose details in development
         var env = context.RequestServices.GetRequiredService<IHostEnvironment>();
         if (env.IsDevelopment())
         {
             return exception.Message;
         }
 
-        // In production, only expose messages from our own exceptions
         return exception is AppException ? exception.Message : null;
     }
 }

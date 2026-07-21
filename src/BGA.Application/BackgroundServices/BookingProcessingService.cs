@@ -1,5 +1,6 @@
 using BGA.Application.Repositories;
 using BGA.Application.Services.Interfaces;
+using BGA.Application.Settings;
 using BGA.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

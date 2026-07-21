@@ -1,4 +1,4 @@
-﻿using BGA.Infrastructure.DataAccess;
+using BGA.Infrastructure.DataAccess;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +10,17 @@ namespace BGA.API.E2ETests.Infrastructure;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres
-        = new PostgreSqlBuilder("postgres:16-alpine").Build();
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine").Build();
 
     public HttpClient HttpClient { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
-
         HttpClient = CreateClient();
     }
 
-    public new async ValueTask DisposeAsync()
-    {
-        await _postgres.DisposeAsync();
-    }
+    public new async ValueTask DisposeAsync() => await _postgres.DisposeAsync();
 
     public ApplicationDbContext CreateContext()
     {
@@ -42,11 +37,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         await using var context = CreateContext();
         await context.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE \"catalog\".\"bookings\", \"catalog\".\"events\" RESTART IDENTITY CASCADE");
+            "TRUNCATE TABLE \"catalog\".\"bookings\", \"catalog\".\"users\", \"catalog\".\"events\" RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Development");
         builder.ConfigureServices(services =>
         {
             services.Remove(services.SingleOrDefault(service => typeof(DbContextOptions<ApplicationDbContext>) == service.ServiceType)!);

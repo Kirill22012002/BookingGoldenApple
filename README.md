@@ -77,6 +77,10 @@ Parameters:
 ### Description of src/BGA.API/appsettings.json settings
 - AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
 - AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
+- Jwt__Key - secret key used to sign JWT tokens. Replace the development value with a long random secret in production and do not store it directly in source control.
+- Jwt__Issuer - token issuer value validated by JWT middleware.
+- Jwt__Audience - token audience value validated by JWT middleware.
+- Jwt__ExpirationMinutes - token lifetime in minutes.
 
 ### Building the solution
 ```powershell
@@ -137,6 +141,13 @@ http://localhost:5068/swagger/index.html
 2. Run the `https` profile or click F5.
 3. Open one of the Swagger URLs above if it does not open automatically.
 
+### Using JWT in Swagger
+1. Register a user with `POST /auth/register`.
+2. Call `POST /auth/login` with the same credentials and copy the returned token.
+3. Click `Authorize` in Swagger.
+4. Paste only the raw JWT token and confirm. Swagger UI will add the `Bearer` prefix automatically.
+5. Call protected endpoints with the authorized session.
+
 ### Running tests
 Run all tests:
 
@@ -164,15 +175,22 @@ dotnet test tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.Integra
 
 ## API Documentation
 
-### Endpoints: 
+### Role model
+- `User` can register, log in, create bookings for future events, view a booking by id and cancel only their own bookings.
+- `Admin` has all `User` permissions and can also create, update and delete events, plus cancel any booking.
+- Anonymous users can read events and use authentication endpoints only.
+
+### Endpoints
+- `POST`:   /auth/register     - register a new user; role is optional and defaults to `User`
+- `POST`:   /auth/login        - log in and receive a JWT token
 - `GET`:    /events            - get list of all events
 - `GET`:    /events/{id}       - get event by id; if not found returns 404
-- `POST`:   /events            - create event
-- `PUT`:    /events/{id}       - update event
-- `DELETE`: /events/{id}       - remove event; if not found returns 404
-- `POST`:   /events/{id}/book  - create booking for event; if event not found returns 404
-
-- `GET`:    /bookings/{id}     - get booking by id; if not found returns 404
+- `POST`:   /events            - create event; requires `Admin`
+- `PUT`:    /events/{id}       - update event; requires `Admin`
+- `DELETE`: /events/{id}       - remove event; requires `Admin`; if not found returns 404
+- `POST`:   /events/{id}/book  - create booking for event; requires authentication
+- `GET`:    /bookings/{id}     - get booking by id; requires authentication
+- `DELETE`: /bookings/{id}     - cancel booking; requires authentication
 
 #### `GET`: /events has the following filters and pagination parameters. All filters work together (logical AND)
 - title - optional, search by name, case-insensitive, partial match.
@@ -196,7 +214,7 @@ And in location you can find URL for getting booking
 #### `GET` /bookings/{id} returns the following result
 - id - id of booking
 - eventId - id of event
-- status - status of booking processing, can be different (pending, confirmed, rejected)
+- status - status of booking processing, can be different (pending, confirmed, rejected, cancelled)
 - createdAt - date of creating booking
 - processedAt - date of processing booking
 
@@ -206,10 +224,18 @@ And in location you can find URL for getting booking
 - pending - created, wait for processing
 - confirmed - processed and confirmed
 - rejected - processed but rejected
+- cancelled - cancelled by the booking owner or admin
+
+### Authorization rules and errors
+- `POST /events`, `PUT /events/{id}` and `DELETE /events/{id}` return `401` without a token and `403` for authenticated non-admin users.
+- `POST /events/{id}/book`, `GET /bookings/{id}` and `DELETE /bookings/{id}` require a valid JWT token.
+- Booking an event that has already started returns `400`.
+- Creating more than 10 active bookings for the same user returns `409`.
+- Cancelling another user's booking without the `Admin` role returns `403`.
 
 ### User flows: 
 
 #### Create event => Create booking => Get booking status
-- create event using `POST` /events
-- create booking using `POST` /events/{id}/book
+- create event using `POST /events` as an admin
+- create booking using `POST /events/{id}/book` as an authenticated user
 - check status of booking using `GET` /bookings/{id}

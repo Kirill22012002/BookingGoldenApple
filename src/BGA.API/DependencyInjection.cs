@@ -1,8 +1,15 @@
-﻿using BGA.API.ExceptionHandlers;
+using BGA.API.ExceptionHandlers;
 using BGA.API.Extensions;
-using BGA.Application;
+using BGA.API.Swagger;
+using BGA.Application.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using System.Security.Claims;
+using System.Text;
 
 namespace BGA.API;
 
@@ -15,9 +22,40 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<JwtOptions>()
+            .BindConfiguration(JwtOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+            {
+                var jwt = jwtOptions.Value;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwt.Audience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+                    NameClaimType = ClaimTypes.NameIdentifier,
+                    RoleClaimType = ClaimTypes.Role
+                };
+            });
+
+        services.AddAuthorization();
         services.AddProblemDetails();
         services.AddExceptionHandler<ValidationExceptionHandler>();
-        services.AddExceptionHandler<GlobalExceptionHandler>(); // Fallback
+        services.AddExceptionHandler<GlobalExceptionHandler>();
 
         services.AddControllers()
             .ConfigureApiBehaviorOptions(options =>
@@ -37,7 +75,19 @@ public static class DependencyInjection
             });
 
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddSwaggerGen(options =>
+        {
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
+                BearerFormat = "JWT",
+                Description = "Paste only the JWT token. Swagger UI adds the Bearer prefix automatically."
+            });
+            options.OperationFilter<AuthorizeOperationFilter>();
+        });
 
         services.AddTransient<ProblemDetailsFactory, CustomProblemDetailsFactory>();
 

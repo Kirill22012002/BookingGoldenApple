@@ -11,5 +11,8 @@ public enum BookingStatus
     Confirmed,
 
     [EnumMember(Value = "rejected")]
-    Rejected
+    Rejected,
+
+    [EnumMember(Value = "cancelled")]
+    Cancelled
 }

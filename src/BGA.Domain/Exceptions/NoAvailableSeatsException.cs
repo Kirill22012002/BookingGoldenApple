@@ -2,6 +2,8 @@
 
 namespace BGA.Domain.Exceptions;
 
-public sealed class NoAvailableSeatsException(string message, HttpStatusCode statusCode = HttpStatusCode.Conflict) : AppException(message, statusCode)
+public sealed class NoAvailableSeatsException(
+    string message,
+    HttpStatusCode statusCode = HttpStatusCode.Conflict) : AppException(message, statusCode)
 {
 }

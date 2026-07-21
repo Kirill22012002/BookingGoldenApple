@@ -1,13 +1,13 @@
-﻿namespace BGA.Application.UnitTests.Helpers;
+namespace BGA.Application.UnitTests.Helpers;
 
-public class TestHelper
+public static class TestHelper
 {
     public static DateTimeOffset Yesterday
-        => DateTimeOffset.UtcNow.AddDays(-1);
+        => new(2026, 07, 14, 12, 0, 0, TimeSpan.Zero);
 
     public static DateTimeOffset Now
-        => DateTimeOffset.UtcNow;
+        => new(2026, 07, 15, 12, 0, 0, TimeSpan.Zero);
 
     public static DateTimeOffset Tomorrow
-        => DateTimeOffset.UtcNow.AddDays(1);
+        => new(2026, 07, 16, 12, 0, 0, TimeSpan.Zero);
 }
