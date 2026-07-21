@@ -15,7 +15,7 @@ Each service owns its own database. For local development all three logical data
 | Project | Responsibility |
 | --- | --- |
 | `src/BGA.AppHost` | Aspire orchestration. Starts all APIs from one entry point. |
-| `src/BGA.Contracts` | Shared contracts placeholder for inter-service contracts. |
+| `src/BGA.Contracts` | Shared inter-service contracts and topic names for Kafka messaging. |
 | `src/BGA.Users/*` | Users microservice: API, Application, Domain, Infrastructure. |
 | `src/BGA.Events/*` | Events microservice: API, Application, Domain, Infrastructure. |
 | `src/BGA.Bookings/*` | Bookings microservice: API, Application, Domain, Infrastructure. |

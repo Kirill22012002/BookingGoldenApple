@@ -18,6 +18,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\BGA.Events.Application\\BGA.Events.Application.csproj" />
+    <ProjectReference Include="..\..\BGA.Contracts\BGA.Contracts.csproj" />
+    <ProjectReference Include="..\BGA.Events.Application\BGA.Events.Application.csproj" />
   </ItemGroup>
 </Project>

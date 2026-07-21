@@ -15,7 +15,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\BGA.Events.Application\\BGA.Events.Application.csproj" />
-    <ProjectReference Include="..\\BGA.Events.Infrastructure\\BGA.Events.Infrastructure.csproj" />
+    <ProjectReference Include="..\BGA.Events.Application\BGA.Events.Application.csproj" />
+    <ProjectReference Include="..\BGA.Events.Infrastructure\BGA.Events.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

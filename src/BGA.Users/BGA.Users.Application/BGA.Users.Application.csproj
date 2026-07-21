@@ -8,6 +8,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\BGA.Users.Domain\\BGA.Users.Domain.csproj" />
+    <ProjectReference Include="..\BGA.Users.Domain\BGA.Users.Domain.csproj" />
   </ItemGroup>
 </Project>

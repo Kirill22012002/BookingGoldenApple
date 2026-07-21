@@ -17,6 +17,6 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\BGA.Bookings.Application\\BGA.Bookings.Application.csproj" />
+    <ProjectReference Include="..\BGA.Bookings.Application\BGA.Bookings.Application.csproj" />
   </ItemGroup>
 </Project>
