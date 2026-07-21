@@ -1,241 +1,247 @@
 # BookingGoldenApple
 
-## Getting Started
+`BookingGoldenApple` is now split into three ASP.NET Core microservices on `.NET 10`:
 
-This version of BookingGoldenApple is based on .NET 10.
+- `BGA.Users` - registration, login and JWT issuing
+- `BGA.Events` - event catalog and event management
+- `BGA.Bookings` - booking creation, booking status and cancellation
 
-### Project structure
-The solution is split into four layers under `src`.
+Each service owns its own database. For local development all three logical databases live inside one PostgreSQL container.
 
-| Project                                            | Layer                                | Responsibility                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/BGA.API/BGA.API.csproj`                       | Presentation and startup application | ASP.NET Core entry point, controllers, DTOs, request validation attributes, exception handling, Swagger and composition of all layers.       |
-| `src/BGA.Application/BGA.Application.csproj`       | Application                          | Use cases, application services, repository interfaces, unit of work interface, background processing and application settings.              |
-| `src/BGA.Domain/BGA.Domain.csproj`                 | Domain                               | Core business models, enums and domain exceptions. This layer does not reference any other project.                                          |
-| `src/BGA.Infrastructure/BGA.Infrastructure.csproj` | Infrastructure                       | EF Core `DbContext`, entity configurations, migrations, repository implementations, unit of work implementation and PostgreSQL registration. |
+## Architecture
 
-Project references must follow this dependency direction:
+### Top-level projects
+
+| Project | Responsibility |
+| --- | --- |
+| `src/BGA.AppHost` | Aspire orchestration. Starts all APIs from one entry point. |
+| `src/BGA.Contracts` | Shared contracts placeholder for inter-service contracts. |
+| `src/BGA.Users/*` | Users microservice: API, Application, Domain, Infrastructure. |
+| `src/BGA.Events/*` | Events microservice: API, Application, Domain, Infrastructure. |
+| `src/BGA.Bookings/*` | Bookings microservice: API, Application, Domain, Infrastructure. |
+
+### Service boundaries
+
+| Service | Owns | Database |
+| --- | --- | --- |
+| `BGA.Users` | users, roles, authentication | `bga_users` |
+| `BGA.Events` | events and seats metadata | `bga_events` |
+| `BGA.Bookings` | bookings and booking processing | `bga_bookings` |
+
+### Source structure
 
 ```text
-BGA.API (Presentation/startup)
-    -> BGA.Application
-    -> BGA.Infrastructure
-
-BGA.Infrastructure -> BGA.Application
-BGA.Infrastructure -> BGA.Domain
-
-BGA.Application    -> BGA.Domain
-
-BGA.Domain         -> no project references
+src/
+  BGA.AppHost/
+  BGA.Contracts/
+  BGA.Users/
+    BGA.Users.API/
+    BGA.Users.Application/
+    BGA.Users.Domain/
+    BGA.Users.Infrastructure/
+  BGA.Events/
+    BGA.Events.API/
+    BGA.Events.Application/
+    BGA.Events.Domain/
+    BGA.Events.Infrastructure/
+  BGA.Bookings/
+    BGA.Bookings.API/
+    BGA.Bookings.Application/
+    BGA.Bookings.Domain/
+    BGA.Bookings.Infrastructure/
 ```
-
-The same structure can be read as a layer diagram:
-
-```text
-                 Presentation / BGA.API
-                   |             |
-                   v             v
-Application / BGA.Application <- Infrastructure / BGA.Infrastructure
-                   |             |
-                   v             v
-                 Domain / BGA.Domain
-```
-
-Keep business rules in `BGA.Domain` or `BGA.Application`. `BGA.API` should translate HTTP requests and responses, while `BGA.Infrastructure` should contain persistence and external implementation details.
 
 ### Test structure
-Tests are split by the project they verify. A test project should reference only its target project.
 
 ```text
-tests/BGA.API.UnitTests                 -> src/BGA.API
-tests/BGA.Application.UnitTests         -> src/BGA.Application
-tests/BGA.Infrastructure.IntegrationTests -> src/BGA.Infrastructure
+tests/
+  BGA.Users/
+    BGA.Users.API.UnitTests/
+    BGA.Users.API.E2ETests/
+    BGA.Users.Infrastructure.IntegrationTests/
+  BGA.Events/
+    BGA.Events.Application.UnitTests/
+    BGA.Events.API.E2ETests/
+    BGA.Events.Infrastructure.IntegrationTests/
+  BGA.Bookings/
+    BGA.Bookings.Application.UnitTests/
+    BGA.Bookings.API.UnitTests/
+    BGA.Bookings.API.E2ETests/
+    BGA.Bookings.Infrastructure.IntegrationTests/
 ```
 
-`BGA.Infrastructure.IntegrationTests` uses Testcontainers to start PostgreSQL in Docker, so Docker must be installed and running before starting these tests.
+## Prerequisites
 
-### Prerequisites
-- PostgreSQL is required to run the application. Start it from the repository root with `docker compose up -d` (uses `docker-compose.yml`). Stop it with `docker compose down`.
-- Docker is required for infrastructure integration tests.
+- `.NET 10 SDK`
+- `Docker` / `Docker Desktop`
 
-### Configure connection string
-Update the PostgreSQL connection string in `src/BGA.API/appsettings.json` under `ConnectionStrings:Default`.
-Defaults match `docker-compose.yml` (`postgres`/`postgres`, DB: `bgaapi`, Port: `5432`).
+## PostgreSQL for local development
 
-Connection string format (Npgsql):
-`Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=<password>`
+Local setup uses one PostgreSQL container with three logical databases:
 
-Parameters:
-| Key | Description | Example |
+- `bga_users`
+- `bga_events`
+- `bga_bookings`
+
+Start PostgreSQL from the repository root:
+
+```powershell
+docker compose up -d
+```
+
+Stop it:
+
+```powershell
+docker compose down
+```
+
+If you previously used the old single-database setup and want a clean local state:
+
+```powershell
+docker compose down -v
+docker compose up -d
+```
+
+Connection strings are already configured in:
+
+- `src/BGA.Users/BGA.Users.API/appsettings.json`
+- `src/BGA.Events/BGA.Events.API/appsettings.json`
+- `src/BGA.Bookings/BGA.Bookings.API/appsettings.json`
+
+Each API calls `Database.Migrate()` on startup, so pending migrations are applied automatically.
+
+## Running the system
+
+### Run everything through Aspire
+
+This is now the fastest way to start all three APIs together.
+
+1. Start PostgreSQL:
+
+```powershell
+docker compose up -d
+```
+
+2. Start Aspire AppHost:
+
+```powershell
+dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
+```
+
+What happens next:
+
+- Aspire starts `BGA.Users.API`, `BGA.Events.API` and `BGA.Bookings.API`
+- the Aspire dashboard opens automatically in the browser
+- from the dashboard you can open each service and inspect logs/endpoints
+
+Important:
+
+- right now `Aspire AppHost` orchestrates the three APIs
+- PostgreSQL is still started separately via `docker compose`
+
+### Run services individually
+
+PostgreSQL must already be running.
+
+```powershell
+dotnet run --project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj
+dotnet run --project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj
+dotnet run --project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj
+```
+
+Swagger opens automatically for each API because `launchSettings.json` uses `launchUrl: swagger`.
+
+Default local URLs:
+
+| Service | HTTPS | HTTP |
 | --- | --- | --- |
-| `Host` | PostgreSQL server address | `localhost` |
-| `Port` | PostgreSQL server port | `5432` |
-| `Database` | Database name | `bgaapi` |
-| `Username` | DB user | `postgres` |
-| `Password` | DB user password | `postgres` |
+| `BGA.Users.API` | `https://localhost:56511/swagger` | `http://localhost:56514/swagger` |
+| `BGA.Events.API` | `https://localhost:56513/swagger` | `http://localhost:56515/swagger` |
+| `BGA.Bookings.API` | `https://localhost:56512/swagger` | `http://localhost:56516/swagger` |
 
-### Description of src/BGA.API/appsettings.json settings
-- AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
-- AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
-- Jwt__Key - secret key used to sign JWT tokens. Replace the development value with a long random secret in production and do not store it directly in source control.
-- Jwt__Issuer - token issuer value validated by JWT middleware.
-- Jwt__Audience - token audience value validated by JWT middleware.
-- Jwt__ExpirationMinutes - token lifetime in minutes.
+## Building
 
-### Building the solution
+Build the whole solution:
+
 ```powershell
 dotnet build BookingGoldenApple.slnx
 ```
 
-You can also build only the startup application:
+## EF Core migrations
+
+Each service has its own `DbContext` and its own migrations:
+
+- `UsersDbContext`
+- `EventsDbContext`
+- `BookingsDbContext`
+
+Examples:
+
+### Users
 
 ```powershell
-dotnet build src/BGA.API/BGA.API.csproj
+dotnet ef migrations add <MigrationName> --project src/BGA.Users/BGA.Users.Infrastructure/BGA.Users.Infrastructure.csproj --startup-project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj --context UsersDbContext --output-dir Migrations
 ```
 
-### Running the solution
-Make sure PostgreSQL is running before starting the API.
-The database schema is managed by EF Core migrations. On application startup the API applies pending migrations automatically via `Database.Migrate()`.
+### Events
 
 ```powershell
-dotnet run --project src/BGA.API/BGA.API.csproj
+dotnet ef migrations add <MigrationName> --project src/BGA.Events/BGA.Events.Infrastructure/BGA.Events.Infrastructure.csproj --startup-project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj --context EventsDbContext --output-dir Migrations
 ```
 
-### EF Core migrations
-Migrations belong to the Infrastructure layer because `ApplicationDbContext` and persistence mappings live in `src/BGA.Infrastructure`.
-Run EF Core commands from the repository root and use:
-
-- `--project src/BGA.Infrastructure/BGA.Infrastructure.csproj` for the project where migration files are created.
-- `--startup-project src/BGA.API/BGA.API.csproj` for the executable project that provides configuration and dependency injection.
-
-Create a new migration:
+### Bookings
 
 ```powershell
-dotnet ef migrations add <MigrationName> --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext --output-dir Migrations
+dotnet ef migrations add <MigrationName> --project src/BGA.Bookings/BGA.Bookings.Infrastructure/BGA.Bookings.Infrastructure.csproj --startup-project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj --context BookingsDbContext --output-dir Migrations
 ```
 
-Apply migrations to the configured database:
+## Running tests
 
-```powershell
-dotnet ef database update --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext
-```
-
-### Opening Swagger in browser
-
-#### Using PowerShell
-1. Run the following command:
-
-```powershell
-dotnet run --project src/BGA.API/BGA.API.csproj --launch-profile https
-```
-
-2. Open one of these URLs in a browser:
-
-```text
-https://localhost:7116/swagger/index.html
-http://localhost:5068/swagger/index.html
-```
-
-#### Using VisualStudio/Rider
-1. Open `BookingGoldenApple.slnx` in VisualStudio or Rider.
-2. Run the `https` profile or click F5.
-3. Open one of the Swagger URLs above if it does not open automatically.
-
-### Using JWT in Swagger
-1. Register a user with `POST /auth/register`.
-2. Call `POST /auth/login` with the same credentials and copy the returned token.
-3. Click `Authorize` in Swagger.
-4. Paste only the raw JWT token and confirm. Swagger UI will add the `Bearer` prefix automatically.
-5. Call protected endpoints with the authorized session.
-
-### Running tests
 Run all tests:
 
 ```powershell
 dotnet test BookingGoldenApple.slnx
 ```
 
-Run API unit tests:
+Run a specific group:
 
 ```powershell
-dotnet test tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj
+dotnet test tests/BGA.Users/BGA.Users.API.E2ETests/BGA.Users.API.E2ETests.csproj
+dotnet test tests/BGA.Events/BGA.Events.Application.UnitTests/BGA.Events.Application.UnitTests.csproj
+dotnet test tests/BGA.Bookings/BGA.Bookings.Infrastructure.IntegrationTests/BGA.Bookings.Infrastructure.IntegrationTests.csproj
 ```
 
-Run Application unit tests:
+Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
 
-```powershell
-dotnet test tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj
-```
+## API overview
 
-Run Infrastructure integration tests:
+### Users API
 
-```powershell
-dotnet test tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj
-```
+- `POST /auth/register`
+- `POST /auth/login`
 
-## API Documentation
+### Events API
 
-### Role model
-- `User` can register, log in, create bookings for future events, view a booking by id and cancel only their own bookings.
-- `Admin` has all `User` permissions and can also create, update and delete events, plus cancel any booking.
-- Anonymous users can read events and use authentication endpoints only.
+- `GET /events`
+- `GET /events/{id}`
+- `POST /events`
+- `PUT /events/{id}`
+- `DELETE /events/{id}`
 
-### Endpoints
-- `POST`:   /auth/register     - register a new user; role is optional and defaults to `User`
-- `POST`:   /auth/login        - log in and receive a JWT token
-- `GET`:    /events            - get list of all events
-- `GET`:    /events/{id}       - get event by id; if not found returns 404
-- `POST`:   /events            - create event; requires `Admin`
-- `PUT`:    /events/{id}       - update event; requires `Admin`
-- `DELETE`: /events/{id}       - remove event; requires `Admin`; if not found returns 404
-- `POST`:   /events/{id}/book  - create booking for event; requires authentication
-- `GET`:    /bookings/{id}     - get booking by id; requires authentication
-- `DELETE`: /bookings/{id}     - cancel booking; requires authentication
+### Bookings API
 
-#### `GET`: /events has the following filters and pagination parameters. All filters work together (logical AND)
-- title - optional, search by name, case-insensitive, partial match.
-- from - optional, events that begin no earlier than the specified date.
-- to - optional, events that end no later than the specified date.
-- page - optional, with default value: 1, the page to return
-- pageSize - optional, with default value: 10, the number of elements on a page
+- `POST /events/{eventId}/book`
+- `GET /bookings/{id}`
+- `DELETE /bookings/{id}`
 
-#### `GET`: /events returns the following result
-- items - the result of pagination and filtering
-- totalItems - the total number of events
-- pageNumber - the current page number
-- pageSize - the number of elements on the current page
+## Booking lifecycle
 
-#### `POST` /events/{id}/book immediately returns the following result
-- id - id of booking
-- eventId - id of event
-- status - current status of booking
-And in location you can find URL for getting booking
+Booking creation is asynchronous:
 
-#### `GET` /bookings/{id} returns the following result
-- id - id of booking
-- eventId - id of event
-- status - status of booking processing, can be different (pending, confirmed, rejected, cancelled)
-- createdAt - date of creating booking
-- processedAt - date of processing booking
-
-### Models descriptions:
-
-#### BookingStatus can be different
-- pending - created, wait for processing
-- confirmed - processed and confirmed
-- rejected - processed but rejected
-- cancelled - cancelled by the booking owner or admin
-
-### Authorization rules and errors
-- `POST /events`, `PUT /events/{id}` and `DELETE /events/{id}` return `401` without a token and `403` for authenticated non-admin users.
-- `POST /events/{id}/book`, `GET /bookings/{id}` and `DELETE /bookings/{id}` require a valid JWT token.
-- Booking an event that has already started returns `400`.
-- Creating more than 10 active bookings for the same user returns `409`.
-- Cancelling another user's booking without the `Admin` role returns `403`.
-
-### User flows: 
-
-#### Create event => Create booking => Get booking status
-- create event using `POST /events` as an admin
-- create booking using `POST /events/{id}/book` as an authenticated user
-- check status of booking using `GET` /bookings/{id}
+1. `POST /events/{eventId}/book` creates a booking with status `pending`
+2. `BGA.Bookings` background processing service handles pending bookings
+3. booking status can later become:
+   - `pending`
+   - `confirmed`
+   - `rejected`
+   - `cancelled`
