@@ -1,5 +1,7 @@
+using BGA.Bookings.Application.Messaging;
 using BGA.Bookings.Application.Repositories;
 using BGA.Bookings.Application.Services.Interfaces;
+using BGA.Bookings.Application.Extensions;
 using BGA.Bookings.Domain.Exceptions;
 using BGA.Bookings.Domain.Models;
 using BGA.Bookings.Domain.Models.Enums;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace BGA.Bookings.Application.Services.Implementations;
 
 public sealed class BookingService(
+    IBookingConfirmedPublisher bookingConfirmedPublisher,
     IUnitOfWork unitOfWork,
     ILogger<BookingService> logger,
     TimeProvider timeProvider) : IBookingService
@@ -58,7 +61,14 @@ public sealed class BookingService(
         {
             booking.Confirm();
             unitOfWork.Bookings.Update(booking);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            var isSaved = await unitOfWork.SaveChangesAsync(cancellationToken);
+            if (!isSaved)
+            {
+                logger.LogWarning("Booking {BookingId} was not saved. Kafka publishing skipped.", booking.Id);
+                return;
+            }
+
+            await bookingConfirmedPublisher.PublishAsync(booking.MapToBookingConfirmed(), cancellationToken);
         }
         catch (Exception ex)
         {

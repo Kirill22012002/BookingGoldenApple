@@ -1,6 +1,8 @@
+using BGA.Bookings.Application.Messaging;
 using BGA.Bookings.Application.Repositories;
 using BGA.Bookings.Infrastructure.DataAccess;
 using BGA.Bookings.Infrastructure.DataAccess.Repositories;
+using BGA.Bookings.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +20,7 @@ public static class DependencyInjection
         services.AddDbContext<BookingsDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IBookingConfirmedPublisher, KafkaBookingConfirmedPublisher>();
 
         return services;
     }

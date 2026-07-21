@@ -1,6 +1,8 @@
+using BGA.Bookings.Application.Messaging;
 using BGA.Bookings.Application.Repositories;
 using BGA.Bookings.Application.Services.Implementations;
 using BGA.Bookings.Application.UnitTests.Helpers;
+using BGA.Contracts.Bookings;
 using BGA.Bookings.Domain.Exceptions;
 using BGA.Bookings.Domain.Models;
 using BGA.Bookings.Domain.Models.Enums;
@@ -13,6 +15,7 @@ namespace BGA.Bookings.Application.UnitTests;
 public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _bookingRepositoryMock = new();
+    private readonly Mock<IBookingConfirmedPublisher> _bookingConfirmedPublisherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<ILogger<BookingService>> _logger = new();
     private readonly FakeTimeProvider _timeProvider = new();
@@ -22,7 +25,8 @@ public class BookingServiceTests
     {
         _timeProvider.SetUtcNow(TestHelper.Now);
         _unitOfWork.SetupGet(unitOfWork => unitOfWork.Bookings).Returns(_bookingRepositoryMock.Object);
-        _service = new BookingService(_unitOfWork.Object, _logger.Object, _timeProvider);
+        _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _service = new BookingService(_bookingConfirmedPublisherMock.Object, _unitOfWork.Object, _logger.Object, _timeProvider);
     }
 
     [Fact]
@@ -103,6 +107,16 @@ public class BookingServiceTests
         Assert.NotNull(booking.ProcessedAt);
         _bookingRepositoryMock.Verify(repository => repository.Update(booking), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _bookingConfirmedPublisherMock.Verify(
+            publisher => publisher.PublishAsync(
+                It.Is<BookingConfirmed>(message =>
+                    message.BookingId == booking.Id &&
+                    message.EventId == booking.EventId &&
+                    message.UserId == booking.UserId &&
+                    message.SeatsCount == 1 &&
+                    message.ConfirmedAt == booking.ProcessedAt),
+                TestContext.Current.CancellationToken),
+            Times.Once);
     }
 
     [Fact]
@@ -114,5 +128,39 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Verify(repository => repository.Update(It.IsAny<Booking>()), Times.Never);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Never);
+        _bookingConfirmedPublisherMock.Verify(
+            publisher => publisher.PublishAsync(It.IsAny<BookingConfirmed>(), TestContext.Current.CancellationToken),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessBookingAsync_WhenSavingFails_DoesNotPublishEvent()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken))
+            .ThrowsAsync(new InvalidOperationException("Database write failed."));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.ProcessBookingAsync(booking, TestContext.Current.CancellationToken));
+
+        _bookingConfirmedPublisherMock.Verify(
+            publisher => publisher.PublishAsync(It.IsAny<BookingConfirmed>(), TestContext.Current.CancellationToken),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessBookingAsync_WhenChangesWereNotSaved_DoesNotPublishEvent()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), BookingStatus.Pending, TestHelper.Now);
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken))
+            .ReturnsAsync(false);
+
+        await _service.ProcessBookingAsync(booking, TestContext.Current.CancellationToken);
+
+        _bookingConfirmedPublisherMock.Verify(
+            publisher => publisher.PublishAsync(It.IsAny<BookingConfirmed>(), TestContext.Current.CancellationToken),
+            Times.Never);
     }
 }

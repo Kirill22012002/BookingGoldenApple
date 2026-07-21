@@ -8,8 +8,8 @@ public sealed class UnitOfWork(
 {
     public IBookingRepository Bookings { get; } = bookingRepository;
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return dbContext.SaveChangesAsync(cancellationToken);
+        return await dbContext.SaveChangesAsync(cancellationToken) > 0;
     }
 }
