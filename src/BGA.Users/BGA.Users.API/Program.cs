@@ -1,8 +1,19 @@
 using BGA.Users.API;
 using BGA.Users.Application;
 using BGA.Users.Infrastructure;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) => cfg
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .ReadFrom.Configuration(ctx.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(new CompactJsonFormatter()));
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
@@ -13,6 +24,7 @@ var app = builder.Build();
 
 app.ApplyMigrations();
 app.UseExceptionHandler();
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
