@@ -1,3 +1,4 @@
+using BGA.Events.Application.Caching;
 using BGA.Events.Application.Repositories;
 using BGA.Events.Application.Services.Interfaces;
 using BGA.Events.Domain.Exceptions;
@@ -5,8 +6,12 @@ using BGA.Events.Domain.Models;
 
 namespace BGA.Events.Application.Services.Implementations;
 
-public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
+public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheService) : IEventService
 {
+    private static readonly TimeSpan EventByIdCacheTtl = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan TopEventsCacheTtl = TimeSpan.FromMinutes(10);
+    private const int TopEventsCount = 10;
+
     public Task<PaginatedResult<Event>> GetAllAsync(
         string? title,
         DateTimeOffset? from,
@@ -46,9 +51,31 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
         });
     }
 
+    public async Task<IReadOnlyList<Event>> GetTopAsync(CancellationToken cancellationToken = default)
+    {
+        var cachedTopEvents = await cacheService.GetAsync<List<Event>>(EventCacheKeys.Top10);
+        if (cachedTopEvents is not null)
+        {
+            return cachedTopEvents;
+        }
+
+        var topEvents = await unitOfWork.Events.GetTopAsync(TopEventsCount, cancellationToken);
+        await cacheService.SetAsync(EventCacheKeys.Top10, topEvents, TopEventsCacheTtl);
+        return topEvents;
+    }
+
     public async Task<Event> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        var cacheKey = EventCacheKeys.GetById(id);
+        var cachedEvent = await cacheService.GetAsync<Event>(cacheKey);
+        if (cachedEvent is not null)
+        {
+            return cachedEvent;
+        }
+
+        var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        await cacheService.SetAsync(cacheKey, @event, EventByIdCacheTtl);
+        return @event;
     }
 
     public async Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default)

@@ -180,4 +180,30 @@ public class EventsApiTests(CustomWebApplicationFactory factory) : IClassFixture
         Assert.NotNull(body);
         Assert.Equal(3, body.TotalItems);
     }
+
+    [Fact]
+    public async Task GET_Top_ShouldReturnEventsOrderedByPopularity()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        var firstEvent = new Event("Low popularity", null, new DateTimeOffset(2026, 10, 17, 10, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 17, 12, 0, 0, TimeSpan.Zero), 10);
+        firstEvent.TryReserveSeats(1);
+        var secondEvent = new Event("High popularity", null, new DateTimeOffset(2026, 10, 18, 10, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 18, 12, 0, 0, TimeSpan.Zero), 10);
+        secondEvent.TryReserveSeats(8);
+        var thirdEvent = new Event("Medium popularity", null, new DateTimeOffset(2026, 10, 19, 10, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 19, 12, 0, 0, TimeSpan.Zero), 10);
+        thirdEvent.TryReserveSeats(5);
+
+        await using (var arrangeContext = _factory.CreateContext())
+        {
+            await arrangeContext.Events.AddRangeAsync([firstEvent, secondEvent, thirdEvent], TestContext.Current.CancellationToken);
+            await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var response = await _client.GetAsync("/events/top", TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadFromJsonAsync<List<EventDto>>(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(body);
+        Assert.Equal(["High popularity", "Medium popularity", "Low popularity"], body.Select(@event => @event.Title).ToArray());
+    }
 }

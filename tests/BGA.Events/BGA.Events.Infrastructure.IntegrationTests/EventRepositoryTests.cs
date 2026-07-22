@@ -116,6 +116,30 @@ public class EventRepositoryTests : PostgresInfrastructure
     }
 
     [Fact]
+    public async Task GetTopAsync_ReturnsEventsOrderedByOccupancyAndLimitedByCount()
+    {
+        await ResetDatabaseAsync();
+
+        await using var context = CreateContext();
+        var events = Enumerable.Range(1, 12)
+            .Select(index =>
+            {
+                var @event = CreateEvent($"Event {index}", new DateTimeOffset(2026, 6, index, 18, 0, 0, TimeSpan.Zero), 20);
+                @event.TryReserveSeats(index - 1);
+                return @event;
+            })
+            .ToArray();
+        await context.Events.AddRangeAsync(events, TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var repository = new EventRepository(CreateContext());
+        var result = await repository.GetTopAsync(10, TestContext.Current.CancellationToken);
+
+        Assert.Equal(10, result.Count);
+        Assert.Equal(Enumerable.Range(3, 10).Reverse().Select(index => $"Event {index}"), result.Select(@event => @event.Title));
+    }
+
+    [Fact]
     public async Task ExistsAsync_WhenEventExists_ReturnsTrue()
     {
         await ResetDatabaseAsync();
