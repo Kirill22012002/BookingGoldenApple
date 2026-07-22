@@ -264,6 +264,16 @@ dotnet test tests/BGA.Bookings/BGA.Bookings.Infrastructure.IntegrationTests/BGA.
 
 Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
 
+## Caching strategy
+
+`BGA.Events` uses Redis with the `Cache-Aside` pattern for reads and `delete-on-write` invalidation for a single event.
+
+- `GET /events/{id}` caches one event by key `event:{id}`.
+- `GET /events/top` caches the public top list by key `events:top10`.
+- `event:{id}` is invalidated after successful `Create`, `Update`, `Delete` and seat reservation processing, including the Kafka `BookingConfirmed` flow because it goes through `TryReserveSeatsAsync`.
+- `events:top10` is not invalidated on every write and relies only on TTL, because a small delay is acceptable for a ranking view and aggressive invalidation would create unnecessary write pressure.
+- Redis failures are logged inside the cache layer and do not fail the client request; the source of truth remains PostgreSQL.
+
 ## API overview
 
 ### Users API

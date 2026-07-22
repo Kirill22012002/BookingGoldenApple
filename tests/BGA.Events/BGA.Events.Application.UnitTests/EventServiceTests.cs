@@ -211,6 +211,7 @@ public class EventServiceTests
         Assert.Equal(@event, result);
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.CreateAsync(@event, TestContext.Current.CancellationToken), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{@event.Id}"), Times.Once);
     }
 
     [Fact]
@@ -225,6 +226,7 @@ public class EventServiceTests
         Assert.True(result);
         Assert.Equal(3, @event.AvailableSeats);
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Update(@event), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     [Fact]
@@ -258,6 +260,7 @@ public class EventServiceTests
 
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     [Fact]
@@ -273,6 +276,7 @@ public class EventServiceTests
 
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Remove(It.IsAny<Event>()), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     public static IEnumerable<object?[]> DifferentDates()

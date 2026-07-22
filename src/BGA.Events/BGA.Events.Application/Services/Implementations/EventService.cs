@@ -82,6 +82,7 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
     {
         await unitOfWork.Events.CreateAsync(@event, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(@event.Id);
         return @event;
     }
 
@@ -100,6 +101,7 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
 
         unitOfWork.Events.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
         return true;
     }
 
@@ -113,6 +115,7 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
 
         unitOfWork.Events.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
     }
 
     public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
@@ -120,5 +123,11 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
         var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
         unitOfWork.Events.Remove(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
+    }
+
+    private Task InvalidateEventCacheAsync(Guid id)
+    {
+        return cacheService.RemoveAsync(EventCacheKeys.GetById(id));
     }
 }
