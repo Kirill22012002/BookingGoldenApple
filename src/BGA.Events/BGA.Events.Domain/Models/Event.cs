@@ -1,15 +1,21 @@
 using BGA.Events.Domain.Exceptions;
+using System.Text.Json.Serialization;
 
 namespace BGA.Events.Domain.Models;
 
 public class Event
 {
+    [JsonInclude]
     public Guid Id { get; private set; }
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
+    [JsonInclude]
     public DateTimeOffset StartAt { get; private set; }
+    [JsonInclude]
     public DateTimeOffset EndAt { get; private set; }
+    [JsonInclude]
     public int TotalSeats { get; private set; }
+    [JsonInclude]
     public int AvailableSeats { get; private set; }
 
     private readonly object _lock = new();
