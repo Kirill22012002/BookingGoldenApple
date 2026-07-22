@@ -6,7 +6,7 @@
 - `BGA.Events` - event catalog and event management
 - `BGA.Bookings` - booking creation, booking status and cancellation
 
-Each service owns its own database. In Docker Compose the system runs as a full stack with three PostgreSQL containers, Kafka, Zookeeper and three APIs.
+Each service owns its own database. In Docker Compose the system runs as a full stack with three PostgreSQL containers, Kafka, Zookeeper, Redis and three APIs.
 
 ## Architecture
 
@@ -39,6 +39,7 @@ Each service owns its own database. In Docker Compose the system runs as a full 
 | `PostgreSQL Events` | `events-db` | `5434` | `bga_events` database |
 | `PostgreSQL Bookings` | `bookings-db` | `5435` | `bga_bookings` database |
 | `Kafka` | `kafka` | `9092` | inter-service messaging |
+| `Redis` | `redis` | `6379` | cache for `BGA.Events` |
 | `Zookeeper` | `zookeeper` | not published | Kafka coordination |
 
 ### Source structure
@@ -94,7 +95,7 @@ The root [`docker-compose.yml`](docker-compose.yml) supports two launch modes.
 
 ### Run the full application
 
-This is the main scenario for sprint 9: one command starts Kafka, Zookeeper, three PostgreSQL containers and three APIs.
+This is the main scenario for sprint 10: one command starts Kafka, Zookeeper, Redis, three PostgreSQL containers and three APIs.
 
 ```powershell
 docker compose up -d --build
@@ -121,21 +122,23 @@ After startup the services are available at:
 Notes:
 
 - each API calls `Database.Migrate()` on startup, so migrations are applied automatically;
-- in full Docker mode connection strings and Kafka host are passed through environment variables from Compose;
-- the APIs inside Docker use the internal Kafka address `kafka:29092`.
+- in full Docker mode connection strings and Redis/Kafka hosts are passed through environment variables from Compose;
+- `BGA.Events.API` uses the internal Docker addresses `kafka:29092` and `redis:6379`;
+- the locally started `BGA.Events.API` keeps using `localhost:6379`, so the same code works when only infrastructure runs in Docker.
 
 ### Run only infrastructure containers
 
-Use this mode if you want Kafka and PostgreSQL in Docker, but prefer running the APIs locally from the SDK.
+Use this mode if you want Kafka, PostgreSQL and Redis in Docker, but prefer running the APIs locally from the SDK or from Visual Studio.
 
 ```powershell
-docker compose up -d zookeeper kafka users-db events-db bookings-db
+docker compose up -d zookeeper kafka redis users-db events-db bookings-db
 ```
 
 This starts:
 
 - `zookeeper`
 - `kafka`
+- `redis`
 - `users-db`
 - `events-db`
 - `bookings-db`
@@ -148,37 +151,33 @@ Published infrastructure ports:
 | `events-db` | `5434` |
 | `bookings-db` | `5435` |
 | `kafka` | `9092` |
+| `redis` | `6379` |
 
 Stop only infrastructure:
 
 ```powershell
-docker compose stop zookeeper kafka users-db events-db bookings-db
+docker compose stop zookeeper kafka redis users-db events-db bookings-db
 ```
 
 ### Run APIs locally against infrastructure containers
 
-If you use `infra-only`, override the connection string for each service because local `appsettings.json` still points to `localhost:5432`.
+If you use `infra-only`, `appsettings.json` already points to the published Docker ports for PostgreSQL and Redis, so local runs from Visual Studio or `dotnet run` work without extra overrides. Kafka still uses `localhost:9092` locally.
 
 `BGA.Users.API`
 
 ```powershell
-$env:ConnectionStrings__Default = "Host=localhost;Port=5433;Database=bga_users;Username=postgres;Password=postgres"
 dotnet run --project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj
 ```
 
 `BGA.Events.API`
 
 ```powershell
-$env:ConnectionStrings__Default = "Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres"
-$env:Kafka__BootstrapServers = "localhost:9092"
 dotnet run --project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj
 ```
 
 `BGA.Bookings.API`
 
 ```powershell
-$env:ConnectionStrings__Default = "Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres"
-$env:Kafka__BootstrapServers = "localhost:9092"
 dotnet run --project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj
 ```
 
@@ -194,10 +193,10 @@ Default local URLs:
 
 ### Run AppHost against infrastructure containers
 
-If you want Aspire to start all three APIs while Docker runs only Kafka and PostgreSQL, use:
+If you want Aspire to start all three APIs while Docker runs only Kafka, PostgreSQL and Redis, use:
 
 ```powershell
-docker compose up -d zookeeper kafka users-db events-db bookings-db
+docker compose up -d zookeeper kafka redis users-db events-db bookings-db
 dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
 ```
 
@@ -207,6 +206,7 @@ dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
 - `EventsDb` -> `Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres`
 - `BookingsDb` -> `Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres`
 - `Kafka` -> `localhost:9092`
+- `Redis` for `BGA.Events` -> `localhost:6379` from `appsettings.json`
 
 If needed, you can override them through `src/BGA.AppHost/appsettings.json` or user secrets/environment variables for `BGA.AppHost`.
 
@@ -263,6 +263,17 @@ dotnet test tests/BGA.Bookings/BGA.Bookings.Infrastructure.IntegrationTests/BGA.
 ```
 
 Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
+
+## Caching strategy
+
+`BGA.Events` uses Redis with the `Cache-Aside` pattern for reads and `delete-on-write` invalidation for a single event.
+
+- `GET /events/{id}` caches one event by key `event:{id}`.
+- `GET /events/top` caches the public top list by key `events:top10`.
+- TTL is configured in `src/BGA.Events/BGA.Events.API/appsettings.json`: `event:{id}` lives for 5 minutes because direct event details should stay relatively fresh, while `events:top10` lives for 10 minutes because it is a read-heavy ranking widget and can tolerate a slightly older snapshot.
+- `event:{id}` is invalidated after successful `Create`, `Update`, `Delete` and seat reservation processing, including the Kafka `BookingConfirmed` flow because it goes through `TryReserveSeatsAsync`.
+- `events:top10` is not invalidated on every write and relies only on TTL, because a small delay is acceptable for a ranking view and aggressive invalidation would create unnecessary write pressure.
+- Redis failures are logged inside the cache layer and do not fail the client request; the source of truth remains PostgreSQL.
 
 ## API overview
 

@@ -1,12 +1,22 @@
+using BGA.Events.Application.Caching;
 using BGA.Events.Application.Repositories;
 using BGA.Events.Application.Services.Interfaces;
+using BGA.Events.Application.Settings;
 using BGA.Events.Domain.Exceptions;
 using BGA.Events.Domain.Models;
+using Microsoft.Extensions.Options;
 
 namespace BGA.Events.Application.Services.Implementations;
 
-public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
+public sealed class EventService(
+    IUnitOfWork unitOfWork,
+    ICacheService cacheService,
+    IOptions<EventCacheOptions> cacheOptions) : IEventService
 {
+    private const int TopEventsCount = 10;
+    private readonly TimeSpan _eventByIdCacheTtl = TimeSpan.FromMinutes(cacheOptions.Value.EventByIdTtlMinutes);
+    private readonly TimeSpan _topEventsCacheTtl = TimeSpan.FromMinutes(cacheOptions.Value.TopEventsTtlMinutes);
+
     public Task<PaginatedResult<Event>> GetAllAsync(
         string? title,
         DateTimeOffset? from,
@@ -46,15 +56,38 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
         });
     }
 
+    public async Task<IReadOnlyList<Event>> GetTopAsync(CancellationToken cancellationToken = default)
+    {
+        var cachedTopEvents = await cacheService.GetAsync<List<Event>>(EventCacheKeys.Top10);
+        if (cachedTopEvents is not null)
+        {
+            return cachedTopEvents;
+        }
+
+        var topEvents = await unitOfWork.Events.GetTopAsync(TopEventsCount, cancellationToken);
+        await cacheService.SetAsync(EventCacheKeys.Top10, topEvents, _topEventsCacheTtl);
+        return topEvents;
+    }
+
     public async Task<Event> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        var cacheKey = EventCacheKeys.GetById(id);
+        var cachedEvent = await cacheService.GetAsync<Event>(cacheKey);
+        if (cachedEvent is not null)
+        {
+            return cachedEvent;
+        }
+
+        var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
+        await cacheService.SetAsync(cacheKey, @event, _eventByIdCacheTtl);
+        return @event;
     }
 
     public async Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default)
     {
         await unitOfWork.Events.CreateAsync(@event, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(@event.Id);
         return @event;
     }
 
@@ -73,6 +106,7 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
 
         unitOfWork.Events.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
         return true;
     }
 
@@ -86,6 +120,7 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
 
         unitOfWork.Events.Update(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
     }
 
     public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
@@ -93,5 +128,11 @@ public sealed class EventService(IUnitOfWork unitOfWork) : IEventService
         var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
         unitOfWork.Events.Remove(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await InvalidateEventCacheAsync(id);
+    }
+
+    private Task InvalidateEventCacheAsync(Guid id)
+    {
+        return cacheService.RemoveAsync(EventCacheKeys.GetById(id));
     }
 }

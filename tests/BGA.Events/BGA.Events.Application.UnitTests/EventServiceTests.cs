@@ -1,24 +1,32 @@
+using BGA.Events.Application.Caching;
 using BGA.Events.Application.Repositories;
 using BGA.Events.Application.Services.Implementations;
+using BGA.Events.Application.Settings;
 using BGA.Events.Application.UnitTests.Helpers;
 using BGA.Events.Domain.Exceptions;
 using BGA.Events.Domain.Models;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace BGA.Events.Application.UnitTests;
 
 public class EventServiceTests
 {
+    private static readonly TimeSpan EventByIdCacheTtl = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan TopEventsCacheTtl = TimeSpan.FromMinutes(10);
+    private readonly Mock<ICacheService> _cacheServiceMock;
     private readonly Mock<IEventRepository> _eventRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly EventService _service;
 
     public EventServiceTests()
     {
+        _cacheServiceMock = new Mock<ICacheService>();
         _eventRepositoryMock = new Mock<IEventRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
+        var cacheOptions = Options.Create(new EventCacheOptions { EventByIdTtlMinutes = 5, TopEventsTtlMinutes = 10 });
         _unitOfWork.Setup(unitOfWork => unitOfWork.Events).Returns(_eventRepositoryMock.Object);
-        _service = new EventService(_unitOfWork.Object);
+        _service = new EventService(_unitOfWork.Object, _cacheServiceMock.Object, cacheOptions);
     }
 
     [Fact]
@@ -94,6 +102,10 @@ public class EventServiceTests
         var id = Guid.NewGuid();
         var @event = new Event("Jumping", "Jumping with other beautiful women", TestHelper.Yesterday, TestHelper.Tomorrow, int.MaxValue);
 
+        _cacheServiceMock
+            .Setup(cache => cache.GetAsync<Event>($"event:{id}"))
+            .ReturnsAsync((Event)null!);
+
         _unitOfWork
             .Setup(unitOfWork => unitOfWork.Events.GetByIdAsync(id, TestContext.Current.CancellationToken))
             .ReturnsAsync(@event);
@@ -101,6 +113,82 @@ public class EventServiceTests
         var result = await _service.GetByIdAsync(id, TestContext.Current.CancellationToken);
 
         Assert.Equal(@event, result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithCacheHit_DoesNotCallRepository()
+    {
+        var id = Guid.NewGuid();
+        var cachedEvent = new Event("Cached", "Cached event", TestHelper.Yesterday, TestHelper.Tomorrow, 12);
+
+        _cacheServiceMock
+            .Setup(cache => cache.GetAsync<Event>($"event:{id}"))
+            .ReturnsAsync(cachedEvent);
+
+        var result = await _service.GetByIdAsync(id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(cachedEvent, result);
+        _eventRepositoryMock.Verify(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithCacheMiss_SavesValueInCache()
+    {
+        var id = Guid.NewGuid();
+        var @event = new Event("Saved", "Cache miss", TestHelper.Yesterday, TestHelper.Tomorrow, 10);
+
+        _cacheServiceMock
+            .Setup(cache => cache.GetAsync<Event>($"event:{id}"))
+            .ReturnsAsync((Event)null!);
+        _eventRepositoryMock
+            .Setup(repository => repository.GetByIdAsync(id, TestContext.Current.CancellationToken))
+            .ReturnsAsync(@event);
+
+        var result = await _service.GetByIdAsync(id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(@event, result);
+        _cacheServiceMock.Verify(cache => cache.SetAsync($"event:{id}", @event, EventByIdCacheTtl), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTopAsync_WithCacheHit_DoesNotCallRepository()
+    {
+        var cachedEvents = new List<Event>
+        {
+            new("Cached 1", null, TestHelper.Yesterday, TestHelper.Tomorrow, 10),
+            new("Cached 2", null, TestHelper.Yesterday.AddDays(1), TestHelper.Tomorrow.AddDays(1), 20)
+        };
+
+        _cacheServiceMock
+            .Setup(cache => cache.GetAsync<List<Event>>("events:top10"))
+            .ReturnsAsync(cachedEvents);
+
+        var result = await _service.GetTopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(cachedEvents, result);
+        _eventRepositoryMock.Verify(repository => repository.GetTopAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetTopAsync_WithCacheMiss_SavesValueInCache()
+    {
+        IReadOnlyList<Event> topEvents =
+        [
+            new("Top 1", null, TestHelper.Yesterday, TestHelper.Tomorrow, 30),
+            new("Top 2", null, TestHelper.Yesterday.AddDays(1), TestHelper.Tomorrow.AddDays(1), 40)
+        ];
+
+        _cacheServiceMock
+            .Setup(cache => cache.GetAsync<List<Event>>("events:top10"))
+            .ReturnsAsync((List<Event>)null!);
+        _eventRepositoryMock
+            .Setup(repository => repository.GetTopAsync(10, TestContext.Current.CancellationToken))
+            .ReturnsAsync(topEvents);
+
+        var result = await _service.GetTopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(topEvents, result);
+        _cacheServiceMock.Verify(cache => cache.SetAsync("events:top10", topEvents, TopEventsCacheTtl), Times.Once);
     }
 
     [Fact]
@@ -128,6 +216,7 @@ public class EventServiceTests
         Assert.Equal(@event, result);
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.CreateAsync(@event, TestContext.Current.CancellationToken), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{@event.Id}"), Times.Once);
     }
 
     [Fact]
@@ -142,6 +231,7 @@ public class EventServiceTests
         Assert.True(result);
         Assert.Equal(3, @event.AvailableSeats);
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Update(@event), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     [Fact]
@@ -175,6 +265,7 @@ public class EventServiceTests
 
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Update(It.IsAny<Event>()), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     [Fact]
@@ -190,6 +281,7 @@ public class EventServiceTests
 
         _unitOfWork.Verify(unitOfWork => unitOfWork.Events.Remove(It.IsAny<Event>()), Times.Once);
         _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.RemoveAsync($"event:{id}"), Times.Once);
     }
 
     public static IEnumerable<object?[]> DifferentDates()

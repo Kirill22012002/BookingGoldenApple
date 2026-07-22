@@ -1,6 +1,7 @@
 using BGA.Events.Application.UnitTests.Helpers;
 using BGA.Events.Domain.Exceptions;
 using BGA.Events.Domain.Models;
+using System.Text.Json;
 
 namespace BGA.Events.Application.UnitTests;
 
@@ -196,6 +197,25 @@ public class EventTests
 
         Assert.Equal(initialTotalSeats, @event.TotalSeats);
         Assert.Equal(availableAfterRelease, @event.AvailableSeats);
+    }
+
+    [Fact]
+    public void SerializeThenDeserialize_ShouldRestoreEventState()
+    {
+        var @event = new Event("title", "description", TestHelper.Yesterday, TestHelper.Tomorrow, 5);
+        @event.TryReserveSeats(2);
+
+        var json = JsonSerializer.Serialize(@event);
+        var deserializedEvent = JsonSerializer.Deserialize<Event>(json);
+
+        Assert.NotNull(deserializedEvent);
+        Assert.Equal(@event.Id, deserializedEvent.Id);
+        Assert.Equal(@event.Title, deserializedEvent.Title);
+        Assert.Equal(@event.Description, deserializedEvent.Description);
+        Assert.Equal(@event.StartAt, deserializedEvent.StartAt);
+        Assert.Equal(@event.EndAt, deserializedEvent.EndAt);
+        Assert.Equal(@event.TotalSeats, deserializedEvent.TotalSeats);
+        Assert.Equal(@event.AvailableSeats, deserializedEvent.AvailableSeats);
     }
 }
 

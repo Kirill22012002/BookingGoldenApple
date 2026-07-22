@@ -33,6 +33,16 @@ public sealed class EventRepository(EventsDbContext dbContext) : IEventRepositor
         return dbContext.Events.SingleOrDefaultAsync(@event => @event.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Event>> GetTopAsync(int count, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Events
+            .AsNoTracking()
+            .OrderByDescending(@event => (double)(@event.TotalSeats - @event.AvailableSeats) / @event.TotalSeats)
+            .ThenBy(@event => @event.Id)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Events.AnyAsync(@event => @event.Id == id, cancellationToken);

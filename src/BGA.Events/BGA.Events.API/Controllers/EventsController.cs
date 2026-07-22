@@ -24,6 +24,13 @@ public sealed class EventsController(IEventService eventService) : ControllerBas
         return Ok(response.MapToDto());
     }
 
+    [HttpGet("top")]
+    public async Task<IActionResult> GetTop(CancellationToken cancellationToken)
+    {
+        var response = await eventService.GetTopAsync(cancellationToken);
+        return Ok(response.MapToDto());
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
     {

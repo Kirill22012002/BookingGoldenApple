@@ -24,6 +24,11 @@ public static class EventExtensions
         };
     }
 
+    public static IReadOnlyList<EventDto> MapToDto(this IEnumerable<Event> entities)
+    {
+        return entities.Select(MapToDto).ToList();
+    }
+
     public static PaginatedResult<EventDto> MapToDto(this PaginatedResult<Event> paginatedResult)
     {
         return new PaginatedResult<EventDto>
