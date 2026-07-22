@@ -1,16 +1,21 @@
 using BGA.Events.Application.Caching;
 using BGA.Events.Application.Repositories;
 using BGA.Events.Application.Services.Interfaces;
+using BGA.Events.Application.Settings;
 using BGA.Events.Domain.Exceptions;
 using BGA.Events.Domain.Models;
+using Microsoft.Extensions.Options;
 
 namespace BGA.Events.Application.Services.Implementations;
 
-public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheService) : IEventService
+public sealed class EventService(
+    IUnitOfWork unitOfWork,
+    ICacheService cacheService,
+    IOptions<EventCacheOptions> cacheOptions) : IEventService
 {
-    private static readonly TimeSpan EventByIdCacheTtl = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan TopEventsCacheTtl = TimeSpan.FromMinutes(10);
     private const int TopEventsCount = 10;
+    private readonly TimeSpan _eventByIdCacheTtl = TimeSpan.FromMinutes(cacheOptions.Value.EventByIdTtlMinutes);
+    private readonly TimeSpan _topEventsCacheTtl = TimeSpan.FromMinutes(cacheOptions.Value.TopEventsTtlMinutes);
 
     public Task<PaginatedResult<Event>> GetAllAsync(
         string? title,
@@ -60,7 +65,7 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
         }
 
         var topEvents = await unitOfWork.Events.GetTopAsync(TopEventsCount, cancellationToken);
-        await cacheService.SetAsync(EventCacheKeys.Top10, topEvents, TopEventsCacheTtl);
+        await cacheService.SetAsync(EventCacheKeys.Top10, topEvents, _topEventsCacheTtl);
         return topEvents;
     }
 
@@ -74,7 +79,7 @@ public sealed class EventService(IUnitOfWork unitOfWork, ICacheService cacheServ
         }
 
         var @event = await unitOfWork.Events.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Event not found");
-        await cacheService.SetAsync(cacheKey, @event, EventByIdCacheTtl);
+        await cacheService.SetAsync(cacheKey, @event, _eventByIdCacheTtl);
         return @event;
     }
 

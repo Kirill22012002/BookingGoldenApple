@@ -1,15 +1,19 @@
 using BGA.Events.Application.Caching;
 using BGA.Events.Application.Repositories;
 using BGA.Events.Application.Services.Implementations;
+using BGA.Events.Application.Settings;
 using BGA.Events.Application.UnitTests.Helpers;
 using BGA.Events.Domain.Exceptions;
 using BGA.Events.Domain.Models;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace BGA.Events.Application.UnitTests;
 
 public class EventServiceTests
 {
+    private static readonly TimeSpan EventByIdCacheTtl = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan TopEventsCacheTtl = TimeSpan.FromMinutes(10);
     private readonly Mock<ICacheService> _cacheServiceMock;
     private readonly Mock<IEventRepository> _eventRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWork;
@@ -20,8 +24,9 @@ public class EventServiceTests
         _cacheServiceMock = new Mock<ICacheService>();
         _eventRepositoryMock = new Mock<IEventRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
+        var cacheOptions = Options.Create(new EventCacheOptions { EventByIdTtlMinutes = 5, TopEventsTtlMinutes = 10 });
         _unitOfWork.Setup(unitOfWork => unitOfWork.Events).Returns(_eventRepositoryMock.Object);
-        _service = new EventService(_unitOfWork.Object, _cacheServiceMock.Object);
+        _service = new EventService(_unitOfWork.Object, _cacheServiceMock.Object, cacheOptions);
     }
 
     [Fact]
@@ -142,7 +147,7 @@ public class EventServiceTests
         var result = await _service.GetByIdAsync(id, TestContext.Current.CancellationToken);
 
         Assert.Equal(@event, result);
-        _cacheServiceMock.Verify(cache => cache.SetAsync($"event:{id}", @event, It.IsAny<TimeSpan>()), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.SetAsync($"event:{id}", @event, EventByIdCacheTtl), Times.Once);
     }
 
     [Fact]
@@ -183,7 +188,7 @@ public class EventServiceTests
         var result = await _service.GetTopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(topEvents, result);
-        _cacheServiceMock.Verify(cache => cache.SetAsync("events:top10", topEvents, It.IsAny<TimeSpan>()), Times.Once);
+        _cacheServiceMock.Verify(cache => cache.SetAsync("events:top10", topEvents, TopEventsCacheTtl), Times.Once);
     }
 
     [Fact]

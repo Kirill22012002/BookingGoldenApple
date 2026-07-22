@@ -40,6 +40,20 @@ services:
     networks:
       - bga-network
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: bga-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - bga-network
+
   users-db:
     image: postgres:16-alpine
     container_name: bga-users-db
@@ -129,11 +143,14 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=events-db;Port=5432;Database=bga_events;Username=postgres;Password=postgres
       Kafka__BootstrapServers: kafka:29092
+      Redis__ConnectionString: redis:6379
     ports:
       - "56515:8080"
     networks:
