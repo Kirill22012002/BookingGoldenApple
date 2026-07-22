@@ -8,7 +8,7 @@ public static class ObservabilityExtensions
 {
     public static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration configuration)
     {
-        const string serviceName = "events-service";
+        var serviceName = configuration["Observability:ServiceName"] ?? "events-service";
         var otlpEndpoint = configuration["Otlp:Endpoint"] ?? "http://localhost:4317";
 
         services.AddOpenTelemetry()
