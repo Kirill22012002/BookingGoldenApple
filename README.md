@@ -270,7 +270,7 @@ Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
 
 - `GET /events/{id}` caches one event by key `event:{id}`.
 - `GET /events/top` caches the public top list by key `events:top10`.
-- TTL is configured in `src/BGA.Events/BGA.Events.API/appsettings.json`: `event:{id}` lives for 5 minutes, `events:top10` lives for 10 minutes.
+- TTL is configured in `src/BGA.Events/BGA.Events.API/appsettings.json`: `event:{id}` lives for 5 minutes because direct event details should stay relatively fresh, while `events:top10` lives for 10 minutes because it is a read-heavy ranking widget and can tolerate a slightly older snapshot.
 - `event:{id}` is invalidated after successful `Create`, `Update`, `Delete` and seat reservation processing, including the Kafka `BookingConfirmed` flow because it goes through `TryReserveSeatsAsync`.
 - `events:top10` is not invalidated on every write and relies only on TTL, because a small delay is acceptable for a ranking view and aggressive invalidation would create unnecessary write pressure.
 - Redis failures are logged inside the cache layer and do not fail the client request; the source of truth remains PostgreSQL.
