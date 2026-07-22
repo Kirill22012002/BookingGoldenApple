@@ -1,241 +1,328 @@
 # BookingGoldenApple
 
-## Getting Started
+`BookingGoldenApple` is now split into three ASP.NET Core microservices on `.NET 10`:
 
-This version of BookingGoldenApple is based on .NET 10.
+- `BGA.Users` - registration, login and JWT issuing
+- `BGA.Events` - event catalog and event management
+- `BGA.Bookings` - booking creation, booking status and cancellation
 
-### Project structure
-The solution is split into four layers under `src`.
+Each service owns its own database. In Docker Compose the system runs as a full stack with three PostgreSQL containers, Kafka, Zookeeper and three APIs.
 
-| Project                                            | Layer                                | Responsibility                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/BGA.API/BGA.API.csproj`                       | Presentation and startup application | ASP.NET Core entry point, controllers, DTOs, request validation attributes, exception handling, Swagger and composition of all layers.       |
-| `src/BGA.Application/BGA.Application.csproj`       | Application                          | Use cases, application services, repository interfaces, unit of work interface, background processing and application settings.              |
-| `src/BGA.Domain/BGA.Domain.csproj`                 | Domain                               | Core business models, enums and domain exceptions. This layer does not reference any other project.                                          |
-| `src/BGA.Infrastructure/BGA.Infrastructure.csproj` | Infrastructure                       | EF Core `DbContext`, entity configurations, migrations, repository implementations, unit of work implementation and PostgreSQL registration. |
+## Architecture
 
-Project references must follow this dependency direction:
+### Top-level projects
+
+| Project | Responsibility |
+| --- | --- |
+| `src/BGA.AppHost` | Aspire orchestration. Starts all APIs from one entry point. |
+| `src/BGA.Contracts` | Shared inter-service contracts and topic names for Kafka messaging. |
+| `src/BGA.Users/*` | Users microservice: API, Application, Domain, Infrastructure. |
+| `src/BGA.Events/*` | Events microservice: API, Application, Domain, Infrastructure. |
+| `src/BGA.Bookings/*` | Bookings microservice: API, Application, Domain, Infrastructure. |
+
+### Service boundaries
+
+| Service | Owns | Database |
+| --- | --- | --- |
+| `BGA.Users` | users, roles, authentication | `bga_users` |
+| `BGA.Events` | events and seats metadata | `bga_events` |
+| `BGA.Bookings` | bookings and booking processing | `bga_bookings` |
+
+### Runtime ports
+
+| Component | Container | Host port | Purpose |
+| --- | --- | --- | --- |
+| `BGA.Users.API` | `users-api` | `56514` | registration, login, JWT issuing |
+| `BGA.Events.API` | `events-api` | `56515` | event CRUD and seat availability |
+| `BGA.Bookings.API` | `bookings-api` | `56516` | booking creation and cancellation |
+| `PostgreSQL Users` | `users-db` | `5433` | `bga_users` database |
+| `PostgreSQL Events` | `events-db` | `5434` | `bga_events` database |
+| `PostgreSQL Bookings` | `bookings-db` | `5435` | `bga_bookings` database |
+| `Kafka` | `kafka` | `9092` | inter-service messaging |
+| `Zookeeper` | `zookeeper` | not published | Kafka coordination |
+
+### Source structure
 
 ```text
-BGA.API (Presentation/startup)
-    -> BGA.Application
-    -> BGA.Infrastructure
-
-BGA.Infrastructure -> BGA.Application
-BGA.Infrastructure -> BGA.Domain
-
-BGA.Application    -> BGA.Domain
-
-BGA.Domain         -> no project references
+src/
+  BGA.AppHost/
+  BGA.Contracts/
+  BGA.Users/
+    BGA.Users.API/
+    BGA.Users.Application/
+    BGA.Users.Domain/
+    BGA.Users.Infrastructure/
+  BGA.Events/
+    BGA.Events.API/
+    BGA.Events.Application/
+    BGA.Events.Domain/
+    BGA.Events.Infrastructure/
+  BGA.Bookings/
+    BGA.Bookings.API/
+    BGA.Bookings.Application/
+    BGA.Bookings.Domain/
+    BGA.Bookings.Infrastructure/
 ```
-
-The same structure can be read as a layer diagram:
-
-```text
-                 Presentation / BGA.API
-                   |             |
-                   v             v
-Application / BGA.Application <- Infrastructure / BGA.Infrastructure
-                   |             |
-                   v             v
-                 Domain / BGA.Domain
-```
-
-Keep business rules in `BGA.Domain` or `BGA.Application`. `BGA.API` should translate HTTP requests and responses, while `BGA.Infrastructure` should contain persistence and external implementation details.
 
 ### Test structure
-Tests are split by the project they verify. A test project should reference only its target project.
 
 ```text
-tests/BGA.API.UnitTests                 -> src/BGA.API
-tests/BGA.Application.UnitTests         -> src/BGA.Application
-tests/BGA.Infrastructure.IntegrationTests -> src/BGA.Infrastructure
+tests/
+  BGA.Users/
+    BGA.Users.API.UnitTests/
+    BGA.Users.API.E2ETests/
+    BGA.Users.Infrastructure.IntegrationTests/
+  BGA.Events/
+    BGA.Events.Application.UnitTests/
+    BGA.Events.API.E2ETests/
+    BGA.Events.Infrastructure.IntegrationTests/
+  BGA.Bookings/
+    BGA.Bookings.Application.UnitTests/
+    BGA.Bookings.API.UnitTests/
+    BGA.Bookings.API.E2ETests/
+    BGA.Bookings.Infrastructure.IntegrationTests/
 ```
 
-`BGA.Infrastructure.IntegrationTests` uses Testcontainers to start PostgreSQL in Docker, so Docker must be installed and running before starting these tests.
+## Prerequisites
 
-### Prerequisites
-- PostgreSQL is required to run the application. Start it from the repository root with `docker compose up -d` (uses `docker-compose.yml`). Stop it with `docker compose down`.
-- Docker is required for infrastructure integration tests.
+- `.NET 10 SDK`
+- `Docker` / `Docker Desktop`
 
-### Configure connection string
-Update the PostgreSQL connection string in `src/BGA.API/appsettings.json` under `ConnectionStrings:Default`.
-Defaults match `docker-compose.yml` (`postgres`/`postgres`, DB: `bgaapi`, Port: `5432`).
+## Docker Compose
 
-Connection string format (Npgsql):
-`Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=<password>`
+The root [`docker-compose.yml`](docker-compose.yml) supports two launch modes.
 
-Parameters:
-| Key | Description | Example |
+### Run the full application
+
+This is the main scenario for sprint 9: one command starts Kafka, Zookeeper, three PostgreSQL containers and three APIs.
+
+```powershell
+docker compose up -d --build
+```
+
+Useful follow-up commands:
+
+```powershell
+docker compose ps
+docker compose logs -f
+docker compose down
+docker compose down -v
+```
+
+After startup the services are available at:
+
+| Service | URL |
+| --- | --- |
+| `BGA.Users.API` | `http://localhost:56514/swagger` |
+| `BGA.Events.API` | `http://localhost:56515/swagger` |
+| `BGA.Bookings.API` | `http://localhost:56516/swagger` |
+| `Kafka` | `localhost:9092` |
+
+Notes:
+
+- each API calls `Database.Migrate()` on startup, so migrations are applied automatically;
+- in full Docker mode connection strings and Kafka host are passed through environment variables from Compose;
+- the APIs inside Docker use the internal Kafka address `kafka:29092`.
+
+### Run only infrastructure containers
+
+Use this mode if you want Kafka and PostgreSQL in Docker, but prefer running the APIs locally from the SDK.
+
+```powershell
+docker compose up -d zookeeper kafka users-db events-db bookings-db
+```
+
+This starts:
+
+- `zookeeper`
+- `kafka`
+- `users-db`
+- `events-db`
+- `bookings-db`
+
+Published infrastructure ports:
+
+| Container | Host port |
+| --- | --- |
+| `users-db` | `5433` |
+| `events-db` | `5434` |
+| `bookings-db` | `5435` |
+| `kafka` | `9092` |
+
+Stop only infrastructure:
+
+```powershell
+docker compose stop zookeeper kafka users-db events-db bookings-db
+```
+
+### Run APIs locally against infrastructure containers
+
+If you use `infra-only`, override the connection string for each service because local `appsettings.json` still points to `localhost:5432`.
+
+`BGA.Users.API`
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5433;Database=bga_users;Username=postgres;Password=postgres"
+dotnet run --project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj
+```
+
+`BGA.Events.API`
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres"
+$env:Kafka__BootstrapServers = "localhost:9092"
+dotnet run --project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj
+```
+
+`BGA.Bookings.API`
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres"
+$env:Kafka__BootstrapServers = "localhost:9092"
+dotnet run --project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj
+```
+
+Swagger opens automatically for local runs because `launchSettings.json` uses `launchUrl: swagger`.
+
+Default local URLs:
+
+| Service | HTTPS | HTTP |
 | --- | --- | --- |
-| `Host` | PostgreSQL server address | `localhost` |
-| `Port` | PostgreSQL server port | `5432` |
-| `Database` | Database name | `bgaapi` |
-| `Username` | DB user | `postgres` |
-| `Password` | DB user password | `postgres` |
+| `BGA.Users.API` | `https://localhost:56511/swagger` | `http://localhost:56514/swagger` |
+| `BGA.Events.API` | `https://localhost:56513/swagger` | `http://localhost:56515/swagger` |
+| `BGA.Bookings.API` | `https://localhost:56512/swagger` | `http://localhost:56516/swagger` |
 
-### Description of src/BGA.API/appsettings.json settings
-- AppSettings__PoolingIntervalSec - (int), from 0 seconds to 2147483647 seconds, this is the interval between attempts to request bookings with pending status and process them.
-- AppSettings__ProcessingDelaySec - (int), from 0 seconds to 2147483647 seconds, this is an artificial delay that simulates a request to a remote service.
-- Jwt__Key - secret key used to sign JWT tokens. Replace the development value with a long random secret in production and do not store it directly in source control.
-- Jwt__Issuer - token issuer value validated by JWT middleware.
-- Jwt__Audience - token audience value validated by JWT middleware.
-- Jwt__ExpirationMinutes - token lifetime in minutes.
+### Run AppHost against infrastructure containers
 
-### Building the solution
+If you want Aspire to start all three APIs while Docker runs only Kafka and PostgreSQL, use:
+
+```powershell
+docker compose up -d zookeeper kafka users-db events-db bookings-db
+dotnet run --project src/BGA.AppHost/BGA.AppHost.csproj
+```
+
+`BGA.AppHost` now passes these values to child services automatically:
+
+- `UsersDb` -> `Host=localhost;Port=5433;Database=bga_users;Username=postgres;Password=postgres`
+- `EventsDb` -> `Host=localhost;Port=5434;Database=bga_events;Username=postgres;Password=postgres`
+- `BookingsDb` -> `Host=localhost;Port=5435;Database=bga_bookings;Username=postgres;Password=postgres`
+- `Kafka` -> `localhost:9092`
+
+If needed, you can override them through `src/BGA.AppHost/appsettings.json` or user secrets/environment variables for `BGA.AppHost`.
+
+## Building
+
+Build the whole solution:
+
 ```powershell
 dotnet build BookingGoldenApple.slnx
 ```
 
-You can also build only the startup application:
+## EF Core migrations
+
+Each service has its own `DbContext` and its own migrations:
+
+- `UsersDbContext`
+- `EventsDbContext`
+- `BookingsDbContext`
+
+Examples:
+
+### Users
 
 ```powershell
-dotnet build src/BGA.API/BGA.API.csproj
+dotnet ef migrations add <MigrationName> --project src/BGA.Users/BGA.Users.Infrastructure/BGA.Users.Infrastructure.csproj --startup-project src/BGA.Users/BGA.Users.API/BGA.Users.API.csproj --context UsersDbContext --output-dir Migrations
 ```
 
-### Running the solution
-Make sure PostgreSQL is running before starting the API.
-The database schema is managed by EF Core migrations. On application startup the API applies pending migrations automatically via `Database.Migrate()`.
+### Events
 
 ```powershell
-dotnet run --project src/BGA.API/BGA.API.csproj
+dotnet ef migrations add <MigrationName> --project src/BGA.Events/BGA.Events.Infrastructure/BGA.Events.Infrastructure.csproj --startup-project src/BGA.Events/BGA.Events.API/BGA.Events.API.csproj --context EventsDbContext --output-dir Migrations
 ```
 
-### EF Core migrations
-Migrations belong to the Infrastructure layer because `ApplicationDbContext` and persistence mappings live in `src/BGA.Infrastructure`.
-Run EF Core commands from the repository root and use:
-
-- `--project src/BGA.Infrastructure/BGA.Infrastructure.csproj` for the project where migration files are created.
-- `--startup-project src/BGA.API/BGA.API.csproj` for the executable project that provides configuration and dependency injection.
-
-Create a new migration:
+### Bookings
 
 ```powershell
-dotnet ef migrations add <MigrationName> --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext --output-dir Migrations
+dotnet ef migrations add <MigrationName> --project src/BGA.Bookings/BGA.Bookings.Infrastructure/BGA.Bookings.Infrastructure.csproj --startup-project src/BGA.Bookings/BGA.Bookings.API/BGA.Bookings.API.csproj --context BookingsDbContext --output-dir Migrations
 ```
 
-Apply migrations to the configured database:
+## Running tests
 
-```powershell
-dotnet ef database update --project src/BGA.Infrastructure/BGA.Infrastructure.csproj --startup-project src/BGA.API/BGA.API.csproj --context ApplicationDbContext
-```
-
-### Opening Swagger in browser
-
-#### Using PowerShell
-1. Run the following command:
-
-```powershell
-dotnet run --project src/BGA.API/BGA.API.csproj --launch-profile https
-```
-
-2. Open one of these URLs in a browser:
-
-```text
-https://localhost:7116/swagger/index.html
-http://localhost:5068/swagger/index.html
-```
-
-#### Using VisualStudio/Rider
-1. Open `BookingGoldenApple.slnx` in VisualStudio or Rider.
-2. Run the `https` profile or click F5.
-3. Open one of the Swagger URLs above if it does not open automatically.
-
-### Using JWT in Swagger
-1. Register a user with `POST /auth/register`.
-2. Call `POST /auth/login` with the same credentials and copy the returned token.
-3. Click `Authorize` in Swagger.
-4. Paste only the raw JWT token and confirm. Swagger UI will add the `Bearer` prefix automatically.
-5. Call protected endpoints with the authorized session.
-
-### Running tests
 Run all tests:
 
 ```powershell
 dotnet test BookingGoldenApple.slnx
 ```
 
-Run API unit tests:
+Run a specific group:
 
 ```powershell
-dotnet test tests/BGA.API.UnitTests/BGA.API.UnitTests.csproj
+dotnet test tests/BGA.Users/BGA.Users.API.E2ETests/BGA.Users.API.E2ETests.csproj
+dotnet test tests/BGA.Events/BGA.Events.Application.UnitTests/BGA.Events.Application.UnitTests.csproj
+dotnet test tests/BGA.Bookings/BGA.Bookings.Infrastructure.IntegrationTests/BGA.Bookings.Infrastructure.IntegrationTests.csproj
 ```
 
-Run Application unit tests:
+Integration and E2E tests use Docker/Testcontainers, so Docker must be running.
 
-```powershell
-dotnet test tests/BGA.Application.UnitTests/BGA.Application.UnitTests.csproj
-```
+## API overview
 
-Run Infrastructure integration tests:
+### Users API
 
-```powershell
-dotnet test tests/BGA.Infrastructure.IntegrationTests/BGA.Infrastructure.IntegrationTests.csproj
-```
+- `POST /auth/register`
+- `POST /auth/login`
 
-## API Documentation
+### Events API
 
-### Role model
-- `User` can register, log in, create bookings for future events, view a booking by id and cancel only their own bookings.
-- `Admin` has all `User` permissions and can also create, update and delete events, plus cancel any booking.
-- Anonymous users can read events and use authentication endpoints only.
+- `GET /events`
+- `GET /events/{id}`
+- `POST /events`
+- `PUT /events/{id}`
+- `DELETE /events/{id}`
 
-### Endpoints
-- `POST`:   /auth/register     - register a new user; role is optional and defaults to `User`
-- `POST`:   /auth/login        - log in and receive a JWT token
-- `GET`:    /events            - get list of all events
-- `GET`:    /events/{id}       - get event by id; if not found returns 404
-- `POST`:   /events            - create event; requires `Admin`
-- `PUT`:    /events/{id}       - update event; requires `Admin`
-- `DELETE`: /events/{id}       - remove event; requires `Admin`; if not found returns 404
-- `POST`:   /events/{id}/book  - create booking for event; requires authentication
-- `GET`:    /bookings/{id}     - get booking by id; requires authentication
-- `DELETE`: /bookings/{id}     - cancel booking; requires authentication
+### Bookings API
 
-#### `GET`: /events has the following filters and pagination parameters. All filters work together (logical AND)
-- title - optional, search by name, case-insensitive, partial match.
-- from - optional, events that begin no earlier than the specified date.
-- to - optional, events that end no later than the specified date.
-- page - optional, with default value: 1, the page to return
-- pageSize - optional, with default value: 10, the number of elements on a page
+- `POST /events/{eventId}/book`
+- `GET /bookings/{id}`
+- `DELETE /bookings/{id}`
 
-#### `GET`: /events returns the following result
-- items - the result of pagination and filtering
-- totalItems - the total number of events
-- pageNumber - the current page number
-- pageSize - the number of elements on the current page
+## Authentication and authorization
 
-#### `POST` /events/{id}/book immediately returns the following result
-- id - id of booking
-- eventId - id of event
-- status - current status of booking
-And in location you can find URL for getting booking
+- `BGA.Users` is the only service that issues JWT tokens through `POST /auth/login`.
+- `BGA.Events` and `BGA.Bookings` validate the same `Jwt:Key`, `Jwt:Issuer` and `Jwt:Audience`.
+- `POST /events`, `PUT /events/{id}` and `DELETE /events/{id}` require the `Admin` role.
+- All bookings endpoints require authentication.
 
-#### `GET` /bookings/{id} returns the following result
-- id - id of booking
-- eventId - id of event
-- status - status of booking processing, can be different (pending, confirmed, rejected, cancelled)
-- createdAt - date of creating booking
-- processedAt - date of processing booking
+## BookingConfirmed Kafka flow
 
-### Models descriptions:
+The services do not call each other over HTTP. Seat updates happen only through Kafka:
 
-#### BookingStatus can be different
-- pending - created, wait for processing
-- confirmed - processed and confirmed
-- rejected - processed but rejected
-- cancelled - cancelled by the booking owner or admin
+1. `POST /events/{eventId}/book` creates a booking in `BGA.Bookings` with status `pending`.
+2. `BookingProcessingService` confirms pending bookings in the bookings database.
+3. After `SaveChangesAsync`, `KafkaBookingConfirmedPublisher` publishes `BookingConfirmed` to topic `booking-confirmed`.
+4. The Kafka message key is `EventId`, so confirmations for the same event stay ordered within one partition.
+5. `BGA.Events` creates the topic at startup if it does not exist yet.
+6. `BookingConfirmedConsumerHostedService` consumes the event in consumer group `bga-events-booking-confirmed`.
+7. `BGA.Events` decreases available seats for the matching event and logs invalid, missing or over-capacity messages without crashing the subscriber.
 
-### Authorization rules and errors
-- `POST /events`, `PUT /events/{id}` and `DELETE /events/{id}` return `401` without a token and `403` for authenticated non-admin users.
-- `POST /events/{id}/book`, `GET /bookings/{id}` and `DELETE /bookings/{id}` require a valid JWT token.
-- Booking an event that has already started returns `400`.
-- Creating more than 10 active bookings for the same user returns `409`.
-- Cancelling another user's booking without the `Admin` role returns `403`.
+## Booking lifecycle
 
-### User flows: 
+Booking creation is asynchronous:
 
-#### Create event => Create booking => Get booking status
-- create event using `POST /events` as an admin
-- create booking using `POST /events/{id}/book` as an authenticated user
-- check status of booking using `GET` /bookings/{id}
+1. `POST /events/{eventId}/book` creates a booking with status `pending`
+2. `BGA.Bookings` background processing service handles pending bookings
+3. in the current sprint-9 flow the background processor moves the booking to `confirmed`
+4. `DELETE /bookings/{id}` changes the booking status to `cancelled`
+5. the domain model also contains `rejected`, but the current Kafka-based flow does not set it automatically
+
+## Manual end-to-end verification
+
+1. Start the full stack with `docker compose up -d --build`.
+2. Register a regular user through `http://localhost:56514/swagger`.
+3. Login through `POST /auth/login` and copy the JWT token.
+4. Register a second user through `POST /auth/register` with `role = "Admin"`, login as that user, then authorize in `http://localhost:56515/swagger`.
+5. Create an event and note its `availableSeats`.
+6. Authorize with the regular user token in `http://localhost:56516/swagger`.
+7. Call `POST /events/{eventId}/book` and copy the returned booking id.
+8. Wait a few seconds for the background processor and Kafka consumer.
+9. Check `GET /bookings/{id}` in `BGA.Bookings` and `GET /events/{id}` in `BGA.Events`.
+10. The booking should be `confirmed`, and the event should have fewer available seats than before.
