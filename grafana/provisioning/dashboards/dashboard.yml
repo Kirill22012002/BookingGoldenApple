@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: BookingGoldenApple Dashboards
+    orgId: 1
+    folder: BookingGoldenApple
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

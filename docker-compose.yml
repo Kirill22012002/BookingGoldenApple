@@ -54,6 +54,47 @@ services:
     networks:
       - bga-network
 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: bga-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - bga-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: bga-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    networks:
+      - bga-network
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: bga-grafana
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - bga-network
+
   users-db:
     image: postgres:16-alpine
     container_name: bga-users-db
@@ -123,10 +164,13 @@ services:
     depends_on:
       users-db:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=users-db;Port=5432;Database=bga_users;Username=postgres;Password=postgres
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "56514:8080"
     networks:
@@ -145,12 +189,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=events-db;Port=5432;Database=bga_events;Username=postgres;Password=postgres
       Kafka__BootstrapServers: kafka:29092
       Redis__ConnectionString: redis:6379
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "56515:8080"
     networks:
@@ -167,11 +214,14 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=bookings-db;Port=5432;Database=bga_bookings;Username=postgres;Password=postgres
       Kafka__BootstrapServers: kafka:29092
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "56516:8080"
     networks:
@@ -185,3 +235,4 @@ volumes:
   users-db-data:
   events-db-data:
   bookings-db-data:
+  grafana-data:

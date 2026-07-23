@@ -41,6 +41,9 @@ Each service owns its own database. In Docker Compose the system runs as a full 
 | `Kafka` | `kafka` | `9092` | inter-service messaging |
 | `Redis` | `redis` | `6379` | cache for `BGA.Events` |
 | `Zookeeper` | `zookeeper` | not published | Kafka coordination |
+| `Prometheus` | `prometheus` | `9090` | metrics storage and scraping |
+| `Jaeger` | `jaeger` | `16686` | trace UI |
+| `Grafana` | `grafana` | `3000` | dashboards UI |
 
 ### Source structure
 
@@ -109,6 +112,57 @@ docker compose logs -f
 docker compose down
 docker compose down -v
 ```
+
+## Observability
+
+Sprint 11 adds a full observability stack for all three APIs:
+
+- `OpenTelemetry` for traces and metrics
+- `Prometheus` for metrics scraping and storage
+- `Jaeger` for distributed tracing
+- `Grafana` for dashboards
+- `Serilog` with `CompactJsonFormatter` for structured JSON logs
+
+What is configured:
+
+- each API exposes Prometheus metrics on `/metrics`
+- each API exports traces to Jaeger over OTLP
+- each API writes structured JSON logs to the container console
+- Grafana is provisioned automatically with the `Prometheus` data source
+- Grafana loads the exported dashboard from [`grafana/dashboards/bga-services-observability.json`](grafana/dashboards/bga-services-observability.json)
+
+Run the full monitoring-enabled stack:
+
+```powershell
+docker compose up -d --build
+```
+
+Run only the observability tools if the APIs are started separately:
+
+```powershell
+docker compose up -d prometheus jaeger grafana
+```
+
+Observability URLs:
+
+| Tool | URL |
+| --- | --- |
+| `Prometheus` | `http://localhost:9090` |
+| `Jaeger` | `http://localhost:16686` |
+| `Grafana` | `http://localhost:3000` |
+
+Metrics endpoints:
+
+| Service | URL |
+| --- | --- |
+| `BGA.Users.API` | `http://localhost:56514/metrics` |
+| `BGA.Events.API` | `http://localhost:56515/metrics` |
+| `BGA.Bookings.API` | `http://localhost:56516/metrics` |
+
+Grafana credentials:
+
+- login: `admin`
+- password: `admin`
 
 After startup the services are available at:
 
